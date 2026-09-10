@@ -1,9 +1,13 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 
-import { inspectPublicTree, type PublicFile } from "./public-boundary";
-import { APPROVED_PUBLIC_EMAILS } from "./public-policy";
+import {
+  DEFAULT_MAX_FILE_BYTES,
+  DEFAULT_MAX_TREE_BYTES,
+  inspectPublicTree,
+  type PublicFile,
+} from "./public-boundary";
 
 interface CommandResult {
   readonly exitCode: number;
@@ -29,6 +33,11 @@ interface IndexEntry {
   readonly path: string;
 }
 
+export interface IndexReadOptions {
+  readonly maxFileBytes?: number;
+  readonly maxTreeBytes?: number;
+}
+
 function parseIndexEntries(output: Uint8Array): readonly IndexEntry[] {
   const text = new TextDecoder("utf-8", { fatal: true }).decode(output);
   return text
@@ -46,7 +55,10 @@ function parseIndexEntries(output: Uint8Array): readonly IndexEntry[] {
     });
 }
 
-export async function readIndexFiles(root: string): Promise<readonly PublicFile[]> {
+export async function readIndexFiles(
+  root: string,
+  options: IndexReadOptions = {},
+): Promise<readonly PublicFile[]> {
   const listing = await runGit(["ls-files", "--stage", "-z"], root);
   if (listing.exitCode !== 0) {
     throw new Error("Unable to enumerate the Git index");
@@ -68,12 +80,37 @@ export async function readIndexFiles(root: string): Promise<readonly PublicFile[
       throw new Error("Unable to materialize the Git index");
     }
 
-    return await Promise.all(
-      entries.map(async (entry) => ({
+    const maxFileBytes = options.maxFileBytes ?? DEFAULT_MAX_FILE_BYTES;
+    const maxTreeBytes = options.maxTreeBytes ?? DEFAULT_MAX_TREE_BYTES;
+    const files: PublicFile[] = [];
+    let loadedBytes = 0;
+    let treeLimitReached = false;
+    for (const entry of entries) {
+      const materializedPath = join(checkout, entry.path);
+      const metadata = await stat(materializedPath);
+      if (!metadata.isFile() || !Number.isSafeInteger(metadata.size) || metadata.size < 0) {
+        throw new Error("Materialized Git index entry is not a bounded regular file");
+      }
+      if (
+        metadata.size > maxFileBytes ||
+        treeLimitReached ||
+        metadata.size > maxTreeBytes - loadedBytes
+      ) {
+        treeLimitReached ||= metadata.size > maxTreeBytes - loadedBytes;
+        files.push({
+          path: entry.path,
+          content: new Uint8Array(),
+          declaredByteLength: metadata.size,
+        });
+        continue;
+      }
+      files.push({
         path: entry.path,
-        content: new Uint8Array(await readFile(join(checkout, entry.path))),
-      })),
-    );
+        content: new Uint8Array(await readFile(materializedPath)),
+      });
+      loadedBytes += metadata.size;
+    }
+    return files;
   } finally {
     await rm(checkout, { recursive: true });
   }
@@ -84,10 +121,17 @@ export async function readCounterproofFile(path: string): Promise<PublicFile> {
   if (!label || label === "." || label === "..") {
     throw new Error("Counter-proof path must name one file");
   }
-  return {
-    path: `counterproof/${label}`,
-    content: new Uint8Array(await readFile(path)),
-  };
+  const metadata = await stat(path);
+  return metadata.size > DEFAULT_MAX_FILE_BYTES
+    ? {
+        path: `counterproof/${label}`,
+        content: new Uint8Array(),
+        declaredByteLength: metadata.size,
+      }
+    : {
+        path: `counterproof/${label}`,
+        content: new Uint8Array(await readFile(path)),
+      };
 }
 
 async function main(): Promise<void> {
@@ -102,7 +146,7 @@ async function main(): Promise<void> {
     throw new Error("Usage: check-public-boundary.ts [--path <counterproof-file>]");
   }
 
-  const findings = inspectPublicTree(files, { allowedEmails: APPROVED_PUBLIC_EMAILS });
+  const findings = inspectPublicTree(files);
   if (findings.length > 0) {
     for (const finding of findings) {
       console.error(`${finding.path}: ${finding.code}`);

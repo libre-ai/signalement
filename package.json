@@ -1,7 +1,7 @@
 {
   "name": "@libre-ai/signalement",
   "version": "0.0.0",
-  "description": "Open, self-hostable incident reporting, reproduction, fix verification, and multi-system projection.",
+  "description": "Specification and security foundation for open incident reporting, reproduction, fix verification, and multi-system projection.",
   "private": true,
   "license": "EUPL-1.2",
   "type": "module",
@@ -32,6 +32,7 @@
     "check:qualification": "bun run check:bun:runtime && bun tools/ci/check-qualification.ts",
     "check:public-boundary": "bun run check:bun:runtime && bun tools/ci/check-public-boundary.ts",
     "check:public-history": "bun run check:bun:runtime && bun tools/ci/check-public-history.ts",
+    "check:remote-attestation": "bun run check:bun:runtime && bun tools/publication/check-remote-attestation.ts",
     "lint": "bun run check:bun:runtime && biome ci .",
     "typecheck": "bun run check:bun:runtime && tsc --noEmit -p tsconfig.json",
     "pretest": "bun run check:bun",

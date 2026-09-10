@@ -4,8 +4,8 @@
 
 This record covers the staged product tree before the root commit. It contains no
 captured content, provider-instance configuration, credential, or private identity.
-The final ref/object manifest is necessarily produced outside this repository after
-the commit, because embedding that manifest here would change the objects it attests.
+The final ref/object manifest must be produced outside this repository after the
+commit, because embedding that manifest here would change the objects it attests.
 
 ## Toolchain and authority
 
@@ -39,7 +39,8 @@ candidate content comprised 55 files and had this Git tree OID:
 ```
 
 This OID deliberately identifies the pre-evidence content tree, not the later root
-commit or its final tree. The non-recursive final manifest is retained in Governance.
+commit or its final tree. The non-recursive final manifest will be retained in
+Governance only after it has been reproduced from the private remote and reviewed.
 
 The exact staged content then passed:
 

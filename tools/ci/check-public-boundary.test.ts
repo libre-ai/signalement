@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -45,6 +45,42 @@ describe("readIndexFiles", () => {
     const root = await createRepository();
 
     await expect(readIndexFiles(root)).rejects.toThrow("Git index contains no files");
+  });
+
+  test("does not load a staged file beyond the configured per-file bound", async () => {
+    const root = await createRepository();
+    await writeFile(join(root, "large.txt"), "12345");
+    await run(["git", "add", "large.txt"], root);
+
+    const files = await readIndexFiles(root, { maxFileBytes: 4 });
+
+    expect(files).toEqual([
+      { path: "large.txt", content: new Uint8Array(), declaredByteLength: 5 },
+    ]);
+  });
+
+  test("stops loading bytes after the configured cumulative tree bound", async () => {
+    const root = await createRepository();
+    await writeFile(join(root, "first.txt"), "1234");
+    await writeFile(join(root, "second.txt"), "5678");
+    await run(["git", "add", "first.txt", "second.txt"], root);
+
+    const files = await readIndexFiles(root, { maxTreeBytes: 4 });
+
+    expect(files).toEqual([
+      { path: "first.txt", content: new TextEncoder().encode("1234") },
+      { path: "second.txt", content: new Uint8Array(), declaredByteLength: 4 },
+    ]);
+  });
+
+  test("does not follow a staged symlink outside the materialized index", async () => {
+    const root = await createRepository();
+    const target = join(root, "unstaged-private-source.txt");
+    await writeFile(target, "must not be loaded");
+    await symlink(target, join(root, "public-link.txt"));
+    await run(["git", "add", "public-link.txt"], root);
+
+    await expect(readIndexFiles(root)).rejects.toThrow("Unsupported Git index mode");
   });
 });
 

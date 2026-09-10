@@ -24,6 +24,34 @@ describe("inspectPublicTree", () => {
   });
 
   test.each([
+    "\u{E0100}",
+    "\u{E0061}",
+  ])("removes supplementary default-ignorable %s before credential checks", (ignorable) => {
+    const obfuscated = `Author${ignorable}ization: Bear${ignorable}er signalement_test_token`;
+
+    expect(inspectPublicTree([{ path: "notes.txt", content: obfuscated }])).toContainEqual({
+      path: "notes.txt",
+      code: "captured-credential",
+    });
+  });
+
+  test.each([
+    ["GitHub token", ["gh", "p_", "A".repeat(24)].join("")],
+    ["AWS access key", ["AK", "IA", "A".repeat(16)].join("")],
+    ["Slack token", ["xo", "xb-", "1234567890-abcdefghij"].join("")],
+    [
+      "credentialled database URI",
+      ["postgresql://operator:", "signalement_test_password", "@db.customer.internal/app"].join(""),
+    ],
+    ["OpenPGP private key", ["-----BEGIN PGP ", "PRIVATE KEY BLOCK-----"].join("")],
+  ])("rejects a %s marker", (_label, content) => {
+    expect(inspectPublicTree([{ path: "notes.txt", content }])).toContainEqual({
+      path: "notes.txt",
+      code: "captured-credential",
+    });
+  });
+
+  test.each([
     ["captured-cookie", ["Coo", "kie: session=signalement_test_cookie"].join("")],
     ["captured-cookie", ["Set-Coo", "kie: session=signalement_test_cookie"].join("")],
     ["private-key", ["-----BEGIN ", "PRIVATE KEY-----"].join("")],
@@ -49,6 +77,26 @@ describe("inspectPublicTree", () => {
     "Install @libre-ai/governance from the pinned commit.",
   ])("allows reserved synthetic identities and package scopes", (content) => {
     expect(inspectPublicTree([{ path: "notes.txt", content }])).toEqual([]);
+  });
+
+  test.each([
+    ["Unicode email", ["Élodie", "@customer.company"].join("")],
+    ["HTML-encoded email", ["reporter&comm", "at;customer&per", "iod;company"].join("")],
+  ])("rejects a %s", (_label, content) => {
+    expect(inspectPublicTree([{ path: "notes.txt", content }])).toContainEqual({
+      path: "notes.txt",
+      code: "personal-email",
+    });
+  });
+
+  test.each([
+    ["French phone number", ["06 12 34", " 56 78"].join(""), "personal-phone"],
+    ["French IBAN", ["FR76 3000 6000", " 0112 3456 7890 189"].join(""), "personal-iban"],
+  ] as const)("rejects a %s", (_label, content, code) => {
+    expect(inspectPublicTree([{ path: "notes.txt", content }])).toContainEqual({
+      path: "notes.txt",
+      code,
+    });
   });
 
   test("allows only an explicitly attested public contributor identity", () => {
@@ -78,6 +126,7 @@ describe("inspectPublicTree", () => {
     "screen.mp4",
     "screenshot.png",
     "archive.zip",
+    "customer-export.csv",
   ])("rejects captured or unbounded artifacts by path", (path) => {
     expect(inspectPublicTree([{ path, content: "" }])).toContainEqual({
       path,
@@ -132,6 +181,26 @@ describe("inspectPublicTree", () => {
         { path: precomposed, content: "second" },
       ]),
     ).toEqual([{ path: precomposed, code: "duplicate-path" }]);
+  });
+
+  test("rejects a tree whose declared bytes exceed the cumulative bound", () => {
+    const files = [
+      { path: "first.txt", content: "1234" },
+      { path: "second.txt", content: "", declaredByteLength: 4 },
+    ];
+
+    expect(inspectPublicTree(files, { maxTreeBytes: 7 })).toContainEqual({
+      path: "<tree>",
+      code: "tree-volume-exceeded",
+    });
+  });
+
+  test("uses a larger declared byte length without allocating the content", () => {
+    const files = [{ path: "large.txt", content: "", declaredByteLength: 65 }];
+
+    expect(inspectPublicTree(files, { maxFileBytes: 64 })).toEqual([
+      { path: "large.txt", code: "oversized-file" },
+    ]);
   });
 
   test("returns deterministic path and code ordering without duplicate findings", () => {

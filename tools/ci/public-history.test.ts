@@ -1,11 +1,12 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { mkdtemp, rm, symlink, unlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, symlink, unlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { inspectReachableHistory, renderPublicHistoryManifest } from "./public-history";
 
 const temporaryDirectories: string[] = [];
+const TEST_IDENTITIES = [{ name: "Signalement Test", email: "tester@signalement.test" }] as const;
 
 async function run(command: readonly string[], cwd: string): Promise<void> {
   const process = Bun.spawn([...command], { cwd, stdout: "pipe", stderr: "pipe" });
@@ -47,6 +48,19 @@ describe("inspectReachableHistory", () => {
     );
   });
 
+  test("sorts ref names by UTF-8 bytes rather than host locale", () => {
+    const rendered = renderPublicHistoryManifest({
+      schemaVersion: "libre-ai.git-object-manifest.v1",
+      refs: [
+        { name: "refs/heads/ä", objectId: "a".repeat(40) },
+        { name: "refs/heads/z", objectId: "b".repeat(40) },
+      ],
+      objects: [],
+    });
+
+    expect(rendered.indexOf("refs/heads/z")).toBeLessThan(rendered.indexOf("refs/heads/ä"));
+  });
+
   test("finds a sensitive blob deleted from the current tree", async () => {
     const root = await createRepository();
     await commitFile(root, "safe.txt", "safe");
@@ -56,10 +70,28 @@ describe("inspectReachableHistory", () => {
     await run(["git", "add", "--all"], root);
     await run(["git", "commit", "--quiet", "-m", "test: delete leak"], root);
 
-    const result = await inspectReachableHistory(root);
+    const result = await inspectReachableHistory(root, { allowedIdentities: TEST_IDENTITIES });
 
     expect(result.findings).toContainEqual({ path: "leak.txt", code: "captured-credential" });
     expect(JSON.stringify(result.findings)).not.toContain("signalement_test_old");
+  });
+
+  test("finds a provider token deleted from the current tree", async () => {
+    const root = await createRepository();
+    await commitFile(root, "safe.txt", "safe");
+    const providerToken = ["gh", "p_", "A".repeat(24)].join("");
+    await commitFile(root, "provider-token.txt", providerToken);
+    await unlink(join(root, "provider-token.txt"));
+    await run(["git", "add", "--all"], root);
+    await run(["git", "commit", "--quiet", "-m", "test: delete provider token"], root);
+
+    const result = await inspectReachableHistory(root, { allowedIdentities: TEST_IDENTITIES });
+
+    expect(result.findings).toContainEqual({
+      path: "provider-token.txt",
+      code: "captured-credential",
+    });
+    expect(JSON.stringify(result.findings)).not.toContain(providerToken);
   });
 
   test("does not exclude evidence and review paths", async () => {
@@ -89,7 +121,7 @@ describe("inspectReachableHistory", () => {
     const root = await createRepository();
     await commitFile(root, "safe.txt", "safe synthetic fixture");
 
-    const result = await inspectReachableHistory(root);
+    const result = await inspectReachableHistory(root, { allowedIdentities: TEST_IDENTITIES });
 
     expect(result.findings).toEqual([]);
     expect(result.commitCount).toBe(1);
@@ -171,9 +203,80 @@ describe("inspectReachableHistory", () => {
     await run(["git", "config", "user.email", allowed], root);
     await commitFile(root, "safe.txt", "safe");
 
-    const result = await inspectReachableHistory(root, { allowedEmails: [allowed] });
+    const result = await inspectReachableHistory(root, {
+      allowedIdentities: [{ name: "Signalement Test", email: allowed }],
+    });
 
     expect(result.findings).toEqual([]);
+  });
+
+  test("rejects a synthetic-domain identity in real history", async () => {
+    const root = await createRepository();
+    await commitFile(root, "safe.txt", "safe");
+
+    const result = await inspectReachableHistory(root, {
+      allowedIdentities: [
+        {
+          name: "Approved Contributor",
+          email: ["approved", "@users.noreply.github.com"].join(""),
+        },
+      ],
+    });
+
+    expect(result.findings).toContainEqual({
+      path: expect.stringMatching(/^metadata\/commits\/[0-9a-f]+\.txt$/),
+      code: "unapproved-identity",
+    });
+  });
+
+  test("rejects an unapproved name paired with an approved email", async () => {
+    const root = await createRepository();
+    const email = ["12345+signalement-test", "@users.noreply.github.com"].join("");
+    await run(["git", "config", "user.name", "Unapproved Name"], root);
+    await run(["git", "config", "user.email", email], root);
+    await commitFile(root, "safe.txt", "safe");
+
+    const result = await inspectReachableHistory(root, {
+      allowedIdentities: [{ name: "Approved Name", email }],
+    });
+
+    expect(result.findings).toContainEqual({
+      path: expect.stringMatching(/^metadata\/commits\/[0-9a-f]+\.txt$/),
+      code: "unapproved-identity",
+    });
+  });
+
+  test("does not grant an approved commit email a blanket blob exemption", async () => {
+    const root = await createRepository();
+    const email = ["12345+signalement-test", "@users.noreply.github.com"].join("");
+    await run(["git", "config", "user.email", email], root);
+    await commitFile(root, "copied-identity.txt", email);
+
+    const result = await inspectReachableHistory(root, {
+      allowedIdentities: [{ name: "Signalement Test", email }],
+    });
+
+    expect(result.findings).toContainEqual({
+      path: "copied-identity.txt",
+      code: "personal-email",
+    });
+  });
+
+  test("does not grant future policy blobs the root policy identity exception", async () => {
+    const root = await createRepository();
+    const email = ["12345+signalement-test", "@users.noreply.github.com"].join("");
+    await run(["git", "config", "user.email", email], root);
+    await mkdir(join(root, "tools/ci"), { recursive: true });
+    await commitFile(root, "tools/ci/public-policy.ts", `export const identity = "${email}";`);
+
+    const result = await inspectReachableHistory(root, {
+      allowedIdentities: [{ name: "Signalement Test", email }],
+    });
+
+    expect(result.findings).toContainEqual({
+      path: "tools/ci/public-policy.ts",
+      code: "personal-email",
+    });
   });
 
   test("scans annotated tag metadata when the tag ref is explicitly authorized", async () => {

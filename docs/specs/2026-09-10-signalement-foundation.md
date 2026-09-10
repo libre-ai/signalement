@@ -1,6 +1,6 @@
 # Libre AI Signalement — Foundation Specification
 
-**Status:** accepted foundation; product capabilities remain unimplemented and unqualified.
+**Status:** locally accepted foundation; product capabilities remain unimplemented and unqualified.
 
 ## Product statement
 

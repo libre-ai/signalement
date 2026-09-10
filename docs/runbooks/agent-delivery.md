@@ -23,9 +23,19 @@ codex --search \
   --ask-for-approval on-request \
   --sandbox workspace-write \
   --cd . \
-  exec --model gpt-6-astra - \
+  exec --json --model gpt-6-astra - \
   < docs/runbooks/qualification.prompt.md
 ```
+
+The first JSONL event is `thread.started`; copy its `thread_id` into a task-specific
+shell variable for every later command in this delivery chain:
+
+```sh
+export SIGNALEMENT_CODEX_THREAD_ID="<thread.started.thread_id>"
+```
+
+Keep the event stream and identifier local and uncommitted. Do not substitute `--last`:
+another Codex run or review in the same checkout can become the most recent session.
 
 This phase may edit qualification documents, ADRs, and plans, but it must not implement
 runtime behavior. It ends only when it has either closed the material product decisions
@@ -40,7 +50,8 @@ codex --search \
   --ask-for-approval on-request \
   --sandbox workspace-write \
   --cd . \
-  exec resume --last "Decision: <chosen option and rationale>. Continue qualification."
+  exec resume "$SIGNALEMENT_CODEX_THREAD_ID" \
+  "Decision: <chosen option and rationale>. Continue qualification."
 ```
 
 Repeat only for security, architecture, dependency, scope, or irreversible decisions.
@@ -55,7 +66,7 @@ codex --search \
   --ask-for-approval on-request \
   --sandbox workspace-write \
   --cd . \
-  exec resume --last --model gpt-6-astra - \
+  exec resume "$SIGNALEMENT_CODEX_THREAD_ID" --model gpt-6-astra - \
   < docs/runbooks/autonomous-delivery.prompt.md
 ```
 
@@ -66,7 +77,8 @@ codex --search \
   --ask-for-approval on-request \
   --sandbox workspace-write \
   --cd . \
-  exec resume --last "Re-read current Git state and continue to the declared completion criteria."
+  exec resume "$SIGNALEMENT_CODEX_THREAD_ID" \
+  "Re-read current Git state and continue to the declared completion criteria."
 ```
 
 ## 3. Required owner checkpoints

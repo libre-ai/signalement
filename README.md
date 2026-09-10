@@ -34,7 +34,7 @@ une preuve de parité.
 <!-- libre-ai:project-status:begin -->
 <!-- Section générée depuis project.v1.yaml — ne pas éditer à la main. -->
 
-- Situation actuelle : Le nom et la fondation produit sont signés dans Governance. Le dépôt reste scellé avant son attestation privée et sa publication; aucune capture, extension, API, synchronisation, exécution ni intégration fournisseur n'est qualifiée ou opérationnelle.
+- Situation actuelle : Le nom et l'enrôlement sont signés dans Governance; la fondation locale est acceptée dans ce dépôt. Le dépôt reste scellé avant son attestation privée et sa publication; aucune capture, extension, API, synchronisation, exécution ni intégration fournisseur n'est qualifiée ou opérationnelle.
 - Maturité : specified
 - Exposition : idea
 - Confiance : medium
@@ -59,6 +59,7 @@ critères de promotion et des prédicats d'arrêt.
 | [`docs/qualification/official-capability-baseline.md`](docs/qualification/official-capability-baseline.md) | capacités navigateur et fournisseur vérifiées dans les documentations officielles |
 | [`docs/audits/dependency-licenses.md`](docs/audits/dependency-licenses.md) | audit reproductible des licences et vulnérabilités du graphe verrouillé |
 | [`docs/runbooks/agent-delivery.md`](docs/runbooks/agent-delivery.md) | lancement en deux temps : qualification poussée puis livraison autonome |
+| [`docs/runbooks/private-first-publication.md`](docs/runbooks/private-first-publication.md) | création privée, miroir exact, attestation puis exposition séparée |
 | [`docs/adr/`](docs/adr/) | frontières Dossier/projections, capture, scénarios et contrôle portable |
 | [`docs/contracts/`](docs/contracts/) | interfaces internes préparant les futurs contrats publics verrouillés |
 

@@ -113,8 +113,10 @@ Scenario assertions and visual references are immutable once approved.
 
 - [ ] **Step 3: Create the project card**
 
-Declare `maturity: specified`, `exposure: spec-published`, and state clearly that zero
-capture, connector, execution, or synchronization capability is operational at bootstrap.
+Declare `maturity: specified`, `exposure: idea`, and state clearly that zero capture,
+connector, execution, or synchronization capability is operational at bootstrap. Promote
+to `spec-published` only after the anonymous clone reproduces the exact private-state
+attestation following the owner-authorized visibility change.
 
 - [ ] **Step 4: Create the public README**
 
@@ -383,7 +385,7 @@ personal account has permission to create in `libre-ai`.
 - [ ] **Step 3: Create an empty private remote without generated starter content**
 
 ```bash
-gh repo create libre-ai/signalement --private --description "Open, self-hostable incident reporting, reproduction and fix-verification platform with portable evidence and multi-system synchronization."
+gh repo create libre-ai/signalement --private --description "Specification and security foundation for open incident reporting, reproduction, fix verification, and multi-system projection."
 ```
 
 Refuse any generated README, license, `.gitignore`, import, branch, or tag.
@@ -405,7 +407,10 @@ vulnerability reporting, and prevention of force pushes and branch deletion.
 Enumerate and fetch every advertised or API-accessible `refs/*` namespace explicitly
 into a fresh non-shallow clean-room clone. Refuse any unexpected ref, missing object,
 unsupported object type, or ref/object manifest difference. Run the complete positive
-gates and all synthetic negative fixtures.
+gates and all synthetic negative fixtures. Execute the repository-native
+`check:remote-attestation` command documented in
+`docs/runbooks/private-first-publication.md`; it must compare Git and GitHub API ref
+inventories before constructing the mirror.
 
 - [ ] **Step 7: Merge the private-state attestation in Governance**
 

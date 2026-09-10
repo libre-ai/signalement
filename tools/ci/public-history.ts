@@ -1,4 +1,5 @@
 import {
+  compareUtf8,
   inspectPublicTree,
   type PublicBoundaryCode,
   type PublicBoundaryOptions,
@@ -9,6 +10,7 @@ export type PublicHistoryCode =
   | PublicBoundaryCode
   | "history-volume-exceeded"
   | "missing-authorized-ref"
+  | "unapproved-identity"
   | "unexpected-object-type"
   | "unexpected-ref"
   | "unsafe-history-mode";
@@ -46,8 +48,14 @@ export interface PublicHistoryResult {
 }
 
 export interface PublicHistoryOptions extends PublicBoundaryOptions {
+  readonly allowedIdentities?: readonly PublicGitIdentity[];
   readonly authorizedRefs?: readonly string[];
   readonly maxHistoryBytes?: number;
+}
+
+export interface PublicGitIdentity {
+  readonly name: string;
+  readonly email: string;
 }
 
 interface CommandResult {
@@ -71,6 +79,7 @@ interface ObjectMetadata {
 }
 
 const DEFAULT_AUTHORIZED_REFS = ["refs/heads/main"] as const;
+const LEGACY_PUBLIC_POLICY_BLOB = "19984c48369a07c55e9c131e33c88979c7ce23d0";
 const DEFAULT_MAX_FILE_BYTES = 1_048_576;
 const DEFAULT_MAX_HISTORY_BYTES = 67_108_864;
 const OBJECT_ID = /^[0-9a-f]{40,64}$/;
@@ -112,7 +121,7 @@ function validateAuthorizedRefs(refs: readonly string[]): readonly string[] {
   ) {
     throw new Error("Authorized refs must be unique canonical full refs");
   }
-  return unique;
+  return unique.sort(compareUtf8);
 }
 
 function parseRefs(output: Uint8Array): readonly GitRef[] {
@@ -137,7 +146,7 @@ function parseRefs(output: Uint8Array): readonly GitRef[] {
       }
       return { name, objectId, objectType };
     })
-    .sort((left, right) => left.name.localeCompare(right.name));
+    .sort((left, right) => compareUtf8(left.name, right.name));
 }
 
 function indexHistoricalPaths(output: Uint8Array): HistoricalIndex {
@@ -223,7 +232,35 @@ function parseObjectMetadata(
   if (metadata.length !== expected.size || metadata.some(({ sha }) => !expected.has(sha))) {
     throw new Error("Git object database returned an incomplete object inventory");
   }
-  return metadata.sort((left, right) => left.sha.localeCompare(right.sha));
+  return metadata.sort((left, right) => compareUtf8(left.sha, right.sha));
+}
+
+function hasOnlyApprovedGitIdentities(
+  content: Uint8Array,
+  objectType: "commit" | "tag",
+  allowedIdentities: readonly PublicGitIdentity[],
+): boolean {
+  const header = decode(content).split("\n\n", 1)[0] ?? "";
+  const expectedHeaders = objectType === "commit" ? ["author", "committer"] : ["tagger"];
+  const identities = new Map<string, PublicGitIdentity>();
+  for (const line of header.split("\n")) {
+    const match = /^(author|committer|tagger) (.+) <([^<>]+)> -?\d+ [+-]\d{4}$/.exec(line);
+    if (!match) continue;
+    const [, kind, name, email] = match;
+    if (!kind || !name || !email || identities.has(kind)) return false;
+    identities.set(kind, { name, email });
+  }
+  if (
+    identities.size !== expectedHeaders.length ||
+    expectedHeaders.some((kind) => !identities.has(kind))
+  ) {
+    return false;
+  }
+  return [...identities.values()].every((identity) =>
+    allowedIdentities.some(
+      (allowed) => allowed.name === identity.name && allowed.email === identity.email,
+    ),
+  );
 }
 
 function readBatchObjects(
@@ -263,10 +300,10 @@ function readBatchObjects(
 export function renderPublicHistoryManifest(manifest: PublicHistoryManifest): string {
   const canonical = {
     objects: [...manifest.objects]
-      .sort((left, right) => left.objectId.localeCompare(right.objectId))
+      .sort((left, right) => compareUtf8(left.objectId, right.objectId))
       .map(({ objectId, size, type }) => ({ objectId, size, type })),
     refs: [...manifest.refs]
-      .sort((left, right) => left.name.localeCompare(right.name))
+      .sort((left, right) => compareUtf8(left.name, right.name))
       .map(({ name, objectId }) => ({ name, objectId })),
     schemaVersion: manifest.schemaVersion,
   };
@@ -292,8 +329,10 @@ export async function inspectReachableHistory(
   const authorizedRefNames = validateAuthorizedRefs(
     options.authorizedRefs ?? DEFAULT_AUTHORIZED_REFS,
   );
-  const identityOptions: PublicBoundaryOptions =
-    options.allowedEmails === undefined ? {} : { allowedEmails: options.allowedEmails };
+  const allowedIdentities = options.allowedIdentities ?? [];
+  const identityOptions: PublicBoundaryOptions = {
+    allowedEmails: allowedIdentities.map(({ email }) => email),
+  };
   const refsResult = await runGit(
     ["for-each-ref", "--format=%(refname)%00%(objectname)%00%(objecttype)"],
     root,
@@ -428,12 +467,24 @@ export async function inspectReachableHistory(
       if (!paths) {
         throw new Error("Reachable blob content has no historical path");
       }
+      if (
+        (object.type === "commit" || object.type === "tag") &&
+        !hasOnlyApprovedGitIdentities(content, object.type, allowedIdentities)
+      ) {
+        report(metadataPath(object), "unapproved-identity");
+      }
       for (const path of paths) {
         const file: PublicFile = { path, content };
-        for (const finding of inspectPublicTree([file], {
-          ...identityOptions,
-          maxFileBytes,
-        })) {
+        // The root commit stored the approved attribution in this exact immutable blob.
+        // A path-only exception would let a future policy revision bypass PII scanning.
+        const permitsApprovedIdentity =
+          object.type === "commit" ||
+          object.type === "tag" ||
+          (object.sha === LEGACY_PUBLIC_POLICY_BLOB && path === "tools/ci/public-policy.ts");
+        const boundaryOptions: PublicBoundaryOptions = permitsApprovedIdentity
+          ? { ...identityOptions, maxFileBytes }
+          : { maxFileBytes };
+        for (const finding of inspectPublicTree([file], boundaryOptions)) {
           report(finding.path, finding.code);
         }
       }
@@ -448,7 +499,7 @@ export async function inspectReachableHistory(
     refs,
     manifest,
     findings: [...findings.values()].sort(
-      (left, right) => left.path.localeCompare(right.path) || left.code.localeCompare(right.code),
+      (left, right) => compareUtf8(left.path, right.path) || compareUtf8(left.code, right.code),
     ),
   };
 }

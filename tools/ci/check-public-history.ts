@@ -1,5 +1,5 @@
 import { inspectReachableHistory, renderPublicHistoryManifest } from "./public-history";
-import { APPROVED_PUBLIC_EMAILS } from "./public-policy";
+import { APPROVED_PUBLIC_IDENTITIES } from "./public-policy";
 
 interface PublicHistoryArguments {
   readonly authorizedRefs: readonly string[] | undefined;
@@ -33,9 +33,9 @@ async function main(): Promise<void> {
   const result = await inspectReachableHistory(
     process.cwd(),
     arguments_.authorizedRefs === undefined
-      ? { allowedEmails: APPROVED_PUBLIC_EMAILS }
+      ? { allowedIdentities: APPROVED_PUBLIC_IDENTITIES }
       : {
-          allowedEmails: APPROVED_PUBLIC_EMAILS,
+          allowedIdentities: APPROVED_PUBLIC_IDENTITIES,
           authorizedRefs: arguments_.authorizedRefs,
         },
   );

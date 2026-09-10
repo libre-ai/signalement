@@ -22,9 +22,10 @@ summary: >-
   Signalement web relu, reproduction exécutable et vérification déterministe,
   avec projections portables vers plusieurs systèmes de travail.
 current_situation: >-
-  Le nom et la fondation produit sont signés dans Governance. Le dépôt reste scellé
-  avant son attestation privée et sa publication; aucune capture, extension, API,
-  synchronisation, exécution ni intégration fournisseur n'est qualifiée ou opérationnelle.
+  Le nom et l'enrôlement sont signés dans Governance; la fondation locale est acceptée
+  dans ce dépôt. Le dépôt reste scellé avant son attestation privée et sa publication;
+  aucune capture, extension, API, synchronisation, exécution ni intégration fournisseur
+  n'est qualifiée ou opérationnelle.
 scope:
   - "Capture volontaire, bornée et relue depuis Chrome, Firefox et Safari, chacun qualifié séparément."
   - "Dossier canonique exportable avec preuves, contexte filtré et historique de redaction."
