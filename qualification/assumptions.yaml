@@ -1,0 +1,23 @@
+schema_version: libre-ai.signalement.qualification.v1
+kind: assumptions
+entries:
+  - id: playwright-web-engine
+    status: assumed
+    statement: "Playwright is suitable as the first compiler target for Chromium and Firefox scenario execution."
+    source: docs/specs/2026-09-10-signalement-foundation.md#critical-dependencies
+    reopens_on: "official API review or execution matrix failure"
+  - id: safari-hardware
+    status: assumed
+    statement: "Real Safari verification requires a macOS execution point on Apple hardware."
+    source: docs/specs/2026-09-10-signalement-foundation.md#critical-dependencies
+    reopens_on: "a verified standards-based remote Safari execution alternative"
+  - id: provider-idempotency
+    status: unresolved
+    statement: "Each provider profile can implement or emulate idempotent create without duplicate work items."
+    source: qualification/provider-matrix.yaml
+    reopens_on: "the first live create-after-timeout qualification per provider profile"
+  - id: eu-hosting-contract
+    status: unresolved
+    statement: "The selected production profile meets declared EU location, recovery, and subprocessor constraints."
+    source: docs/specs/2026-09-10-signalement-foundation.md#unverified-assumptions
+    reopens_on: "contractual and restore evidence for an exact deployment profile"

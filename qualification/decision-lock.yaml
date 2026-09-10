@@ -1,0 +1,28 @@
+schema_version: libre-ai.signalement.qualification.v1
+kind: decision-lock
+entries:
+  - id: modular-control-plane
+    status: verified
+    statement: "Use one modular backend and isolated workers; do not introduce service boundaries without a trust or scaling proof."
+    source: docs/adr/0004-portable-control-plane-and-execution-points.md
+    reopens_on: "a measured isolation or scaling limit that the modular boundary cannot satisfy"
+  - id: transactional-outbox
+    status: verified
+    statement: "PostgreSQL state and transactional outbox are the authoritative delivery baseline."
+    source: docs/adr/0004-portable-control-plane-and-execution-points.md
+    reopens_on: "proof that the baseline violates a measured correctness or performance criterion"
+  - id: interoperable-event-envelope
+    status: verified
+    statement: "Integration events use versioned CloudEvents envelopes described by AsyncAPI; transport adapters never own canonical state."
+    source: docs/adr/0004-portable-control-plane-and-execution-points.md
+    reopens_on: "a contract-level incompatibility demonstrated by two qualified transports"
+  - id: field-conflict-authority
+    status: unresolved
+    statement: "Conflict authority is explicit per mapped field and provider profile; no universal source-of-truth rule is assumed."
+    source: docs/adr/0001-canonical-dossier-and-external-projections.md
+    reopens_on: "qualification of the first bidirectional provider pair"
+  - id: optional-ai
+    status: verified
+    statement: "RAG, drafting, deduplication, and prequalification are optional proposal-only modules."
+    source: docs/specs/2026-09-10-signalement-foundation.md#non-goals
+    reopens_on: "a proposal granting AI any canonical or effect authority"

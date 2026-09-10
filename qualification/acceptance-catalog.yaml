@@ -1,0 +1,14 @@
+schema_version: libre-ai.signalement.qualification.v1
+kind: acceptance-catalog
+entries:
+  - { id: capture-reviewed, status: unresolved, statement: "Annotated screenshot, optional-audio video, and filtered technical context are reviewed before transfer.", source: "project.v1.yaml#evidence_required", reopens_on: "capture pipeline change" }
+  - { id: sensitive-removal, status: unresolved, statement: "A user can remove each artifact or sensitive event from the exact target preview.", source: "project.v1.yaml#evidence_required", reopens_on: "redaction or preview change" }
+  - { id: real-ticket, status: unresolved, statement: "A real qualified connector creates a work item with approved evidence.", source: "project.v1.yaml#promotion_criteria", reopens_on: "provider profile change" }
+  - { id: scenario-approved, status: unresolved, statement: "A Scenario version with a relevant explicit assertion is approved before execution.", source: "project.v1.yaml#promotion_criteria", reopens_on: "scenario or approval contract change" }
+  - { id: fail-then-pass, status: unresolved, statement: "The same Scenario fails on the defective version and passes on the corrected version.", source: "project.v1.yaml#phases", reopens_on: "engine or assertion change" }
+  - { id: results-published, status: unresolved, statement: "Assertion-level results and proofs publish to every selected target independently.", source: "project.v1.yaml#phases", reopens_on: "projection or receipt change" }
+  - { id: standalone-export, status: unresolved, statement: "The exported Scenario executes without the service.", source: "project.v1.yaml#phases", reopens_on: "export format or engine change" }
+  - { id: no-duplicate-resume, status: unresolved, statement: "A timeout and resume cannot create a duplicate external item.", source: "project.v1.yaml#kill_predicates", reopens_on: "idempotency or provider adapter change" }
+  - { id: blocked-worker, status: unresolved, statement: "Worker failure produces execution-blocked and never fix-validated.", source: "project.v1.yaml#evidence_required", reopens_on: "execution state-machine change" }
+  - { id: assertions-complete, status: unresolved, statement: "Any unevaluated required assertion prevents fix-validated.", source: "project.v1.yaml#kill_predicates", reopens_on: "verdict derivation change" }
+  - { id: cleanup, status: unresolved, statement: "Created test data and resources are cleaned or explicitly reported as retained.", source: "project.v1.yaml#phases", reopens_on: "fixture or cleanup policy change" }

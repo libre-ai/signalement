@@ -1,0 +1,29 @@
+schema_version: libre-ai.signalement.qualification.v1
+kind: provider-matrix
+entries:
+  - { id: github-issues, status: unresolved, statement: "GitHub Issues exact API profile", source: "docs/qualification/official-capability-baseline.md#github-issues-and-projects", reopens_on: "API or permission profile change" }
+  - { id: github-projects, status: unresolved, statement: "GitHub Projects exact GraphQL profile", source: "docs/qualification/official-capability-baseline.md#github-issues-and-projects", reopens_on: "API or permission profile change" }
+  - { id: jira-cloud, status: unresolved, statement: "Jira Cloud exact REST and auth profile", source: "docs/qualification/official-capability-baseline.md#jira-cloud", reopens_on: "API or auth profile change" }
+  - { id: jira-data-center, status: unresolved, statement: "Jira Data Center exact edition and version profile", source: "docs/qualification/official-capability-baseline.md#jira-data-center", reopens_on: "edition or version change" }
+  - { id: gitlab-issues, status: unresolved, statement: "GitLab Issues exact edition and API profile", source: "qualification/acceptance-catalog.yaml", reopens_on: "edition or API change" }
+  - { id: azure-devops, status: unresolved, statement: "Azure DevOps Boards exact organization and API profile", source: "qualification/acceptance-catalog.yaml", reopens_on: "API or process template change" }
+  - { id: asana, status: unresolved, statement: "Asana task exact API profile", source: "qualification/acceptance-catalog.yaml", reopens_on: "API or workspace policy change" }
+  - { id: monday, status: unresolved, statement: "monday.com item exact API profile", source: "qualification/acceptance-catalog.yaml", reopens_on: "API or board schema change" }
+  - { id: trello, status: unresolved, statement: "Trello card exact API profile", source: "qualification/acceptance-catalog.yaml", reopens_on: "API or board schema change" }
+  - { id: linear, status: unresolved, statement: "Linear issue exact API profile", source: "qualification/acceptance-catalog.yaml", reopens_on: "API or workspace policy change" }
+  - { id: youtrack, status: unresolved, statement: "YouTrack issue exact edition and API profile", source: "qualification/acceptance-catalog.yaml", reopens_on: "edition or API change" }
+  - { id: redmine, status: unresolved, statement: "Redmine issue exact version and API profile", source: "qualification/acceptance-catalog.yaml", reopens_on: "version or plugin set change" }
+  - { id: notion, status: unresolved, statement: "Notion database page exact API profile", source: "qualification/acceptance-catalog.yaml", reopens_on: "API or database schema change" }
+  - { id: wrike, status: unresolved, statement: "Wrike task exact API profile", source: "qualification/acceptance-catalog.yaml", reopens_on: "API or account policy change" }
+  - { id: basecamp, status: unresolved, statement: "Basecamp to-do exact API profile", source: "qualification/acceptance-catalog.yaml", reopens_on: "API or account policy change" }
+  - { id: smartsheet, status: unresolved, statement: "Smartsheet row exact API profile", source: "qualification/acceptance-catalog.yaml", reopens_on: "API or sheet schema change" }
+  - { id: zoho-projects, status: unresolved, statement: "Zoho Projects task exact API profile", source: "qualification/acceptance-catalog.yaml", reopens_on: "API or portal policy change" }
+  - { id: teamwork, status: unresolved, statement: "Teamwork.com task exact API profile", source: "qualification/acceptance-catalog.yaml", reopens_on: "API or site policy change" }
+  - { id: airtable, status: unresolved, statement: "Airtable record exact API profile", source: "qualification/acceptance-catalog.yaml", reopens_on: "API or base schema change" }
+  - { id: shortcut, status: unresolved, statement: "Shortcut story exact API profile", source: "qualification/acceptance-catalog.yaml", reopens_on: "API or workflow change" }
+  - { id: plane, status: unresolved, statement: "Plane work-item exact edition and API profile", source: "qualification/acceptance-catalog.yaml", reopens_on: "edition or API change" }
+  - { id: taiga, status: unresolved, statement: "Taiga issue exact version and API profile", source: "qualification/acceptance-catalog.yaml", reopens_on: "version or API change" }
+  - { id: openproject, status: unresolved, statement: "OpenProject work-package exact version and API profile", source: "qualification/acceptance-catalog.yaml", reopens_on: "version or API change" }
+  - { id: service-now, status: unresolved, statement: "ServiceNow record exact table and API profile", source: "qualification/acceptance-catalog.yaml", reopens_on: "instance family, table, or API change" }
+  - { id: zendesk, status: unresolved, statement: "Zendesk support ticket exact API profile", source: "qualification/acceptance-catalog.yaml", reopens_on: "API or account policy change" }
+  - { id: enterprise-house, status: unresolved, statement: "Enterprise-owned work-item adapter conforming to the connector boundary", source: "docs/contracts/connector-boundary.md", reopens_on: "house schema or authority policy change" }

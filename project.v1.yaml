@@ -1,0 +1,172 @@
+schema_version: libre-ai.project.v1
+project: signalement
+repository: libre-ai/signalement
+kind: product
+layer: couche-1
+statement:
+  for: "les collaborateurs qui observent un incident ou proposent une amélioration dans une application web"
+  who_faces: >-
+    des signalements incomplets, des preuves sensibles difficiles à relire, des
+    reproductions incertaines et plusieurs systèmes de travail qui divergent
+  enables: >-
+    constituer un dossier relu, portable et vérifiable, le projeter sans doublon vers
+    les systèmes choisis, puis reproduire le comportement et vérifier le correctif
+  producing:
+    - "un dossier versionné séparant déclaration, faits observés, hypothèses et preuves approuvées"
+    - "un scénario exécutable avec assertions explicites et résultats traçables"
+    - "des projections idempotentes et synchronisables vers plusieurs systèmes externes ou internes"
+  without_depending_on:
+    - "aucun fournisseur d'IA obligatoire ni fournisseur de ticketing canonique"
+    - "aucun format propriétaire pour exporter dossiers, scénarios, assertions et résultats"
+summary: >-
+  Signalement web relu, reproduction exécutable et vérification déterministe,
+  avec projections portables vers plusieurs systèmes de travail.
+current_situation: >-
+  Le nom et la fondation produit sont signés dans Governance. Le dépôt reste scellé
+  avant son attestation privée et sa publication; aucune capture, extension, API,
+  synchronisation, exécution ni intégration fournisseur n'est qualifiée ou opérationnelle.
+scope:
+  - "Capture volontaire, bornée et relue depuis Chrome, Firefox et Safari, chacun qualifié séparément."
+  - "Dossier canonique exportable avec preuves, contexte filtré et historique de redaction."
+  - "Scénarios versionnés, assertions approuvées, exécution isolée et verdicts déterministes."
+  - "Projections multi-destinations idempotentes, règles de conflit explicites et adaptateurs d'entreprise."
+  - "API, CLI, déploiement auto-hébergeable et fonctions IA facultatives et remplaçables."
+non_goals:
+  - "Devenir un nouveau Jira, Linear, Plane ou autre autorité de gestion de projet."
+  - "Capturer audio, corps réseau, cookies ou sessions par défaut, ou les rejouer."
+  - "Laisser une IA modifier silencieusement une assertion, une référence ou un verdict."
+  - "Qualifier universellement une famille fournisseur dont les éditions ont des contrats différents."
+dependencies:
+  - on: libre-ai/governance
+    why: "doctrine de flotte, schéma de fiche, gates de sécurité et workflows réutilisables"
+    pinned: "94fc054c6b16e047eb0736e12444a08d50728efc"
+  - on: libre-ai/contracts
+    why: "autorité future des schémas publics de dossier, scénario, exécution et connecteur"
+    pinned: "aucun contrat consommé au stade de fondation"
+maturity: specified
+confidence: medium
+exposure: idea
+freshness:
+  last_verified_on: "2026-09-10"
+scope_stability: stable
+hypothesis: >-
+  Un dossier canonique relu, doté d'un scénario et de projections idempotentes, réduit
+  les pertes d'information et permet de vérifier un correctif sans imposer un nouveau
+  système de ticketing aux équipes.
+evidence_required:
+  - "parcours complet sur application de test : capture relue, ticket réel, reproduction en échec puis correctif validé"
+  - "même scénario exporté et exécuté indépendamment du service"
+  - "reprise après interruption sans ticket dupliqué sur chaque profil fournisseur qualifié"
+  - "zéro secret témoin dans exports, transmissions, journaux et historique public"
+  - "isolation entre organizations et panne travailleur classée execution-bloquée"
+promotion_criteria:
+  - to: spec-published
+    when: >-
+      le dépôt public est clonable anonymement et reproduit exactement l'état privé
+      attesté dans Governance, sans ref ou objet supplémentaire
+  - to: usable-verifiable
+    when: >-
+      le parcours de référence traverse une extension réellement installée, deux
+      connecteurs réels, un worker isolé et un export autonome avec toutes les assertions vertes
+  - to: proven
+    when: >-
+      plusieurs organizations utilisent des profils de connecteur et navigateurs distincts,
+      avec métriques publiées de reproduction, flakiness, transfert et coût machine
+kill_predicates:
+  - id: public-data-leak
+    predicate: "un secret, identifiant personnel, artefact capturé ou configuration d'instance atteint l'historique public"
+    source: tools/ci/check-public-history.ts
+  - id: cross-organization-disclosure
+    predicate: "une organization peut consulter ou projeter une ressource appartenant à une autre"
+    source: qualification/threat-model.yaml
+  - id: unsupported-fix-verdict
+    predicate: "un correctif est déclaré validé alors qu'une assertion attendue n'a pas été évaluée"
+    source: qualification/acceptance-catalog.yaml
+  - id: duplicate-external-item
+    predicate: "une reprise d'envoi crée un second item externe pour la même projection idempotente"
+    source: qualification/acceptance-catalog.yaml
+  - id: capability-overclaim
+    predicate: "une capacité fournisseur, navigateur ou moteur est publiée sans suite de qualification exacte"
+    source: qualification/decision-lock.yaml
+benchmark:
+  product: "Jam.dev et Marker.io pour la capture; Linear et Plane pour l'expérience d'intégration, sans devenir un ticketing"
+phases:
+  - id: sealed-repo
+    title: "Repository publiable et historique prouvé étanche"
+    exit_criteria:
+      - id: boundary-red-green
+        text: "Le gate de frontière rejette un canari synthétique externe au repo puis accepte l'index assaini."
+        weight: 5
+        status: pending
+      - id: all-history-clean
+        text: "Toutes les refs autorisées, objets accessibles et métadonnées Git destinés au premier push sont inspectés sans exclusion de chemin."
+        weight: 5
+        status: pending
+      - id: card-and-licenses
+        text: "La fiche valide et les licences EUPL-1.2, Apache-2.0 et CC-BY-4.0 sont attribuées par chemin."
+        weight: 3
+        status: pending
+      - id: independent-bootstrap-review
+        text: "Les revues architecture, sécurité, qualité et souveraineté acceptent le même commit immuable."
+        weight: 4
+        status: pending
+  - id: capture-qualification
+    title: "Capture volontaire et qualification relue"
+    exit_criteria:
+      - id: browser-matrix-real
+        text: "Chrome, Firefox et Safari passent chacun leur matrice réelle avec limites affichées."
+        weight: 5
+        status: pending
+      - id: exact-disclosure-preview
+        text: "L'utilisateur retire ou masque chaque donnée avant une transmission cible explicite."
+        weight: 5
+        status: pending
+      - id: resumable-local-draft
+        text: "Un brouillon local reprend après interruption sans perdre sa lignée de redaction."
+        weight: 3
+        status: pending
+  - id: multi-system-projection
+    title: "Projections idempotentes et synchronisation gouvernée"
+    exit_criteria:
+      - id: two-real-profiles
+        text: "GitHub Issues et un second profil exact passent création, ajout, pièce jointe, reprise et conflit."
+        weight: 5
+        status: pending
+      - id: fanout-independent-state
+        text: "Une destination en échec ne masque ni ne duplique les autres projections du même Dossier."
+        weight: 5
+        status: pending
+      - id: internal-standard-adapter
+        text: "Un standard maison se branche par contrat sans fork du domaine canonique."
+        weight: 4
+        status: pending
+  - id: reproduce-verify
+    title: "Reproduction exécutable et verdict déterministe"
+    exit_criteria:
+      - id: fail-then-pass
+        text: "Le même scénario échoue sur la version défectueuse et réussit sur la version corrigée."
+        weight: 5
+        status: pending
+      - id: standalone-export
+        text: "L'export s'exécute indépendamment du service avec assertions et preuves vérifiables."
+        weight: 5
+        status: pending
+      - id: blocked-worker-verdict
+        text: "Une panne du worker produit execution-bloquée et jamais un verdict de correction."
+        weight: 4
+        status: pending
+  - id: durable-operations
+    title: "Exploitation souveraine, restaurable et mesurée"
+    exit_criteria:
+      - id: restore-effects-disabled
+        text: "Sauvegarde et restauration sont prouvées; les effets externes restent désactivés après restauration."
+        weight: 4
+        status: pending
+      - id: bounded-costs
+        text: "CPU, mémoire, réseau, stockage et coût machine sont mesurés par dossier et exécution."
+        weight: 3
+        status: pending
+      - id: retention-deletion
+        text: "Rétention, suppression des brouillons, artefacts et données de test sont prouvées."
+        weight: 4
+        status: pending

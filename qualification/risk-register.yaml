@@ -1,0 +1,28 @@
+schema_version: libre-ai.signalement.qualification.v1
+kind: risk-register
+entries:
+  - id: false-anonymization
+    status: unresolved
+    statement: "Masking may miss rendered, cross-origin, canvas, closed-shadow, or encoded sensitive content."
+    source: docs/adr/0002-bounded-capture-and-target-bound-disclosure.md
+    reopens_on: "capture or redaction implementation change"
+  - id: selector-fragility
+    status: unresolved
+    statement: "Recorded selectors may become non-semantic or environment-specific."
+    source: docs/adr/0003-scenario-ir-and-deterministic-verdicts.md
+    reopens_on: "recorder, compiler, or application markup change"
+  - id: provider-feedback-loop
+    status: unresolved
+    statement: "Bidirectional synchronization can echo updates or overwrite provider-owned fields."
+    source: docs/adr/0001-canonical-dossier-and-external-projections.md
+    reopens_on: "conflict resolver or provider mapping change"
+  - id: safari-divergence
+    status: unresolved
+    statement: "Safari capture and execution capabilities may diverge materially from Chromium and Firefox."
+    source: qualification/browser-matrix.yaml
+    reopens_on: "Safari qualification run"
+  - id: ai-data-egress
+    status: rejected
+    statement: "No page, Dossier, ticket, or artifact content reaches an AI provider without explicit configured disclosure."
+    source: AGENTS.md#domain-doctrine
+    reopens_on: "AI provider configuration or disclosure-policy change"

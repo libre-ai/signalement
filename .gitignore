@@ -1,0 +1,44 @@
+# Bun / TypeScript
+node_modules/
+dist/
+coverage/
+bun-error.log
+
+# Rust
+target/
+
+# Toolchains and caches
+.tools/
+.cache/
+
+# Tests
+playwright-report/
+test-results/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Captured and execution artifacts never belong in Git
+*.har
+*.webm
+*.mp4
+*.mov
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.zip
+*.7z
+*.tar
+*.gz
+
+# IDE / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Logs
+*.log

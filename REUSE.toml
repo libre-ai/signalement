@@ -1,0 +1,22 @@
+version = 1
+SPDX-PackageName = "signalement"
+SPDX-PackageSupplier = "Libre AI <https://github.com/libre-ai>"
+SPDX-PackageDownloadLocation = "https://github.com/libre-ai/signalement"
+
+[[annotations]]
+path = ["**"]
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 Libre AI contributors"
+SPDX-License-Identifier = "EUPL-1.2"
+
+[[annotations]]
+path = ["README.md", "docs/**", "qualification/**/*.md"]
+precedence = "override"
+SPDX-FileCopyrightText = "2026 Libre AI contributors"
+SPDX-License-Identifier = "CC-BY-4.0"
+
+[[annotations]]
+path = ["packages/connector-sdk/**"]
+precedence = "override"
+SPDX-FileCopyrightText = "2026 Libre AI contributors"
+SPDX-License-Identifier = "Apache-2.0"

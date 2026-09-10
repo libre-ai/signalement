@@ -1,0 +1,28 @@
+schema_version: libre-ai.signalement.qualification.v1
+kind: product-scope
+entries:
+  - id: journey
+    status: verified
+    statement: "Observer, capture, qualify, transmit, reproduce, verify, and attach results."
+    source: docs/specs/2026-09-10-signalement-foundation.md#product-statement
+    reopens_on: "owner change to the product outcome"
+  - id: canonical-record
+    status: verified
+    statement: "Dossier is canonical; external work items are projections."
+    source: docs/specs/2026-09-10-signalement-foundation.md#canonical-model
+    reopens_on: "a proposal to make an external provider authoritative for Dossier state"
+  - id: browser-targets
+    status: verified
+    statement: "Chrome, Firefox, and Safari are v1 targets with separate qualification profiles."
+    source: project.v1.yaml#scope
+    reopens_on: "a browser is removed from the declared scope"
+  - id: security-reporting
+    status: rejected
+    statement: "Dossier intake is not a vulnerability-reporting channel."
+    source: AGENTS.md#domain-doctrine
+    reopens_on: "a separately threat-modelled private security-intake proposal"
+  - id: ai-authority
+    status: rejected
+    statement: "AI output cannot authorize disclosure, assertions, conflicts, verdicts, or effects."
+    source: docs/specs/2026-09-10-signalement-foundation.md#non-goals
+    reopens_on: "a new governance invariant and adversarial authorization proof"

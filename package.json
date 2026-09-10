@@ -1,0 +1,42 @@
+{
+  "name": "@libre-ai/signalement",
+  "version": "0.0.0",
+  "description": "Open, self-hostable incident reporting, reproduction, fix verification, and multi-system projection.",
+  "private": true,
+  "license": "EUPL-1.2",
+  "type": "module",
+  "packageManager": "bun@1.4.0-canary.1",
+  "engines": {
+    "bun": ">=1.4.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/libre-ai/signalement.git"
+  },
+  "overrides": {
+    "fast-uri": "4.1.4"
+  },
+  "devDependencies": {
+    "@libre-ai/governance": "github:libre-ai/governance#94fc054c6b16e047eb0736e12444a08d50728efc",
+    "@biomejs/biome": "2.5.3",
+    "@types/bun": "1.3.14",
+    "typescript": "7.0.2"
+  },
+  "scripts": {
+    "check:bun:runtime": "bun node_modules/@libre-ai/governance/tools/quality/check-bun-minimum.ts",
+    "check:bun": "bun run check:bun:runtime && bun node_modules/@libre-ai/governance/tools/quality/check-bun-manifests.ts",
+    "check:toolchain": "bun run check:bun && bun node_modules/@libre-ai/governance/tools/quality/check-toolchain.ts",
+    "check:secret-scan": "bun run check:bun:runtime && bun node_modules/@libre-ai/governance/tools/quality/check-secret-scan.ts",
+    "check:personal-data": "bun run check:bun:runtime && bun node_modules/@libre-ai/governance/tools/quality/check-personal-data-boundary.ts",
+    "check:card": "bun run check:bun:runtime && bun node_modules/@libre-ai/governance/ecosystem/validate-cards.ts",
+    "check:qualification": "bun run check:bun:runtime && bun tools/ci/check-qualification.ts",
+    "check:public-boundary": "bun run check:bun:runtime && bun tools/ci/check-public-boundary.ts",
+    "check:public-history": "bun run check:bun:runtime && bun tools/ci/check-public-history.ts",
+    "lint": "bun run check:bun:runtime && biome ci .",
+    "typecheck": "bun run check:bun:runtime && tsc --noEmit -p tsconfig.json",
+    "pretest": "bun run check:bun",
+    "test": "bun test",
+    "check:tree": "bun run check:bun:runtime && bun run check:toolchain && bun run check:secret-scan && bun run check:personal-data && bun run check:public-boundary && bun run check:card && bun run check:qualification && bun run lint && bun run typecheck && bun run test",
+    "check": "bun run check:bun && bun run check:tree && bun run check:public-history"
+  }
+}

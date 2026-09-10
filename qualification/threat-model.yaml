@@ -1,0 +1,28 @@
+schema_version: libre-ai.signalement.qualification.v1
+kind: threat-model
+entries:
+  - id: page-prompt-injection
+    status: verified
+    statement: "Page, ticket, attachment, provider, and model text is untrusted data and cannot authorize actions."
+    source: AGENTS.md#domain-doctrine
+    reopens_on: "any new model-visible or tool-call boundary"
+  - id: cross-organization-access
+    status: unresolved
+    statement: "Every Dossier, artifact, scenario, execution, and projection is isolated by organization and project action."
+    source: project.v1.yaml#kill_predicates
+    reopens_on: "authorization implementation or schema change"
+  - id: capture-secret-leak
+    status: unresolved
+    statement: "Captured credentials, cookies, tokens, and masked content cannot reach exports, logs, providers, or public Git history."
+    source: project.v1.yaml#evidence_required
+    reopens_on: "capture, export, logging, or connector implementation change"
+  - id: cross-target-disclosure
+    status: unresolved
+    statement: "Approval for one target grants no disclosure authority to another target."
+    source: docs/adr/0002-bounded-capture-and-target-bound-disclosure.md
+    reopens_on: "projection policy or federation-group change"
+  - id: destructive-replay
+    status: unresolved
+    statement: "Payment, deletion, message sending, and real mutations require explicit environment policy and are denied by default."
+    source: docs/adr/0003-scenario-ir-and-deterministic-verdicts.md
+    reopens_on: "execution-policy implementation or new effect class"

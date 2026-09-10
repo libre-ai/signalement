@@ -1,0 +1,18 @@
+schema_version: libre-ai.signalement.qualification.v1
+kind: browser-matrix
+entries:
+  - id: chrome-stable
+    status: unresolved
+    statement: "Chrome stable extension capture, disclosure preview, resume, and scenario export pass on the pinned version."
+    source: docs/qualification/official-capability-baseline.md#chrome
+    reopens_on: "browser or extension manifest version change"
+  - id: firefox-stable
+    status: unresolved
+    statement: "Firefox stable extension capture, disclosure preview, resume, and scenario export pass on the pinned version."
+    source: docs/qualification/official-capability-baseline.md#firefox
+    reopens_on: "browser or extension manifest version change"
+  - id: safari-stable-macos
+    status: unresolved
+    statement: "Safari stable Web Extension capture and safaridriver execution pass on pinned macOS and Apple hardware."
+    source: docs/qualification/official-capability-baseline.md#safari
+    reopens_on: "Safari, macOS, Xcode, native-host, or hardware profile change"
