@@ -726,4 +726,42 @@ describe("inspectReachableHistory", () => {
 
     await expect(inspectReachableHistory(root)).rejects.toThrow("no reachable commit");
   });
+
+  test("refuses the local ref bound before dependent history reads", async () => {
+    const root = await createRepository();
+    await commitFile(root, "safe.txt", "safe");
+    await run(["git", "branch", "second"], root);
+
+    await expect(inspectReachableHistory(root, { maxRefs: 1 })).rejects.toThrow(
+      "Git data is invalid",
+    );
+  });
+
+  test("refuses the commit bound before raw history reads", async () => {
+    const root = await createRepository();
+    await commitFile(root, "first.txt", "first");
+    await commitFile(root, "second.txt", "second");
+
+    await expect(inspectReachableHistory(root, { maxCommits: 1 })).rejects.toThrow(
+      "Git data is invalid",
+    );
+  });
+
+  test("refuses the reachable-object bound before metadata and body reads", async () => {
+    const root = await createRepository();
+    await commitFile(root, "safe.txt", "safe");
+
+    await expect(inspectReachableHistory(root, { maxObjects: 2 })).rejects.toThrow(
+      "Git data is invalid",
+    );
+  });
+
+  test("refuses an overlong UTF-8 historical path component", async () => {
+    const root = await createRepository();
+    await commitFile(root, "é.txt", "safe");
+
+    await expect(inspectReachableHistory(root, { maxPathComponentBytes: 5 })).rejects.toThrow(
+      "Git data is invalid",
+    );
+  });
 });

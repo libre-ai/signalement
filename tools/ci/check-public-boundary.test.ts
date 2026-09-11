@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
+import { chmod, mkdtemp, readFile, rm, symlink, unlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { readCounterproofFile, readIndexFiles } from "./check-public-boundary";
+import { parseIndexEntries, readCounterproofFile, readIndexFiles } from "./check-public-boundary";
 
 const temporaryDirectories: string[] = [];
 
@@ -20,6 +20,58 @@ async function createRepository(): Promise<string> {
   temporaryDirectories.push(root);
   await run(["git", "init", "--quiet"], root);
   return root;
+}
+
+interface SyntheticIndexGitContext {
+  readonly admittedObjectId: string;
+  readonly requestLog: string;
+  readonly root: string;
+}
+
+async function withSyntheticIndexGit(
+  admittedType: "blob" | "tree",
+  action: (context: SyntheticIndexGitContext) => Promise<void>,
+): Promise<void> {
+  const root = await createRepository();
+  const executableDirectory = await mkdtemp(join(tmpdir(), "signalement-index-git-helper-"));
+  temporaryDirectories.push(executableDirectory);
+  const requestLog = join(executableDirectory, "body-request.txt");
+  const executable = join(executableDirectory, "git");
+  const largeObjectId = "a".repeat(40);
+  const admittedObjectId = "b".repeat(40);
+  await writeFile(
+    executable,
+    [
+      "#!/bin/sh",
+      'if [ "$1" = "ls-files" ]; then',
+      `  printf '100644 ${largeObjectId} 0\\tlarge.txt\\000100644 ${admittedObjectId} 0\\tsafe.txt\\000'`,
+      'elif [ "$1" = "cat-file" ] && [ "$2" = "--batch-check" ]; then',
+      "  /bin/cat >/dev/null",
+      `  printf '${largeObjectId} blob 5\\n${admittedObjectId} ${admittedType} 4\\n'`,
+      'elif [ "$1" = "cat-file" ] && [ "$2" = "--batch" ]; then',
+      '  /bin/cat >"$SIGNALEMENT_BODY_REQUEST_LOG"',
+      `  printf '${admittedObjectId} ${admittedType} 4\\nsafe\\n'`,
+      "else",
+      "  exit 1",
+      "fi",
+    ].join("\n"),
+  );
+  await chmod(executable, 0o755);
+  const originalPath = process.env.PATH;
+  const originalLog = process.env.SIGNALEMENT_BODY_REQUEST_LOG;
+  process.env.PATH = `${executableDirectory}:${originalPath ?? ""}`;
+  process.env.SIGNALEMENT_BODY_REQUEST_LOG = requestLog;
+
+  try {
+    await action({ admittedObjectId, requestLog, root });
+  } finally {
+    process.env.PATH = originalPath;
+    if (originalLog === undefined) {
+      delete process.env.SIGNALEMENT_BODY_REQUEST_LOG;
+    } else {
+      process.env.SIGNALEMENT_BODY_REQUEST_LOG = originalLog;
+    }
+  }
 }
 
 afterEach(async () => {
@@ -41,6 +93,23 @@ describe("readIndexFiles", () => {
     ]);
   });
 
+  test("reads staged bytes by object ID when the working-tree file is absent", async () => {
+    const root = await createRepository();
+    const path = join(root, "removed-after-stage.txt");
+    await writeFile(path, "approved staged content");
+    await run(["git", "add", "removed-after-stage.txt"], root);
+    await unlink(path);
+
+    const files = await readIndexFiles(root);
+
+    expect(files).toEqual([
+      {
+        path: "removed-after-stage.txt",
+        content: new TextEncoder().encode("approved staged content"),
+      },
+    ]);
+  });
+
   test("fails closed when the index is empty", async () => {
     const root = await createRepository();
 
@@ -57,6 +126,26 @@ describe("readIndexFiles", () => {
     expect(files).toEqual([
       { path: "large.txt", content: new Uint8Array(), declaredByteLength: 5 },
     ]);
+  });
+
+  test("excludes over-limit object IDs from the batch body request", async () => {
+    await withSyntheticIndexGit("blob", async ({ admittedObjectId, requestLog, root }) => {
+      const files = await readIndexFiles(root, { maxFileBytes: 4 });
+
+      expect(files).toEqual([
+        { path: "large.txt", content: new Uint8Array(), declaredByteLength: 5 },
+        { path: "safe.txt", content: new TextEncoder().encode("safe") },
+      ]);
+      expect(await readFile(requestLog, "utf8")).toBe(`${admittedObjectId}\n`);
+    });
+  });
+
+  test("refuses an index object claimed as a non-blob", async () => {
+    await withSyntheticIndexGit("tree", async ({ root }) => {
+      await expect(readIndexFiles(root, { maxFileBytes: 4 })).rejects.toThrow(
+        "Git data is invalid",
+      );
+    });
   });
 
   test("stops loading bytes after the configured cumulative tree bound", async () => {
@@ -80,8 +169,42 @@ describe("readIndexFiles", () => {
     await symlink(target, join(root, "public-link.txt"));
     await run(["git", "add", "public-link.txt"], root);
 
-    await expect(readIndexFiles(root)).rejects.toThrow("Unsupported Git index mode");
+    await expect(readIndexFiles(root)).rejects.toThrow("Git data is invalid");
   });
+
+  test("refuses the index-entry bound before loading object bodies", async () => {
+    const root = await createRepository();
+    await writeFile(join(root, "first.txt"), "first");
+    await writeFile(join(root, "second.txt"), "second");
+    await run(["git", "add", "first.txt", "second.txt"], root);
+
+    await expect(readIndexFiles(root, { maxIndexEntries: 1 })).rejects.toThrow(
+      "Git data is invalid",
+    );
+  });
+
+  test("refuses an overlong UTF-8 path component", async () => {
+    const root = await createRepository();
+    await writeFile(join(root, "é.txt"), "safe");
+    await run(["git", "add", "é.txt"], root);
+
+    await expect(readIndexFiles(root, { maxPathComponentBytes: 5 })).rejects.toThrow(
+      "Git data is invalid",
+    );
+  });
+
+  for (const testCase of [
+    { name: "malformed stage", record: `100644 ${"a".repeat(40)} 1\tfile.txt\0` },
+    { name: "malformed object ID", record: "100644 not-an-object 0\tfile.txt\0" },
+    { name: "unsupported mode", record: `120000 ${"a".repeat(40)} 0\tfile.txt\0` },
+    { name: "missing terminator", record: `100644 ${"a".repeat(40)} 0\tfile.txt` },
+  ]) {
+    test(`refuses ${testCase.name}`, () => {
+      expect(() => parseIndexEntries(new TextEncoder().encode(testCase.record))).toThrow(
+        "Git data is invalid",
+      );
+    });
+  }
 });
 
 describe("readCounterproofFile", () => {

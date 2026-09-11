@@ -1,4 +1,13 @@
 import {
+  batchOutputByteLength,
+  GIT_BODY_BYTES_LIMIT,
+  GIT_METADATA_STDOUT_LIMIT,
+  type GitObjectMetadata,
+  parseBatchCheckOutput,
+  parseBatchOutput,
+  runGitBounded,
+} from "./git-process";
+import {
   compareUtf8,
   inspectPublicTree,
   type PublicBoundaryCode,
@@ -50,17 +59,16 @@ export interface PublicHistoryResult {
 export interface PublicHistoryOptions extends PublicBoundaryOptions {
   readonly allowedIdentities?: readonly PublicGitIdentity[];
   readonly authorizedRefs?: readonly string[];
+  readonly maxCommits?: number;
   readonly maxHistoryBytes?: number;
+  readonly maxObjects?: number;
+  readonly maxPathComponentBytes?: number;
+  readonly maxRefs?: number;
 }
 
 export interface PublicGitIdentity {
   readonly name: string;
   readonly email: string;
-}
-
-interface CommandResult {
-  readonly exitCode: number;
-  readonly stdout: Uint8Array;
 }
 
 interface HistoricalIndex {
@@ -72,10 +80,8 @@ interface GitRef extends PublicGitRef {
   readonly objectType: string;
 }
 
-interface ObjectMetadata {
+interface ObjectMetadata extends GitObjectMetadata {
   readonly sha: string;
-  readonly type: string;
-  readonly size: number;
 }
 
 interface GitHeader {
@@ -95,11 +101,16 @@ const DEFAULT_AUTHORIZED_REFS = ["refs/heads/main"] as const;
 const LEGACY_PUBLIC_POLICY_BLOB = "19984c48369a07c55e9c131e33c88979c7ce23d0";
 const DEFAULT_MAX_FILE_BYTES = 1_048_576;
 const DEFAULT_MAX_HISTORY_BYTES = 67_108_864;
-const OBJECT_ID = /^[0-9a-f]{40,64}$/;
+const MAX_COMMITS = 50_000;
+const MAX_OBJECTS = 100_000;
+const MAX_PATH_COMPONENT_BYTES = 4_096;
+const MAX_REFS = 1_024;
+const OBJECT_ID = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/;
 const ZERO_OBJECT = /^0+$/;
 const REGULAR_MODES = new Set(["100644", "100755"]);
 const SUPPORTED_OBJECT_TYPES = new Set(["blob", "commit", "tag", "tree"]);
-const RAW_HEADER = /^:([0-7]{6}) ([0-7]{6}) ([0-9a-f]{40,64}) ([0-9a-f]{40,64}) ([A-Z][0-9]*)$/;
+const RAW_HEADER =
+  /^:([0-7]{6}) ([0-7]{6}) ((?:[0-9a-f]{40}|[0-9a-f]{64})) ((?:[0-9a-f]{40}|[0-9a-f]{64})) ([A-Z][0-9]*)$/;
 const SAFE_REF = /^refs\/[A-Za-z0-9][^\s~^:?*\\[]*$/;
 const GIT_HEADER = /^([a-z][a-z0-9-]*) (.*)$/;
 const GIT_IDENTITY =
@@ -111,27 +122,38 @@ const MAX_GIT_TIMESTAMP = 9_223_372_036_854_775_807n;
 const MAX_GIT_TIMESTAMP_TEXT = MAX_GIT_TIMESTAMP.toString();
 const COMMIT_RESERVED_HEADERS = new Set(["tree", "parent", "author", "committer", "tagger"]);
 
-async function runGit(
-  arguments_: readonly string[],
-  cwd: string,
-  input?: string,
-): Promise<CommandResult> {
-  const process = Bun.spawn(["git", ...arguments_], {
-    cwd,
-    stdin: input === undefined ? undefined : new Blob([input]),
-    stdout: "pipe",
-    stderr: "pipe",
-  });
-  const [exitCode, stdout] = await Promise.all([
-    process.exited,
-    new Response(process.stdout).bytes(),
-  ]);
-  await new Response(process.stderr).bytes();
-  return { exitCode, stdout };
-}
-
 function decode(output: Uint8Array): string {
   return new TextDecoder("utf-8", { fatal: true }).decode(output);
+}
+
+function invalidGitData(): never {
+  throw new Error("Git data is invalid");
+}
+
+function boundedPolicyValue(value: number | undefined, maximum: number): number {
+  const resolved = value ?? maximum;
+  if (!Number.isSafeInteger(resolved) || resolved < 0 || resolved > maximum) invalidGitData();
+  return resolved;
+}
+
+function pathBytesAreBounded(
+  output: Uint8Array,
+  start: number,
+  end: number,
+  maximumBytes: number,
+): boolean {
+  if (start === end) return false;
+  let componentBytes = 0;
+  for (let index = start; index < end; index += 1) {
+    if (output[index] === 47) {
+      if (componentBytes === 0) return false;
+      componentBytes = 0;
+      continue;
+    }
+    componentBytes += 1;
+    if (componentBytes > maximumBytes) return false;
+  }
+  return componentBytes > 0;
 }
 
 function validateAuthorizedRefs(refs: readonly string[]): readonly string[] {
@@ -146,14 +168,17 @@ function validateAuthorizedRefs(refs: readonly string[]): readonly string[] {
   return unique.sort(compareUtf8);
 }
 
-function parseRefs(output: Uint8Array): readonly GitRef[] {
-  const value = decode(output).trim();
-  if (value.length === 0) {
-    return [];
+function parseRefs(output: Uint8Array, maxRefs: number): readonly GitRef[] {
+  if (output.byteLength === 0) return [];
+  if (output.at(-1) !== 10) invalidGitData();
+  let recordCount = 0;
+  for (const byte of output) {
+    if (byte === 10) recordCount += 1;
+    if (recordCount > maxRefs) invalidGitData();
   }
-
-  return value
-    .split("\n")
+  const records = decode(output.subarray(0, -1)).split("\n");
+  let objectIdWidth: number | undefined;
+  return records
     .map((line) => {
       const [name, objectId, objectType, extra] = line.split("\0");
       if (
@@ -162,16 +187,34 @@ function parseRefs(output: Uint8Array): readonly GitRef[] {
         !objectId ||
         !OBJECT_ID.test(objectId) ||
         !objectType ||
+        !SUPPORTED_OBJECT_TYPES.has(objectType) ||
+        (objectIdWidth !== undefined && objectId.length !== objectIdWidth) ||
         extra !== undefined
       ) {
         throw new Error("Git returned malformed local ref metadata");
       }
+      objectIdWidth = objectId.length;
       return { name, objectId, objectType };
     })
     .sort((left, right) => compareUtf8(left.name, right.name));
 }
 
-function indexHistoricalPaths(output: Uint8Array): HistoricalIndex {
+function indexHistoricalPaths(output: Uint8Array, maxPathComponentBytes: number): HistoricalIndex {
+  if (output.byteLength > 0 && output.at(-1) !== 0) invalidGitData();
+  let fieldStart = 0;
+  let fieldCount = 0;
+  for (let index = 0; index < output.byteLength; index += 1) {
+    if (output[index] !== 0) continue;
+    if (
+      fieldCount % 2 === 1 &&
+      !pathBytesAreBounded(output, fieldStart, index, maxPathComponentBytes)
+    ) {
+      invalidGitData();
+    }
+    fieldCount += 1;
+    fieldStart = index + 1;
+  }
+  if (fieldCount % 2 !== 0) invalidGitData();
   const records = decode(output)
     .split("\0")
     .filter((record) => record.length > 0);
@@ -215,46 +258,24 @@ function indexHistoricalPaths(output: Uint8Array): HistoricalIndex {
   return { blobPaths: mutablePaths, findings: [...findings.values()] };
 }
 
-function parseObjectIds(output: Uint8Array): readonly string[] {
-  const ids = decode(output)
-    .trim()
-    .split("\n")
-    .filter((line) => line.length > 0)
-    .map((line) => line.split(" ", 1)[0]);
-  if (ids.some((id) => !id || !OBJECT_ID.test(id))) {
-    throw new Error("Git returned a malformed reachable object inventory");
+function parseObjectIds(output: Uint8Array, maxObjects: number): readonly string[] {
+  if (output.byteLength === 0 || output.at(-1) !== 10) invalidGitData();
+  let recordCount = 0;
+  for (const byte of output) {
+    if (byte === 10) recordCount += 1;
+    if (recordCount > maxObjects) invalidGitData();
   }
-  return ids as readonly string[];
-}
-
-function parseObjectMetadata(
-  output: Uint8Array,
-  expected: ReadonlySet<string>,
-): readonly ObjectMetadata[] {
-  const metadata = decode(output)
-    .trim()
-    .split("\n")
-    .filter((line) => line.length > 0)
-    .map((line) => {
-      const [sha, type, rawSize, extra] = line.split(" ");
-      const size = Number(rawSize);
-      if (
-        !sha ||
-        !OBJECT_ID.test(sha) ||
-        !type ||
-        !Number.isSafeInteger(size) ||
-        size < 0 ||
-        extra
-      ) {
-        throw new Error("Git object database returned invalid metadata");
-      }
-      return { sha, type, size };
-    });
-
-  if (metadata.length !== expected.size || metadata.some(({ sha }) => !expected.has(sha))) {
-    throw new Error("Git object database returned an incomplete object inventory");
-  }
-  return metadata.sort((left, right) => compareUtf8(left.sha, right.sha));
+  if (recordCount === 0) invalidGitData();
+  const records = decode(output.subarray(0, -1)).split("\n");
+  const ids = records.map((record) => {
+    const [objectId, extra] = record.split(" ");
+    if (objectId === undefined || !OBJECT_ID.test(objectId) || extra !== undefined) {
+      invalidGitData();
+    }
+    return objectId;
+  });
+  if (new Set(ids).size !== ids.length) invalidGitData();
+  return ids;
 }
 
 function matchesAllowedIdentity(
@@ -444,40 +465,6 @@ export function inspectGitMetadata(
   return { approved: true, contentForBoundary: replaceValidatedRanges(source, ranges) };
 }
 
-function readBatchObjects(
-  output: Uint8Array,
-  metadata: readonly ObjectMetadata[],
-): ReadonlyMap<string, Uint8Array> {
-  const objects = new Map<string, Uint8Array>();
-  let offset = 0;
-
-  for (const expected of metadata) {
-    const newline = output.indexOf(10, offset);
-    if (newline === -1) {
-      throw new Error("Git object database returned an incomplete object header");
-    }
-    const header = decode(output.slice(offset, newline));
-    const [sha, type, rawSize, extra] = header.split(" ");
-    const size = Number(rawSize);
-    if (sha !== expected.sha || type !== expected.type || size !== expected.size || extra) {
-      throw new Error("Git object database returned an unexpected object header");
-    }
-
-    const contentStart = newline + 1;
-    const contentEnd = contentStart + size;
-    if (contentEnd >= output.length || output[contentEnd] !== 10) {
-      throw new Error("Git object database returned truncated object bytes");
-    }
-    objects.set(sha, output.slice(contentStart, contentEnd));
-    offset = contentEnd + 1;
-  }
-
-  if (offset !== output.length) {
-    throw new Error("Git object database returned trailing unrequested bytes");
-  }
-  return objects;
-}
-
 export function renderPublicHistoryManifest(manifest: PublicHistoryManifest): string {
   const canonical = {
     objects: [...manifest.objects]
@@ -507,18 +494,25 @@ export async function inspectReachableHistory(
   root: string,
   options: PublicHistoryOptions = {},
 ): Promise<PublicHistoryResult> {
-  const authorizedRefNames = validateAuthorizedRefs(
-    options.authorizedRefs ?? DEFAULT_AUTHORIZED_REFS,
+  const maxRefs = boundedPolicyValue(options.maxRefs, MAX_REFS);
+  const maxCommits = boundedPolicyValue(options.maxCommits, MAX_COMMITS);
+  const maxObjects = boundedPolicyValue(options.maxObjects, MAX_OBJECTS);
+  const maxPathComponentBytes = boundedPolicyValue(
+    options.maxPathComponentBytes,
+    MAX_PATH_COMPONENT_BYTES,
   );
+  const requestedAuthorizedRefs = options.authorizedRefs ?? DEFAULT_AUTHORIZED_REFS;
+  if (requestedAuthorizedRefs.length > maxRefs) invalidGitData();
+  const authorizedRefNames = validateAuthorizedRefs(requestedAuthorizedRefs);
   const allowedIdentities = options.allowedIdentities ?? [];
-  const refsResult = await runGit(
+  const refsResult = await runGitBounded(
     ["for-each-ref", "--format=%(refname)%00%(objectname)%00%(objecttype)"],
-    root,
+    { cwd: root, maxStdoutBytes: GIT_METADATA_STDOUT_LIMIT },
   );
   if (refsResult.exitCode !== 0) {
     throw new Error("Unable to enumerate local refs");
   }
-  const allRefs = parseRefs(refsResult.stdout);
+  const allRefs = parseRefs(refsResult.stdout, maxRefs);
   const allRefsByName = new Map(allRefs.map((ref) => [ref.name, ref]));
   const findings = new Map<string, PublicHistoryFinding>();
 
@@ -549,38 +543,56 @@ export async function inspectReachableHistory(
     throw new Error("Git repository has no reachable commit");
   }
 
-  const commitCountResult = await runGit(["rev-list", "--count", ...refTips], root);
-  const commitCount = Number(decode(commitCountResult.stdout).trim());
-  if (commitCountResult.exitCode !== 0 || !Number.isSafeInteger(commitCount) || commitCount < 1) {
+  const commitCountResult = await runGitBounded(["rev-list", "--count", ...refTips], {
+    cwd: root,
+    maxStdoutBytes: GIT_METADATA_STDOUT_LIMIT,
+  });
+  const rawCommitCount = decode(commitCountResult.stdout).trim();
+  const commitCount = Number(rawCommitCount);
+  if (
+    commitCountResult.exitCode !== 0 ||
+    !/^[1-9][0-9]*$/.test(rawCommitCount) ||
+    !Number.isSafeInteger(commitCount)
+  ) {
     throw new Error("Unable to count authorized reachable commits");
   }
+  if (commitCount > maxCommits) invalidGitData();
 
-  const rawHistory = await runGit(
+  const rawHistory = await runGitBounded(
     ["log", ...refTips, "--format=", "--raw", "--root", "--no-abbrev", "--no-renames", "-z"],
-    root,
+    { cwd: root, maxStdoutBytes: GIT_METADATA_STDOUT_LIMIT },
   );
   if (rawHistory.exitCode !== 0) {
     throw new Error("Unable to enumerate authorized reachable history");
   }
-  const index = indexHistoricalPaths(rawHistory.stdout);
+  const index = indexHistoricalPaths(rawHistory.stdout, maxPathComponentBytes);
   for (const finding of index.findings) {
     report(finding.path, finding.code);
   }
 
-  const objectsResult = await runGit(
+  const objectsResult = await runGitBounded(
     ["rev-list", "--objects", "--no-object-names", ...refTips],
-    root,
+    { cwd: root, maxStdoutBytes: GIT_METADATA_STDOUT_LIMIT },
   );
   if (objectsResult.exitCode !== 0) {
     throw new Error("Unable to enumerate every authorized reachable object");
   }
-  const objectIds = new Set([...parseObjectIds(objectsResult.stdout), ...refTips]);
-  const requestedObjects = `${[...objectIds].sort().join("\n")}\n`;
-  const metadataResult = await runGit(["cat-file", "--batch-check"], root, requestedObjects);
+  const objectIds = new Set([...parseObjectIds(objectsResult.stdout, maxObjects), ...refTips]);
+  if (objectIds.size > maxObjects) invalidGitData();
+  const requestedObjectIds = [...objectIds].sort();
+  const requestedObjects = new TextEncoder().encode(`${requestedObjectIds.join("\n")}\n`);
+  const metadataResult = await runGitBounded(["cat-file", "--batch-check"], {
+    cwd: root,
+    maxStdoutBytes: GIT_METADATA_STDOUT_LIMIT,
+    stdin: { data: requestedObjects, maxBytes: GIT_METADATA_STDOUT_LIMIT },
+  });
   if (metadataResult.exitCode !== 0) {
     throw new Error("Unable to inspect reachable object metadata");
   }
-  const metadata = parseObjectMetadata(metadataResult.stdout, objectIds);
+  const metadata: readonly ObjectMetadata[] = parseBatchCheckOutput(
+    metadataResult.stdout,
+    requestedObjectIds,
+  ).map((object) => ({ ...object, sha: object.objectId }));
   const refs = authorizedRefs.map(({ name, objectId }) => ({ name, objectId }));
   const manifest: PublicHistoryManifest = {
     schemaVersion: "libre-ai.git-object-manifest.v1",
@@ -589,8 +601,11 @@ export async function inspectReachableHistory(
   };
   const objectManifestSha256 = await digestObjectManifest(manifest);
 
-  const maxFileBytes = options.maxFileBytes ?? DEFAULT_MAX_FILE_BYTES;
-  const maxHistoryBytes = options.maxHistoryBytes ?? DEFAULT_MAX_HISTORY_BYTES;
+  const maxFileBytes = boundedPolicyValue(options.maxFileBytes, DEFAULT_MAX_FILE_BYTES);
+  const maxHistoryBytes = boundedPolicyValue(
+    options.maxHistoryBytes,
+    Math.min(DEFAULT_MAX_HISTORY_BYTES, GIT_BODY_BYTES_LIMIT),
+  );
   const readable: ObjectMetadata[] = [];
   let readableBytes = 0;
 
@@ -623,17 +638,20 @@ export async function inspectReachableHistory(
   if (readableBytes > maxHistoryBytes) {
     report("<history>", "history-volume-exceeded");
   } else if (readable.length > 0) {
-    const objectResult = await runGit(
-      ["cat-file", "--batch"],
-      root,
-      `${readable.map(({ sha }) => sha).join("\n")}\n`,
+    const bodyRequest = new TextEncoder().encode(
+      `${readable.map(({ objectId }) => objectId).join("\n")}\n`,
     );
+    const objectResult = await runGitBounded(["cat-file", "--batch"], {
+      cwd: root,
+      maxStdoutBytes: batchOutputByteLength(readable),
+      stdin: { data: bodyRequest, maxBytes: GIT_METADATA_STDOUT_LIMIT },
+    });
     if (objectResult.exitCode !== 0) {
       throw new Error("Unable to read reachable objects");
     }
-    const objects = readBatchObjects(objectResult.stdout, readable);
+    const objects = parseBatchOutput(objectResult.stdout, readable);
     for (const object of readable) {
-      const content = objects.get(object.sha);
+      const content = objects.get(object.objectId);
       if (!content) {
         throw new Error("Reachable object content is incomplete");
       }
