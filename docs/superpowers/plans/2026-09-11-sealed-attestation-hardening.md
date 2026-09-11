@@ -91,6 +91,35 @@ and green GitHub checks.
 adjacent personal identifier fail closed; the repository typecheck has no Task-1 API mismatch
 except the explicitly coupled structural-history consumer resolved by Task 3.
 
+### Task 1B: Close the structural Git-identity coupling
+
+**Files:**
+
+- Modify: `tools/ci/public-history.ts`
+- Modify: `tools/ci/public-history.test.ts`
+
+**Reason for ordering:** Removing generic content identity exemptions made the existing history
+consumer uncompilable and exposed that Git identities and DCO trailers must be parsed as metadata,
+not allowlisted as arbitrary text. This structural subset of Task 3 is therefore atomic with Task 1;
+the manifest-v2/tree-entry work remains after bounded Git plumbing in Task 2.
+
+**Steps:**
+
+- [ ] Add RED tests for an approved address copied into prose, a non-terminal trailer, malformed
+      identity headers, duplicate identity headers, and missing/mismatched DCO.
+- [ ] Parse commit/tag headers exactly, including continuation-header boundaries, before accepting
+      the nominatively authorized identity tuples.
+- [ ] Require and neutralize only the canonical terminal `Signed-off-by` trailer bound to an
+      approved identity; scan every other message byte without an email exemption.
+- [ ] Remove the obsolete `allowedEmails` consumer and retain the exact legacy policy-blob
+      object-ID plus path exception only.
+- [ ] Run typecheck, focused history tests, executable history gate, and the complete repository
+      gate before review.
+
+**Acceptation:** Approved Git identity headers and the matching terminal DCO are accepted only in
+their structural positions; the same address anywhere else is reported as `personal-email`; the
+repository has no Task-1 integration failure.
+
 ### Task 2: Bounded Git plumbing without index materialization
 
 **Files:**
