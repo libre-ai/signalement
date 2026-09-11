@@ -78,6 +78,19 @@ interface ObjectMetadata {
   readonly size: number;
 }
 
+interface GitHeader {
+  readonly name: string;
+  readonly value: string;
+  readonly start: number;
+  readonly end: number;
+  readonly hasContinuation: boolean;
+}
+
+interface GitMetadataInspection {
+  readonly approved: boolean;
+  readonly contentForBoundary: string;
+}
+
 const DEFAULT_AUTHORIZED_REFS = ["refs/heads/main"] as const;
 const LEGACY_PUBLIC_POLICY_BLOB = "19984c48369a07c55e9c131e33c88979c7ce23d0";
 const DEFAULT_MAX_FILE_BYTES = 1_048_576;
@@ -88,6 +101,10 @@ const REGULAR_MODES = new Set(["100644", "100755"]);
 const SUPPORTED_OBJECT_TYPES = new Set(["blob", "commit", "tag", "tree"]);
 const RAW_HEADER = /^:([0-7]{6}) ([0-7]{6}) ([0-9a-f]{40,64}) ([0-9a-f]{40,64}) ([A-Z][0-9]*)$/;
 const SAFE_REF = /^refs\/[A-Za-z0-9][^\s~^:?*\\[]*$/;
+const GIT_HEADER = /^([a-z][a-z0-9-]*) (.*)$/;
+const GIT_IDENTITY =
+  /^(author|committer|tagger) ([^<>\r\n]+) <([^<>\r\n]+)> (-?(?:0|[1-9][0-9]*)) ([+-](?:(?:0[0-9]|1[0-3])[0-5][0-9]|1400))$/;
+const TERMINAL_DCO = /^Signed-off-by: ([^<>\r\n]+) <([^<>\r\n]+)>$/;
 
 async function runGit(
   arguments_: readonly string[],
@@ -235,32 +252,164 @@ function parseObjectMetadata(
   return metadata.sort((left, right) => compareUtf8(left.sha, right.sha));
 }
 
-function hasOnlyApprovedGitIdentities(
+function matchesAllowedIdentity(
+  identity: PublicGitIdentity,
+  allowedIdentities: readonly PublicGitIdentity[],
+): boolean {
+  return allowedIdentities.some(
+    (allowed) => allowed.name === identity.name && allowed.email === identity.email,
+  );
+}
+
+function isValidTagName(value: string): boolean {
+  if (value.length === 0) return false;
+  for (const character of value) {
+    const codePoint = character.codePointAt(0);
+    if (codePoint === undefined || codePoint <= 0x20 || codePoint === 0x7f) return false;
+  }
+  return true;
+}
+
+function parseHeaders(headerText: string): readonly GitHeader[] | null {
+  const headers: GitHeader[] = [];
+  let offset = 0;
+
+  for (const line of headerText.split("\n")) {
+    const start = offset;
+    const end = start + line.length;
+    offset = end + 1;
+    if (line.startsWith(" ")) {
+      const previous = headers.at(-1);
+      if (!previous) return null;
+      headers[headers.length - 1] = { ...previous, hasContinuation: true };
+      continue;
+    }
+    const match = GIT_HEADER.exec(line);
+    const name = match?.[1];
+    const value = match?.[2];
+    if (name === undefined || value === undefined) return null;
+    headers.push({ name, value, start, end, hasContinuation: false });
+  }
+
+  return headers;
+}
+
+function replaceValidatedRanges(
+  source: string,
+  ranges: readonly { readonly start: number; readonly end: number; readonly label: string }[],
+): string {
+  let result = "";
+  let offset = 0;
+  for (const range of [...ranges].sort((left, right) => left.start - right.start)) {
+    result += source.slice(offset, range.start);
+    result += range.label;
+    offset = range.end;
+  }
+  return result + source.slice(offset);
+}
+
+function inspectGitMetadata(
   content: Uint8Array,
   objectType: "commit" | "tag",
   allowedIdentities: readonly PublicGitIdentity[],
-): boolean {
-  const header = decode(content).split("\n\n", 1)[0] ?? "";
-  const expectedHeaders = objectType === "commit" ? ["author", "committer"] : ["tagger"];
-  const identities = new Map<string, PublicGitIdentity>();
-  for (const line of header.split("\n")) {
-    const match = /^(author|committer|tagger) (.+) <([^<>]+)> -?\d+ [+-]\d{4}$/.exec(line);
-    if (!match) continue;
-    const [, kind, name, email] = match;
-    if (!kind || !name || !email || identities.has(kind)) return false;
-    identities.set(kind, { name, email });
-  }
-  if (
-    identities.size !== expectedHeaders.length ||
-    expectedHeaders.some((kind) => !identities.has(kind))
-  ) {
-    return false;
-  }
-  return [...identities.values()].every((identity) =>
-    allowedIdentities.some(
-      (allowed) => allowed.name === identity.name && allowed.email === identity.email,
-    ),
+): GitMetadataInspection {
+  const source = decode(content);
+  const separator = source.indexOf("\n\n");
+  if (separator === -1) return { approved: false, contentForBoundary: source };
+  const headers = parseHeaders(source.slice(0, separator));
+  if (!headers) return { approved: false, contentForBoundary: source };
+
+  const expectedIdentityHeaders = objectType === "commit" ? ["author", "committer"] : ["tagger"];
+  const identityHeaders = headers.filter(({ name }) =>
+    ["author", "committer", "tagger"].includes(name),
   );
+  if (
+    identityHeaders.length !== expectedIdentityHeaders.length ||
+    expectedIdentityHeaders.some(
+      (expected) => identityHeaders.filter(({ name }) => name === expected).length !== 1,
+    ) ||
+    identityHeaders.some(({ name }) => !expectedIdentityHeaders.includes(name))
+  ) {
+    return { approved: false, contentForBoundary: source };
+  }
+
+  const validatedIdentities: PublicGitIdentity[] = [];
+  const ranges: { start: number; end: number; label: string }[] = [];
+  for (const header of identityHeaders) {
+    const match = GIT_IDENTITY.exec(`${header.name} ${header.value}`);
+    const name = match?.[2];
+    const email = match?.[3];
+    if (header.hasContinuation || name === undefined || email === undefined) {
+      return { approved: false, contentForBoundary: source };
+    }
+    const identity = { name, email };
+    if (!matchesAllowedIdentity(identity, allowedIdentities)) {
+      return { approved: false, contentForBoundary: source };
+    }
+    validatedIdentities.push(identity);
+    ranges.push({ start: header.start, end: header.end, label: `${header.name} <validated>` });
+  }
+
+  if (objectType === "commit") {
+    const trees = headers.filter(({ name }) => name === "tree");
+    const parents = headers.filter(({ name }) => name === "parent");
+    if (
+      trees.length !== 1 ||
+      trees[0]?.hasContinuation ||
+      !OBJECT_ID.test(trees[0]?.value ?? "") ||
+      parents.some(({ value, hasContinuation }) => hasContinuation || !OBJECT_ID.test(value))
+    ) {
+      return { approved: false, contentForBoundary: source };
+    }
+  } else {
+    const objects = headers.filter(({ name }) => name === "object");
+    const types = headers.filter(({ name }) => name === "type");
+    const tags = headers.filter(({ name }) => name === "tag");
+    if (
+      objects.length !== 1 ||
+      objects[0]?.hasContinuation ||
+      !OBJECT_ID.test(objects[0]?.value ?? "") ||
+      types.length !== 1 ||
+      types[0]?.hasContinuation ||
+      !SUPPORTED_OBJECT_TYPES.has(types[0]?.value ?? "") ||
+      tags.length !== 1 ||
+      tags[0]?.hasContinuation ||
+      !isValidTagName(tags[0]?.value ?? "")
+    ) {
+      return { approved: false, contentForBoundary: source };
+    }
+  }
+
+  const messageStart = separator + 2;
+  const message = source.slice(messageStart);
+  const withoutFinalLf = message.endsWith("\n") ? message.slice(0, -1) : message;
+  const messageLines = withoutFinalLf.split("\n");
+  const terminalLine = messageLines.at(-1) ?? "";
+  if (messageLines.filter((line) => line.startsWith("Signed-off-by:")).length !== 1) {
+    return { approved: false, contentForBoundary: source };
+  }
+  const terminalMatch = TERMINAL_DCO.exec(terminalLine);
+  const dcoName = terminalMatch?.[1];
+  const dcoEmail = terminalMatch?.[2];
+  if (dcoName === undefined || dcoEmail === undefined) {
+    return { approved: false, contentForBoundary: source };
+  }
+  const dcoIdentity = { name: dcoName, email: dcoEmail };
+  if (
+    !matchesAllowedIdentity(dcoIdentity, allowedIdentities) ||
+    !validatedIdentities.some(
+      (identity) => identity.name === dcoIdentity.name && identity.email === dcoIdentity.email,
+    )
+  ) {
+    return { approved: false, contentForBoundary: source };
+  }
+  const terminalStart = messageStart + withoutFinalLf.lastIndexOf(terminalLine);
+  ranges.push({
+    start: terminalStart,
+    end: terminalStart + terminalLine.length,
+    label: "Signed-off-by: <validated>",
+  });
+  return { approved: true, contentForBoundary: replaceValidatedRanges(source, ranges) };
 }
 
 function readBatchObjects(
@@ -330,9 +479,6 @@ export async function inspectReachableHistory(
     options.authorizedRefs ?? DEFAULT_AUTHORIZED_REFS,
   );
   const allowedIdentities = options.allowedIdentities ?? [];
-  const identityOptions: PublicBoundaryOptions = {
-    allowedEmails: allowedIdentities.map(({ email }) => email),
-  };
   const refsResult = await runGit(
     ["for-each-ref", "--format=%(refname)%00%(objectname)%00%(objecttype)"],
     root,
@@ -350,10 +496,7 @@ export async function inspectReachableHistory(
 
   for (const [index, ref] of allRefs.entries()) {
     const refLabel = `metadata/refs/${index + 1}.txt`;
-    for (const finding of inspectPublicTree(
-      [{ path: refLabel, content: ref.name }],
-      identityOptions,
-    )) {
+    for (const finding of inspectPublicTree([{ path: refLabel, content: ref.name }])) {
       report(finding.path, finding.code);
     }
     if (!authorizedRefNames.includes(ref.name)) {
@@ -462,29 +605,30 @@ export async function inspectReachableHistory(
       if (!content) {
         throw new Error("Reachable object content is incomplete");
       }
+      const metadataInspection =
+        object.type === "commit" || object.type === "tag"
+          ? inspectGitMetadata(content, object.type, allowedIdentities)
+          : null;
       const paths =
         object.type === "blob" ? index.blobPaths.get(object.sha) : new Set([metadataPath(object)]);
       if (!paths) {
         throw new Error("Reachable blob content has no historical path");
       }
-      if (
-        (object.type === "commit" || object.type === "tag") &&
-        !hasOnlyApprovedGitIdentities(content, object.type, allowedIdentities)
-      ) {
+      if (metadataInspection !== null && !metadataInspection.approved) {
         report(metadataPath(object), "unapproved-identity");
       }
       for (const path of paths) {
-        const file: PublicFile = { path, content };
+        const file: PublicFile = {
+          path,
+          content: metadataInspection?.contentForBoundary ?? content,
+          declaredByteLength: object.size,
+        };
         // The root commit stored the approved attribution in this exact immutable blob.
         // A path-only exception would let a future policy revision bypass PII scanning.
-        const permitsApprovedIdentity =
-          object.type === "commit" ||
-          object.type === "tag" ||
-          (object.sha === LEGACY_PUBLIC_POLICY_BLOB && path === "tools/ci/public-policy.ts");
-        const boundaryOptions: PublicBoundaryOptions = permitsApprovedIdentity
-          ? { ...identityOptions, maxFileBytes }
-          : { maxFileBytes };
-        for (const finding of inspectPublicTree([file], boundaryOptions)) {
+        const permitsLegacyPolicyIdentity =
+          object.sha === LEGACY_PUBLIC_POLICY_BLOB && path === "tools/ci/public-policy.ts";
+        for (const finding of inspectPublicTree([file], { maxFileBytes })) {
+          if (permitsLegacyPolicyIdentity && finding.code === "personal-email") continue;
           report(finding.path, finding.code);
         }
       }

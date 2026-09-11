@@ -7,6 +7,16 @@ import { inspectReachableHistory, renderPublicHistoryManifest } from "./public-h
 
 const temporaryDirectories: string[] = [];
 const TEST_IDENTITIES = [{ name: "Signalement Test", email: "tester@signalement.test" }] as const;
+const TEST_GITHUB_IDENTITY = {
+  name: "Signalement Test",
+  email: ["12345+signalement-test", "@users.noreply.github.com"].join(""),
+} as const;
+
+function dco(
+  identity: { readonly name: string; readonly email: string } = TEST_IDENTITIES[0],
+): string {
+  return `Signed-off-by: ${identity.name} <${identity.email}>`;
+}
 
 async function run(command: readonly string[], cwd: string): Promise<void> {
   const process = Bun.spawn([...command], { cwd, stdout: "pipe", stderr: "pipe" });
@@ -14,6 +24,28 @@ async function run(command: readonly string[], cwd: string): Promise<void> {
   if (exitCode !== 0) {
     throw new Error(`command failed with exit code ${exitCode}`);
   }
+}
+
+async function runWithInput(
+  command: readonly string[],
+  cwd: string,
+  input?: string,
+): Promise<string> {
+  const process = Bun.spawn([...command], {
+    cwd,
+    stdin: input === undefined ? undefined : new Blob([input]),
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  const [exitCode, stdout] = await Promise.all([
+    process.exited,
+    new Response(process.stdout).text(),
+  ]);
+  await new Response(process.stderr).bytes();
+  if (exitCode !== 0) {
+    throw new Error(`command failed with exit code ${exitCode}`);
+  }
+  return stdout.trim();
 }
 
 async function createRepository(): Promise<string> {
@@ -28,7 +60,65 @@ async function createRepository(): Promise<string> {
 async function commitFile(root: string, path: string, content: string): Promise<void> {
   await writeFile(join(root, path), content);
   await run(["git", "add", path], root);
-  await run(["git", "commit", "--quiet", "-m", `test: add ${path}`], root);
+  await run(["git", "commit", "--quiet", "--signoff", "-m", `test: add ${path}`], root);
+}
+
+async function replaceMainWithRawCommit(root: string, rawCommit: string): Promise<void> {
+  const objectId = await runWithInput(
+    ["git", "hash-object", "--literally", "-t", "commit", "-w", "--stdin"],
+    root,
+    rawCommit,
+  );
+  await run(["git", "update-ref", "refs/heads/main", objectId], root);
+}
+
+async function currentTree(root: string): Promise<string> {
+  return runWithInput(["git", "rev-parse", "HEAD^{tree}"], root);
+}
+
+function rawCommit(
+  tree: string,
+  options: {
+    readonly headers?: readonly string[];
+    readonly message?: string;
+  } = {},
+): string {
+  const identity = "Signalement Test <tester@signalement.test> 1770000000 +0000";
+  const headers = options.headers ?? [`author ${identity}`, `committer ${identity}`];
+  const message = options.message ?? `test: raw commit\n\n${dco()}`;
+  return [`tree ${tree}`, ...headers, "", message, ""].join("\n");
+}
+
+async function inspectRawCommit(
+  rawOptions: Parameters<typeof rawCommit>[1],
+  allowedIdentities: readonly { readonly name: string; readonly email: string }[] = TEST_IDENTITIES,
+) {
+  const root = await createRepository();
+  await commitFile(root, "safe.txt", "safe");
+  await replaceMainWithRawCommit(root, rawCommit(await currentTree(root), rawOptions));
+  return inspectReachableHistory(root, { allowedIdentities });
+}
+
+function rawTag(objectId: string, message: string): string {
+  const identity = "Signalement Test <tester@signalement.test> 1770000000 +0000";
+  return [
+    `object ${objectId}`,
+    "type commit",
+    "tag v1",
+    `tagger ${identity}`,
+    "",
+    message,
+    "",
+  ].join("\n");
+}
+
+async function writeRawTag(root: string, rawTag: string, ref = "refs/tags/v1"): Promise<void> {
+  const objectId = await runWithInput(
+    ["git", "hash-object", "--literally", "-t", "tag", "-w", "--stdin"],
+    root,
+    rawTag,
+  );
+  await run(["git", "update-ref", ref, objectId], root);
 }
 
 afterEach(async () => {
@@ -68,7 +158,7 @@ describe("inspectReachableHistory", () => {
     await commitFile(root, "leak.txt", capturedHeader);
     await unlink(join(root, "leak.txt"));
     await run(["git", "add", "--all"], root);
-    await run(["git", "commit", "--quiet", "-m", "test: delete leak"], root);
+    await run(["git", "commit", "--quiet", "--signoff", "-m", "test: delete leak"], root);
 
     const result = await inspectReachableHistory(root, { allowedIdentities: TEST_IDENTITIES });
 
@@ -145,7 +235,10 @@ describe("inspectReachableHistory", () => {
     const root = await createRepository();
     await commitFile(root, "safe.txt", "safe");
     const capturedHeader = ["Author", "ization: ", "Bear", "er history_only_secret"].join("");
-    await run(["git", "commit", "--allow-empty", "--quiet", "-m", capturedHeader], root);
+    await run(
+      ["git", "commit", "--allow-empty", "--quiet", "--signoff", "-m", capturedHeader],
+      root,
+    );
 
     const result = await inspectReachableHistory(root);
 
@@ -161,7 +254,10 @@ describe("inspectReachableHistory", () => {
     await writeFile(join(root, "safe.txt"), "safe");
     await run(["git", "add", "safe.txt"], root);
     const author = ["Private Reporter <reporter", "@customer.company>"].join("");
-    await run(["git", "commit", "--quiet", "--author", author, "-m", "test: private author"], root);
+    await run(
+      ["git", "commit", "--quiet", "--signoff", "--author", author, "-m", "test: private author"],
+      root,
+    );
 
     const result = await inspectReachableHistory(root);
 
@@ -181,6 +277,7 @@ describe("inspectReachableHistory", () => {
         "git",
         "commit",
         "--quiet",
+        "--signoff",
         "--author",
         "Synthetic Author <author@signalement.test>",
         "-m",
@@ -209,6 +306,116 @@ describe("inspectReachableHistory", () => {
 
     expect(result.findings).toEqual([]);
   });
+
+  test("scans an approved commit address when it is copied into prose", async () => {
+    const root = await createRepository();
+    await run(["git", "config", "user.email", TEST_GITHUB_IDENTITY.email], root);
+    await commitFile(root, "safe.txt", "safe");
+    await run(
+      [
+        "git",
+        "commit",
+        "--allow-empty",
+        "--quiet",
+        "--signoff",
+        "-m",
+        `Contact ${TEST_GITHUB_IDENTITY.email} outside the identity metadata`,
+      ],
+      root,
+    );
+
+    const result = await inspectReachableHistory(root, {
+      allowedIdentities: [TEST_GITHUB_IDENTITY],
+    });
+
+    expect(result.findings).toContainEqual({
+      path: expect.stringMatching(/^metadata\/commits\/[0-9a-f]+\.txt$/),
+      code: "personal-email",
+    });
+  });
+
+  const otherIdentity = {
+    name: "Other Approved",
+    email: ["67890+other-approved", "@users.noreply.github.com"].join(""),
+  };
+  for (const testCase of [
+    { name: "a canonical DCO followed by content", message: `${dco()}\nnot terminal` },
+    { name: "a commit without a DCO", message: "test: missing DCO" },
+    {
+      name: "a DCO tuple absent from object identities",
+      message: `test: mismatch\n\n${dco(otherIdentity)}`,
+      identities: [...TEST_IDENTITIES, otherIdentity],
+    },
+  ] as const) {
+    test(`rejects ${testCase.name}`, async () => {
+      const result = await inspectRawCommit(
+        { message: testCase.message },
+        "identities" in testCase ? testCase.identities : TEST_IDENTITIES,
+      );
+
+      expect(result.findings).toContainEqual({
+        path: expect.stringMatching(/^metadata\/commits\/[0-9a-f]+\.txt$/),
+        code: "unapproved-identity",
+      });
+    });
+  }
+
+  const githubIdentity = `Signalement Test <${TEST_GITHUB_IDENTITY.email}> 1770000000 +0000`;
+  for (const testCase of [
+    {
+      name: "duplicate identity headers",
+      headers: [
+        `author ${githubIdentity}`,
+        `author ${githubIdentity}`,
+        `committer ${githubIdentity}`,
+      ],
+      expectedCodes: ["unapproved-identity", "personal-email"],
+    },
+    {
+      name: "a malformed identity timestamp and timezone",
+      headers: [
+        `author Signalement Test <${TEST_GITHUB_IDENTITY.email}> 01770000000 +1460`,
+        `committer ${githubIdentity}`,
+      ],
+      expectedCodes: ["unapproved-identity", "personal-email"],
+    },
+    {
+      name: "identity text in a continuation line",
+      headers: [
+        `author ${githubIdentity}`,
+        `committer ${githubIdentity}`,
+        "gpgsig synthetic-signature",
+        ` author ${githubIdentity}`,
+      ],
+      expectedCodes: ["personal-email"],
+    },
+    {
+      name: "an identity manufactured by a continuation line",
+      headers: [
+        "gpgsig synthetic-signature",
+        ` author ${githubIdentity}`,
+        `committer ${githubIdentity}`,
+      ],
+      expectedCodes: ["unapproved-identity", "personal-email"],
+    },
+  ] as const) {
+    test(`rejects ${testCase.name}`, async () => {
+      const result = await inspectRawCommit(
+        {
+          headers: testCase.headers,
+          message: `test: header attack\n\n${dco(TEST_GITHUB_IDENTITY)}`,
+        },
+        [TEST_GITHUB_IDENTITY],
+      );
+
+      for (const code of testCase.expectedCodes) {
+        expect(result.findings).toContainEqual({
+          path: expect.stringMatching(/^metadata\/commits\/[0-9a-f]+\.txt$/),
+          code,
+        });
+      }
+    });
+  }
 
   test("rejects a synthetic-domain identity in real history", async () => {
     const root = await createRepository();
@@ -283,9 +490,10 @@ describe("inspectReachableHistory", () => {
     const root = await createRepository();
     await commitFile(root, "safe.txt", "safe");
     const tagMessage = ["Author", "ization: ", "Bear", "er tag_only_secret"].join("");
-    await run(["git", "tag", "-a", "v1", "-m", tagMessage], root);
+    await run(["git", "tag", "-a", "v1", "-m", `${tagMessage}\n\n${dco()}`], root);
 
     const result = await inspectReachableHistory(root, {
+      allowedIdentities: TEST_IDENTITIES,
       authorizedRefs: ["refs/heads/main", "refs/tags/v1"],
     });
 
@@ -294,13 +502,15 @@ describe("inspectReachableHistory", () => {
       code: "captured-credential",
     });
     expect(JSON.stringify(result.findings)).not.toContain("tag_only_secret");
+    expect(result.findings.some(({ code }) => code === "unapproved-identity")).toBe(false);
   });
 
   test("rejects a personal annotated-tag tagger identity", async () => {
     const root = await createRepository();
     await commitFile(root, "safe.txt", "safe");
     await run(["git", "config", "user.email", ["tagger", "@customer.company"].join("")], root);
-    await run(["git", "tag", "-a", "v1", "-m", "test: private tagger"], root);
+    const privateDco = ["Signed-off-by: Signalement Test <tagger", "@customer.company>"].join("");
+    await run(["git", "tag", "-a", "v1", "-m", `test: private tagger\n\n${privateDco}`], root);
 
     const result = await inspectReachableHistory(root, {
       authorizedRefs: ["refs/heads/main", "refs/tags/v1"],
@@ -309,6 +519,23 @@ describe("inspectReachableHistory", () => {
     expect(result.findings).toContainEqual({
       path: expect.stringMatching(/^metadata\/tags\/[0-9a-f]+\.txt$/),
       code: "personal-email",
+    });
+  });
+
+  test("rejects an annotated tag without a terminal DCO", async () => {
+    const root = await createRepository();
+    await commitFile(root, "safe.txt", "safe");
+    const head = await runWithInput(["git", "rev-parse", "HEAD"], root);
+    await writeRawTag(root, rawTag(head, "test: missing tag DCO"));
+
+    const result = await inspectReachableHistory(root, {
+      allowedIdentities: TEST_IDENTITIES,
+      authorizedRefs: ["refs/heads/main", "refs/tags/v1"],
+    });
+
+    expect(result.findings).toContainEqual({
+      path: expect.stringMatching(/^metadata\/tags\/[0-9a-f]+\.txt$/),
+      code: "unapproved-identity",
     });
   });
 
@@ -381,7 +608,7 @@ describe("inspectReachableHistory", () => {
     await writeFile(join(root, "target.txt"), "safe");
     await symlink("target.txt", join(root, "link.txt"));
     await run(["git", "add", "target.txt", "link.txt"], root);
-    await run(["git", "commit", "--quiet", "-m", "test: add symlink"], root);
+    await run(["git", "commit", "--quiet", "--signoff", "-m", "test: add symlink"], root);
 
     const result = await inspectReachableHistory(root);
 
