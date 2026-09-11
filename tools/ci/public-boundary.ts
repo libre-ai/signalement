@@ -1,6 +1,6 @@
 import {
   containsCredentialMarker,
-  containsEmailIdentifier,
+  containsEmailIdentifierExcludingRfc2606Examples,
   decodeSensitiveMarkers,
 } from "@libre-ai/governance/tools/quality/public-source-scanner";
 
@@ -49,9 +49,6 @@ const SQL_ARTIFACT = /\.sql$/i;
 const MIGRATION_SQL = /(^|\/)migrations\/[^/]+\.sql$/i;
 const INSTANCE_CONFIGURATION =
   /(^|\/)(?:\.env(?!\.example$)(?:\.[^/]*)?|instances?\/|provider-instance(?:\.[^/]*)?$)/i;
-const SYNTHETIC_EMAIL_DOMAINS = new Set(["example.com", "example.net", "example.org"]);
-const ASCII_ATEXT_OR_DOT = /^[A-Za-z0-9!#$%&'*+/=?^_`{|}~.-]$/;
-const ASCII_DOMAIN_CODE_POINT = /^[A-Za-z0-9_.-]$/;
 const PHONE_FR = /(?:\+33[\s.-]?|(?<![\d.-])\b0)[1-9](?:[\s.-]?\d{2}){4}\b/;
 const IBAN_FR = /\bFR\d{2}(?:\s?[A-Z0-9]{4}){5}\s?[A-Z0-9]{3}\b/i;
 
@@ -138,96 +135,7 @@ function hasUnsafePath(path: string): boolean {
   );
 }
 
-function isReservedExampleDomain(domain: string): boolean {
-  return (
-    SYNTHETIC_EMAIL_DOMAINS.has(domain) ||
-    domain.endsWith(".example") ||
-    domain.endsWith(".invalid") ||
-    domain.endsWith(".test")
-  );
-}
-
-function isEmailBoundaryCodePoint(codePoint: number | undefined): boolean {
-  if (codePoint === undefined) return false;
-  if (codePoint >= 0x80) return true;
-  return /[A-Za-z0-9!#$%&'*+/=?^_`{|}~.@-]/.test(String.fromCodePoint(codePoint));
-}
-
-interface ReservedEmailProjection {
-  readonly masked: string;
-  readonly containsMalformedReservedExample: boolean;
-}
-
-function hasCanonicalDotAtom(local: string): boolean {
-  return (
-    local.length > 0 &&
-    local.length <= 64 &&
-    !local.startsWith(".") &&
-    !local.endsWith(".") &&
-    !local.includes("..")
-  );
-}
-
-function hasCanonicalDnsLabels(domain: string): boolean {
-  return (
-    domain.length <= 253 &&
-    domain
-      .split(".")
-      .every(
-        (label) => label.length <= 63 && /^[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?$/.test(label),
-      )
-  );
-}
-
-function projectReservedEmails(value: string): ReservedEmailProjection {
-  const masked: string[] = [];
-  let copiedUntil = 0;
-  let containsMalformedReservedExample = false;
-  for (let at = value.indexOf("@"); at >= 0; at = value.indexOf("@", at + 1)) {
-    let localStart = at;
-    while (localStart > copiedUntil && ASCII_ATEXT_OR_DOT.test(value[localStart - 1] ?? "")) {
-      localStart -= 1;
-    }
-    let domainEnd = at + 1;
-    while (domainEnd < value.length && ASCII_DOMAIN_CODE_POINT.test(value[domainEnd] ?? "")) {
-      domainEnd += 1;
-    }
-    const punctuationEnd = domainEnd;
-    while (domainEnd > at + 1 && value[domainEnd - 1] === ".") {
-      domainEnd -= 1;
-    }
-    const local = value.slice(localStart, at);
-    const domain = value.slice(at + 1, domainEnd).toLowerCase();
-    const previous = localStart === 0 ? undefined : value.codePointAt(localStart - 1);
-    const next = value.codePointAt(punctuationEnd);
-    const canonicalLocal = hasCanonicalDotAtom(local);
-    const canonicalBoundary =
-      !isEmailBoundaryCodePoint(previous) && !isEmailBoundaryCodePoint(next);
-    if (!isReservedExampleDomain(domain) || !canonicalLocal || !canonicalBoundary) {
-      continue;
-    }
-    if (!hasCanonicalDnsLabels(domain)) {
-      containsMalformedReservedExample = true;
-      continue;
-    }
-    // The scanner must still see every non-canonical form; this sentinel masks
-    // only a validated RFC 2606 dot-atom example from the email-specific view.
-    masked.push(value.slice(copiedUntil, localStart), "<rfc2606-example-email>");
-    copiedUntil = domainEnd;
-    at = punctuationEnd - 1;
-  }
-  if (copiedUntil > 0) masked.push(value.slice(copiedUntil));
-  return {
-    masked: copiedUntil === 0 ? value : masked.join(""),
-    containsMalformedReservedExample,
-  };
-}
-
-function inspectText(
-  text: string,
-  emailText: string = text,
-  containsMalformedReservedExample = false,
-): readonly PublicBoundaryCode[] {
+function inspectText(text: string, rawEmailSource: string): readonly PublicBoundaryCode[] {
   const codes = new Set<PublicBoundaryCode>();
   if (containsCredentialMarker(text)) {
     codes.add("captured-credential");
@@ -237,7 +145,7 @@ function inspectText(
       codes.add(rule.code);
     }
   }
-  if (containsMalformedReservedExample || containsEmailIdentifier(emailText)) {
+  if (containsEmailIdentifierExcludingRfc2606Examples(rawEmailSource)) {
     codes.add("personal-email");
   }
   if (PHONE_FR.test(text)) codes.add("personal-phone");
@@ -269,34 +177,18 @@ function containsControlCodePoint(value: string): boolean {
   return false;
 }
 
-function projectEmailText(value: string): ReservedEmailProjection {
-  const direct = projectReservedEmails(value);
-  const normalized = normalizeSensitiveText(direct.masked);
-  const decoded = projectReservedEmails(normalized);
-  return {
-    masked: normalized,
-    containsMalformedReservedExample:
-      direct.containsMalformedReservedExample || decoded.containsMalformedReservedExample,
-  };
-}
-
 interface PathProjection {
   readonly canonical: string;
   readonly sensitive: string;
-  readonly emailSensitive: string;
-  readonly containsMalformedReservedExample: boolean;
   readonly containsDefaultIgnorable: boolean;
   readonly containsControlCodePoint: boolean;
 }
 
 function projectPath(path: string): PathProjection {
   const decoded = decodeSensitiveMarkers(path);
-  const email = projectEmailText(path);
   return {
     canonical: normalizeUnicode(path),
     sensitive: normalizeUnicode(decoded),
-    emailSensitive: email.masked,
-    containsMalformedReservedExample: email.containsMalformedReservedExample,
     containsDefaultIgnorable:
       CONTAINS_DEFAULT_IGNORABLE.test(path) || CONTAINS_DEFAULT_IGNORABLE.test(decoded),
     containsControlCodePoint: containsControlCodePoint(path) || containsControlCodePoint(decoded),
@@ -330,11 +222,7 @@ export function inspectPublicTree(
 
   for (const [index, file] of files.entries()) {
     const pathProjection = projectPath(file.path);
-    const pathCodes = inspectText(
-      pathProjection.sensitive,
-      pathProjection.emailSensitive,
-      pathProjection.containsMalformedReservedExample,
-    );
+    const pathCodes = inspectText(pathProjection.sensitive, file.path);
     const findingPath =
       pathCodes.length > 0 ||
       pathProjection.containsDefaultIgnorable ||
@@ -381,19 +269,14 @@ export function inspectPublicTree(
       continue;
     }
 
-    const decoded = decodeText(file.content);
-    if (decoded === null) {
+    const sourceText = decodeText(file.content);
+    if (sourceText === null) {
       report(findingPath, "unclassified-binary");
       continue;
     }
 
-    const normalized = normalizeSensitiveText(decoded);
-    const email = projectEmailText(decoded);
-    for (const code of inspectText(
-      normalized,
-      email.masked,
-      email.containsMalformedReservedExample,
-    )) {
+    const normalized = normalizeSensitiveText(sourceText);
+    for (const code of inspectText(normalized, sourceText)) {
       report(findingPath, code);
     }
   }

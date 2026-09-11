@@ -81,6 +81,13 @@ describe("inspectPublicTree", () => {
     expect(inspectPublicTree([{ path: "notes.txt", content }])).toEqual([]);
   });
 
+  test.each([
+    "reporter@example.com",
+    "docs/reporter@signalement.test",
+  ])("allows a canonical reserved example path: %s", (path) => {
+    expect(inspectPublicTree([{ path, content: "safe" }])).toEqual([]);
+  });
+
   test("allows a canonical reserved example followed by sentence punctuation", () => {
     const content = ["reporter", "@example.com."].join("");
 
@@ -101,7 +108,10 @@ describe("inspectPublicTree", () => {
 
   test.each([
     ["quoted email", ['"reporter"', "@customer.company"].join("")],
-    ["commented email", ["reporter(comment)", String.fromCodePoint(0x40), "customer.company"].join("")],
+    [
+      "commented email",
+      ["reporter(comment)", String.fromCodePoint(0x40), "customer.company"].join(""),
+    ],
     ["SMTPUTF8 email", ["reporter🦀", "@customer.company"].join("")],
     ["domain-literal email", ["reporter", "@[192.0.2.1]"].join("")],
     ["HTML-encoded email", ["reporter&comm", "at;customer&per", "iod;company"].join("")],
@@ -114,9 +124,59 @@ describe("inspectPublicTree", () => {
 
   test.each([
     ["quoted local part", ['"reporter"', "@example.com"].join("")],
-    ["commented local part", ["reporter(comment)", String.fromCodePoint(0x40), "example.org"].join("")],
+    [
+      "commented local part",
+      ["reporter(comment)", String.fromCodePoint(0x40), "example.org"].join(""),
+    ],
     ["SMTPUTF8 local part", ["reporter🦀", "@signalement.test"].join("")],
   ])("does not exempt a reserved-domain email with a %s", (_label, content) => {
+    expect(inspectPublicTree([{ path: "notes.txt", content }])).toContainEqual({
+      path: "notes.txt",
+      code: "personal-email",
+    });
+  });
+
+  test.each([
+    ["percent-encoded", ["reporter%4", "0example.com"].join("")],
+    ["HTML-encoded", ["reporter&comm", "at;example.com"].join("")],
+    ["NFKC", ["reporter", "\uFF20example.com"].join("")],
+    ["default-ignorable", ["reporter", "@\u200Bexample.com"].join("")],
+  ])("does not exempt a %s reserved-domain email", (_label, content) => {
+    expect(inspectPublicTree([{ path: "notes.txt", content }])).toContainEqual({
+      path: "notes.txt",
+      code: "personal-email",
+    });
+  });
+
+  test.each([
+    ["space", " "],
+    ["comma", ","],
+    ["semicolon", ";"],
+    ["colon", ":"],
+    ["closing parenthesis", ")"],
+  ])("detects a personal email after a reserved example separated by %s", (_label, separator) => {
+    const content = ["reporter", "@example.com", separator, "admin", "@customer.company"].join("");
+
+    expect(inspectPublicTree([{ path: "notes.txt", content }])).toContainEqual({
+      path: "notes.txt",
+      code: "personal-email",
+    });
+  });
+
+  test.each([
+    [
+      "before reserved examples",
+      ["admin", "@customer.company,first", "@example.com;second", "@example.org"].join(""),
+    ],
+    [
+      "between reserved examples",
+      ["first", "@example.com;admin", "@customer.company:second", "@example.org"].join(""),
+    ],
+    [
+      "after reserved examples",
+      ["first", "@example.com,second", "@example.org)admin", "@customer.company"].join(""),
+    ],
+  ])("detects a personal email %s", (_label, content) => {
     expect(inspectPublicTree([{ path: "notes.txt", content }])).toContainEqual({
       path: "notes.txt",
       code: "personal-email",
@@ -148,6 +208,61 @@ describe("inspectPublicTree", () => {
 
     expect(findings).toContainEqual({ path: "<redacted-path:1>", code: "personal-email" });
     expect(JSON.stringify(findings)).not.toContain("reporter");
+  });
+
+  test.each([
+    ["percent-encoded", ["reporter%4", "0example.com.har"].join("")],
+    ["HTML-encoded", ["reporter&comm", "at;example.com.har"].join("")],
+    ["NFKC", ["reporter", "\uFF20example.com.har"].join("")],
+    ["default-ignorable", ["reporter", "@\u200Bexample.com.har"].join("")],
+  ])("redacts a %s reserved-domain email path", (_label, path) => {
+    const findings = inspectPublicTree([{ path, content: "safe" }]);
+
+    expect(findings).toContainEqual({ path: "<redacted-path:1>", code: "personal-email" });
+    expect(findings.every(({ path: findingPath }) => findingPath === "<redacted-path:1>")).toBe(
+      true,
+    );
+  });
+
+  test.each([
+    [
+      "before reserved examples",
+      ["admin", "@customer.company,first", "@example.com;second", "@example.org"].join(""),
+    ],
+    [
+      "between reserved examples",
+      ["first", "@example.com;admin", "@customer.company:second", "@example.org"].join(""),
+    ],
+    [
+      "after reserved examples",
+      ["first", "@example.com,second", "@example.org)admin", "@customer.company"].join(""),
+    ],
+  ])("redacts a personal email path %s", (_label, path) => {
+    const findings = inspectPublicTree([{ path, content: "safe" }]);
+
+    expect(findings).toContainEqual({ path: "<redacted-path:1>", code: "personal-email" });
+    expect(findings.every(({ path: findingPath }) => findingPath === "<redacted-path:1>")).toBe(
+      true,
+    );
+  });
+
+  test.each([
+    ["space", " "],
+    ["comma", ","],
+    ["semicolon", ";"],
+    ["colon", ":"],
+    ["closing parenthesis", ")"],
+  ])("detects and redacts a personal path after a reserved example separated by %s", (_label, separator) => {
+    const path = ["reporter", "@example.com", separator, "admin", "@customer.company", ".har"].join(
+      "",
+    );
+
+    const findings = inspectPublicTree([{ path, content: "safe" }]);
+
+    expect(findings).toContainEqual({ path: "<redacted-path:1>", code: "personal-email" });
+    expect(findings.every(({ path: findingPath }) => findingPath === "<redacted-path:1>")).toBe(
+      true,
+    );
   });
 
   test.each([
