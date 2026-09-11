@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { chmod, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -16,6 +16,11 @@ const temporaryDirectories: string[] = [];
 const SHA_A = "a".repeat(40);
 const SHA_B = "b".repeat(40);
 
+interface FakeGitProcess {
+  readonly cleanup: () => Promise<void>;
+  readonly descendantPidPath: string;
+}
+
 async function createRepository(): Promise<string> {
   const root = await mkdtemp(join(tmpdir(), "signalement-git-process-test-"));
   temporaryDirectories.push(root);
@@ -26,6 +31,86 @@ async function createRepository(): Promise<string> {
   });
   expect(await process.exited).toBe(0);
   return root;
+}
+
+async function installDurableFakeGit(): Promise<FakeGitProcess> {
+  const executableDirectory = await mkdtemp(join(tmpdir(), "signalement-durable-git-"));
+  temporaryDirectories.push(executableDirectory);
+  const descendantPidPath = join(executableDirectory, "descendant.pid");
+  const executable = join(executableDirectory, "git");
+  await writeFile(
+    executable,
+    [
+      "#!/bin/sh",
+      "/bin/sh -c 'while :; do /bin/sleep 1; done' >&2 &",
+      'descendant="$!"',
+      'printf "%s\\n" "$descendant" >"$SIGNALEMENT_DESCENDANT_PID_PATH"',
+      'if [ "$1" = "overflow-with-descendant" ]; then',
+      "  printf 'overflowing-sensitive-output'",
+      "fi",
+      'wait "$descendant"',
+    ].join("\n"),
+  );
+  await chmod(executable, 0o755);
+  const originalPath = process.env.PATH;
+  const originalPidPath = process.env.SIGNALEMENT_DESCENDANT_PID_PATH;
+  process.env.PATH = `${executableDirectory}:${originalPath ?? ""}`;
+  process.env.SIGNALEMENT_DESCENDANT_PID_PATH = descendantPidPath;
+
+  return {
+    cleanup: async () => {
+      process.env.PATH = originalPath;
+      if (originalPidPath === undefined) {
+        delete process.env.SIGNALEMENT_DESCENDANT_PID_PATH;
+      } else {
+        process.env.SIGNALEMENT_DESCENDANT_PID_PATH = originalPidPath;
+      }
+      try {
+        const descendantPid = Number((await readFile(descendantPidPath, "utf8")).trim());
+        if (
+          Number.isSafeInteger(descendantPid) &&
+          descendantPid > 0 &&
+          processIsAlive(descendantPid)
+        ) {
+          process.kill(descendantPid, "SIGKILL");
+          await waitUntilProcessStops(descendantPid);
+        }
+      } catch {
+        // Cleanup is best-effort when the helper failed before publishing a PID.
+      }
+    },
+    descendantPidPath,
+  };
+}
+
+function processIsAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function readDescendantPid(path: string): Promise<number> {
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    try {
+      const pid = Number((await readFile(path, "utf8")).trim());
+      if (Number.isSafeInteger(pid) && pid > 0) return pid;
+    } catch {
+      // The fake Git writes the PID immediately before producing output.
+    }
+    await Bun.sleep(10);
+  }
+  throw new Error("fake Git did not publish its descendant PID");
+}
+
+async function waitUntilProcessStops(pid: number): Promise<boolean> {
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    if (!processIsAlive(pid)) return true;
+    await Bun.sleep(10);
+  }
+  return !processIsAlive(pid);
 }
 
 afterEach(async () => {
@@ -98,6 +183,93 @@ describe("runGitBounded", () => {
       maxStdoutBytes: 2,
     });
     expect(result).toEqual({ exitCode: 0, stdout: new TextEncoder().encode("ok") });
+  });
+
+  test(
+    "bounds overflow when a durable descendant keeps stderr open",
+    async () => {
+      const root = await createRepository();
+      const fakeGit = await installDurableFakeGit();
+      try {
+        const startedAt = performance.now();
+        const invocation = runGitBounded(["overflow-with-descendant"], {
+          cwd: root,
+          maxStdoutBytes: 8,
+          timeoutMs: 400,
+        });
+        let testTimeout: ReturnType<typeof setTimeout> | undefined;
+        let outcome:
+          | { readonly kind: "rejected"; readonly error: unknown }
+          | { readonly kind: "resolved" | "test-timeout"; readonly error: null };
+        try {
+          outcome = await Promise.race([
+            invocation.then(
+              () => ({ kind: "resolved" as const, error: null }),
+              (error: unknown) => ({ kind: "rejected" as const, error }),
+            ),
+            new Promise<{ readonly kind: "test-timeout"; readonly error: null }>((resolve) => {
+              testTimeout = setTimeout(() => resolve({ kind: "test-timeout", error: null }), 700);
+            }),
+          ]);
+        } finally {
+          if (testTimeout !== undefined) clearTimeout(testTimeout);
+        }
+        const descendantPid = await readDescendantPid(fakeGit.descendantPidPath);
+
+        expect(outcome.kind).toBe("rejected");
+        expect(outcome.error).toBeInstanceOf(GitProcessError);
+        expect((outcome.error as GitProcessError).code).toBe("stdout-overflow");
+        expect(String(outcome.error)).toBe("GitProcessError: Git process failed");
+        expect(performance.now() - startedAt).toBeLessThan(700);
+        expect(await waitUntilProcessStops(descendantPid)).toBe(true);
+      } finally {
+        await fakeGit.cleanup();
+      }
+    },
+    { timeout: 3_000 },
+  );
+
+  test(
+    "bounds wall-clock execution and terminates the durable process group",
+    async () => {
+      const root = await createRepository();
+      const fakeGit = await installDurableFakeGit();
+      try {
+        const startedAt = performance.now();
+        let failure: unknown;
+        try {
+          await runGitBounded(["hang-with-descendant"], {
+            cwd: root,
+            maxStdoutBytes: 8,
+            timeoutMs: 150,
+          });
+        } catch (error) {
+          failure = error;
+        }
+        const descendantPid = await readDescendantPid(fakeGit.descendantPidPath);
+
+        expect(failure).toBeInstanceOf(GitProcessError);
+        expect((failure as GitProcessError).code).toBe("process-timeout");
+        expect(String(failure)).toBe("GitProcessError: Git process failed");
+        expect(performance.now() - startedAt).toBeLessThan(450);
+        expect(await waitUntilProcessStops(descendantPid)).toBe(true);
+      } finally {
+        await fakeGit.cleanup();
+      }
+    },
+    { timeout: 2_000 },
+  );
+
+  test("does not allow callers to increase the wall-clock policy timeout", async () => {
+    const root = await createRepository();
+
+    await expect(
+      runGitBounded(["status"], {
+        cwd: root,
+        maxStdoutBytes: 32,
+        timeoutMs: 30_001,
+      }),
+    ).rejects.toMatchObject({ code: "invalid-bound", message: "Git process failed" });
   });
 });
 

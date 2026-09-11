@@ -1,5 +1,6 @@
 export const GIT_METADATA_STDOUT_LIMIT = 16 * 1024 * 1024;
 export const GIT_BODY_BYTES_LIMIT = 64 * 1024 * 1024;
+export const GIT_PROCESS_TIMEOUT_MS = 30_000;
 
 const MAX_GIT_PROCESS_STDOUT_BYTES = 80 * 1024 * 1024;
 const OBJECT_ID = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/;
@@ -20,11 +21,13 @@ export interface RunGitBoundedOptions {
   readonly cwd: string;
   readonly maxStdoutBytes: number;
   readonly stdin?: BoundedStdin;
+  readonly timeoutMs?: number;
 }
 
 export type GitProcessErrorCode =
   | "invalid-bound"
   | "process-failure"
+  | "process-timeout"
   | "stdin-overflow"
   | "stdout-overflow"
   | "stream-failure";
@@ -49,49 +52,90 @@ function isValidBound(value: number, maximum: number): boolean {
   return Number.isSafeInteger(value) && value >= 0 && value <= maximum;
 }
 
-async function drain(stream: ReadableStream<Uint8Array>, terminate: () => void): Promise<void> {
-  let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
+async function drain(reader: ReadableStreamDefaultReader<Uint8Array>): Promise<void> {
   try {
-    reader = stream.getReader();
     while (!(await reader.read()).done) {
       // Discard diagnostics: they are untrusted and can contain paths, refs, or credentials.
     }
-  } catch {
-    terminate();
-    throw new GitProcessError("stream-failure");
   } finally {
-    reader?.releaseLock();
+    reader.releaseLock();
   }
 }
 
 async function collectBounded(
-  stream: ReadableStream<Uint8Array>,
+  reader: ReadableStreamDefaultReader<Uint8Array>,
   capacity: number,
-  terminate: () => void,
+  overflow: () => void,
 ): Promise<Uint8Array> {
-  let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
   let offset = 0;
   try {
     const buffer = new Uint8Array(capacity);
-    reader = stream.getReader();
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
       if (value.byteLength > capacity - offset) {
-        terminate();
-        await reader.cancel().catch(() => undefined);
+        overflow();
         throw new GitProcessError("stdout-overflow");
       }
       buffer.set(value, offset);
       offset += value.byteLength;
     }
     return buffer.subarray(0, offset);
-  } catch (error) {
-    terminate();
-    if (error instanceof GitProcessError) throw error;
-    throw new GitProcessError("stream-failure");
   } finally {
-    reader?.releaseLock();
+    reader.releaseLock();
+  }
+}
+
+function terminateProcessTree(child: ReturnType<typeof Bun.spawn>): void {
+  if (process.platform !== "win32" && child.pid > 0) {
+    try {
+      process.kill(-child.pid, "SIGKILL");
+    } catch {
+      // The group may already be gone or group signalling may be unavailable.
+    }
+  }
+  try {
+    child.kill("SIGKILL");
+  } catch {
+    // Reader cancellation and the wall deadline still bound return on unsupported platforms.
+  }
+}
+
+function cancelReader(reader: ReadableStreamDefaultReader<Uint8Array>): void {
+  void reader.cancel().catch(() => undefined);
+}
+
+async function cancelUnstartedReader(
+  reader: ReadableStreamDefaultReader<Uint8Array>,
+): Promise<void> {
+  try {
+    await reader.cancel();
+  } catch {
+    // Stream failures must not replace the generic acquisition failure.
+  } finally {
+    try {
+      reader.releaseLock();
+    } catch {
+      // A failed stream implementation may already have released its lock.
+    }
+  }
+}
+
+async function waitForSettlement(
+  tasks: readonly Promise<unknown>[],
+  timeoutMs: number,
+): Promise<void> {
+  if (timeoutMs <= 0) return;
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  try {
+    await Promise.race([
+      Promise.all(tasks).then(() => undefined),
+      new Promise<void>((resolve) => {
+        timeout = setTimeout(resolve, timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timeout !== undefined) clearTimeout(timeout);
   }
 }
 
@@ -100,6 +144,10 @@ export async function runGitBounded(
   options: RunGitBoundedOptions,
 ): Promise<BoundedCommandResult> {
   if (!isValidBound(options.maxStdoutBytes, MAX_GIT_PROCESS_STDOUT_BYTES)) {
+    throw new GitProcessError("invalid-bound");
+  }
+  const timeoutMs = options.timeoutMs ?? GIT_PROCESS_TIMEOUT_MS;
+  if (!Number.isSafeInteger(timeoutMs) || timeoutMs <= 0 || timeoutMs > GIT_PROCESS_TIMEOUT_MS) {
     throw new GitProcessError("invalid-bound");
   }
   if (
@@ -118,6 +166,7 @@ export async function runGitBounded(
         : new Blob([Uint8Array.from(options.stdin.data).buffer]);
     child = Bun.spawn(["git", ...arguments_], {
       cwd: options.cwd,
+      detached: true,
       env: process.env,
       stdin,
       stdout: "pipe",
@@ -127,37 +176,81 @@ export async function runGitBounded(
     throw new GitProcessError("process-failure");
   }
 
-  const terminate = (): void => {
-    try {
-      child.kill("SIGKILL");
-    } catch {
-      // The child may already have exited; the original bounded failure remains authoritative.
-    }
-  };
-  const stdoutPromise = collectBounded(
-    child.stdout as ReadableStream<Uint8Array>,
-    options.maxStdoutBytes,
-    terminate,
-  );
-  const stderrPromise = drain(child.stderr as ReadableStream<Uint8Array>, terminate);
-  const [exit, stdout, stderr] = await Promise.allSettled([
-    child.exited,
-    stdoutPromise,
-    stderrPromise,
-  ]);
+  let stdoutReader: ReadableStreamDefaultReader<Uint8Array> | undefined;
+  let stderrReader: ReadableStreamDefaultReader<Uint8Array> | undefined;
+  try {
+    stdoutReader = (child.stdout as ReadableStream<Uint8Array>).getReader();
+    stderrReader = (child.stderr as ReadableStream<Uint8Array>).getReader();
+  } catch {
+    terminateProcessTree(child);
+    const cleanupTasks: Promise<unknown>[] = [child.exited.catch(() => undefined)];
+    if (stdoutReader !== undefined) cleanupTasks.push(cancelUnstartedReader(stdoutReader));
+    if (stderrReader !== undefined) cleanupTasks.push(cancelUnstartedReader(stderrReader));
+    await waitForSettlement(cleanupTasks, timeoutMs);
+    throw new GitProcessError("stream-failure");
+  }
+  if (stdoutReader === undefined || stderrReader === undefined) {
+    terminateProcessTree(child);
+    throw new GitProcessError("stream-failure");
+  }
 
-  if (stdout.status === "rejected") {
-    if (stdout.reason instanceof GitProcessError) throw stdout.reason;
-    throw new GitProcessError("stream-failure");
+  const startedAt = performance.now();
+  let primaryFailure: GitProcessError | undefined;
+  let resolveFailure: ((failure: GitProcessError) => void) | undefined;
+  const failurePromise = new Promise<GitProcessError>((resolve) => {
+    resolveFailure = resolve;
+  });
+  const fail = (failure: GitProcessError): void => {
+    if (primaryFailure !== undefined) return;
+    primaryFailure = failure;
+    terminateProcessTree(child);
+    cancelReader(stdoutReader);
+    cancelReader(stderrReader);
+    resolveFailure?.(failure);
+  };
+
+  const stdoutTask = collectBounded(stdoutReader, options.maxStdoutBytes, () => {
+    fail(new GitProcessError("stdout-overflow"));
+  }).catch((error: unknown) => {
+    fail(error instanceof GitProcessError ? error : new GitProcessError("stream-failure"));
+    return undefined;
+  });
+  const stderrTask = drain(stderrReader).catch(() => {
+    fail(new GitProcessError("stream-failure"));
+  });
+  const exitTask = child.exited.catch(() => {
+    fail(new GitProcessError("process-failure"));
+    return undefined;
+  });
+  const completionPromise = Promise.all([exitTask, stdoutTask, stderrTask]).then(
+    ([exitCode, stdout]) => {
+      if (primaryFailure !== undefined) {
+        return { failure: primaryFailure, result: null } as const;
+      }
+      if (exitCode === undefined || stdout === undefined) {
+        const failure = new GitProcessError("process-failure");
+        fail(failure);
+        return { failure, result: null } as const;
+      }
+      return { failure: null, result: { exitCode, stdout } } as const;
+    },
+  );
+  const wallTimeout = setTimeout(() => {
+    fail(new GitProcessError("process-timeout"));
+  }, timeoutMs);
+
+  const outcome = await Promise.race([
+    completionPromise,
+    failurePromise.then((failure) => ({ failure, result: null }) as const),
+  ]);
+  clearTimeout(wallTimeout);
+
+  if (outcome.failure !== null) {
+    const remainingMs = Math.max(0, timeoutMs - (performance.now() - startedAt));
+    await waitForSettlement([exitTask, stdoutTask, stderrTask], remainingMs);
+    throw outcome.failure;
   }
-  if (stderr.status === "rejected") {
-    terminate();
-    throw new GitProcessError("stream-failure");
-  }
-  if (exit.status === "rejected") {
-    throw new GitProcessError("process-failure");
-  }
-  return { exitCode: exit.value, stdout: stdout.value };
+  return outcome.result;
 }
 
 function invalidGitData(): never {

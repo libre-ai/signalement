@@ -162,6 +162,36 @@ describe("readIndexFiles", () => {
     ]);
   });
 
+  test("shares one bounded object body across two index paths", async () => {
+    const root = await createRepository();
+    await writeFile(join(root, "first.txt"), "same");
+    await writeFile(join(root, "second.txt"), "same");
+    await run(["git", "add", "first.txt", "second.txt"], root);
+
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    try {
+      const files = await Promise.race([
+        readIndexFiles(root, { maxTreeBytes: 8 }),
+        new Promise<never>((_, reject) => {
+          timeout = setTimeout(() => reject(new Error("bounded object read timed out")), 1_000);
+        }),
+      ]);
+
+      expect(files).toHaveLength(2);
+      expect(files[0]).toEqual({
+        path: "first.txt",
+        content: new TextEncoder().encode("same"),
+      });
+      expect(files[1]).toEqual({
+        path: "second.txt",
+        content: new TextEncoder().encode("same"),
+      });
+      expect(files[0]?.content).toBe(files[1]?.content);
+    } finally {
+      if (timeout !== undefined) clearTimeout(timeout);
+    }
+  });
+
   test("does not follow a staged symlink outside the materialized index", async () => {
     const root = await createRepository();
     const target = join(root, "unstaged-private-source.txt");
