@@ -3,7 +3,12 @@ import { mkdir, mkdtemp, rm, symlink, unlink, writeFile } from "node:fs/promises
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { inspectReachableHistory, renderPublicHistoryManifest } from "./public-history";
+import {
+  inspectGitMetadata,
+  inspectReachableHistory,
+  type PublicHistoryResult,
+  renderPublicHistoryManifest,
+} from "./public-history";
 
 const temporaryDirectories: string[] = [];
 const TEST_IDENTITIES = [{ name: "Signalement Test", email: "tester@signalement.test" }] as const;
@@ -89,13 +94,25 @@ function rawCommit(
   return [`tree ${tree}`, ...headers, "", message, ""].join("\n");
 }
 
+interface RawCommitContext {
+  readonly parent: string;
+  readonly tree: string;
+}
+
+type RawCommitOptions = Parameters<typeof rawCommit>[1];
+
 async function inspectRawCommit(
-  rawOptions: Parameters<typeof rawCommit>[1],
+  rawOptions: RawCommitOptions | ((context: RawCommitContext) => RawCommitOptions),
   allowedIdentities: readonly { readonly name: string; readonly email: string }[] = TEST_IDENTITIES,
-) {
+): Promise<PublicHistoryResult> {
   const root = await createRepository();
   await commitFile(root, "safe.txt", "safe");
-  await replaceMainWithRawCommit(root, rawCommit(await currentTree(root), rawOptions));
+  const context = {
+    parent: await runWithInput(["git", "rev-parse", "HEAD"], root),
+    tree: await currentTree(root),
+  };
+  const resolvedOptions = typeof rawOptions === "function" ? rawOptions(context) : rawOptions;
+  await replaceMainWithRawCommit(root, rawCommit(context.tree, resolvedOptions));
   return inspectReachableHistory(root, { allowedIdentities });
 }
 
@@ -380,6 +397,27 @@ describe("inspectReachableHistory", () => {
       expectedCodes: ["unapproved-identity", "personal-email"],
     },
     {
+      name: "committer before author",
+      headers: [`committer ${githubIdentity}`, `author ${githubIdentity}`],
+      expectedCodes: ["unapproved-identity", "personal-email"],
+    },
+    {
+      name: "a negative timestamp",
+      headers: [
+        `author Signalement Test <${TEST_GITHUB_IDENTITY.email}> -1 +0000`,
+        `committer ${githubIdentity}`,
+      ],
+      expectedCodes: ["unapproved-identity", "personal-email"],
+    },
+    {
+      name: "a timestamp above Git's signed 64-bit time_t bound",
+      headers: [
+        `author Signalement Test <${TEST_GITHUB_IDENTITY.email}> 9223372036854775808 +0000`,
+        `committer ${githubIdentity}`,
+      ],
+      expectedCodes: ["unapproved-identity", "personal-email"],
+    },
+    {
       name: "identity text in a continuation line",
       headers: [
         `author ${githubIdentity}`,
@@ -416,6 +454,21 @@ describe("inspectReachableHistory", () => {
       }
     });
   }
+
+  test("rejects a parent header after author", async () => {
+    const result = await inspectRawCommit(
+      ({ parent }) => ({
+        headers: [`author ${githubIdentity}`, `parent ${parent}`, `committer ${githubIdentity}`],
+        message: `test: late parent\n\n${dco(TEST_GITHUB_IDENTITY)}`,
+      }),
+      [TEST_GITHUB_IDENTITY],
+    );
+
+    expect(result.findings).toContainEqual({
+      path: expect.stringMatching(/^metadata\/commits\/[0-9a-f]+\.txt$/),
+      code: "unapproved-identity",
+    });
+  });
 
   test("rejects a synthetic-domain identity in real history", async () => {
     const root = await createRepository();
@@ -537,6 +590,50 @@ describe("inspectReachableHistory", () => {
       path: expect.stringMatching(/^metadata\/tags\/[0-9a-f]+\.txt$/),
       code: "unapproved-identity",
     });
+  });
+
+  test("rejects reordered required annotated-tag headers", async () => {
+    const head = "a".repeat(40);
+    const identity = "Signalement Test <tester@signalement.test> 1770000000 +0000";
+    const inspection = inspectGitMetadata(
+      new TextEncoder().encode(
+        [
+          "type commit",
+          `object ${head}`,
+          "tag v1",
+          `tagger ${identity}`,
+          "",
+          `test: reordered tag\n\n${dco()}`,
+          "",
+        ].join("\n"),
+      ),
+      "tag",
+      TEST_IDENTITIES,
+    );
+
+    expect(inspection.approved).toBe(false);
+  });
+
+  test("rejects an arbitrary annotated-tag extension header", () => {
+    const identity = "Signalement Test <tester@signalement.test> 1770000000 +0000";
+    const inspection = inspectGitMetadata(
+      new TextEncoder().encode(
+        [
+          `object ${"a".repeat(40)}`,
+          "type commit",
+          "tag v1",
+          `tagger ${identity}`,
+          "custom unsupported",
+          "",
+          `test: tag extension\n\n${dco()}`,
+          "",
+        ].join("\n"),
+      ),
+      "tag",
+      TEST_IDENTITIES,
+    );
+
+    expect(inspection.approved).toBe(false);
   });
 
   test("rejects every local branch or tag outside the authorized ref set", async () => {

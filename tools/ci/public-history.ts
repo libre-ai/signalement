@@ -103,8 +103,14 @@ const RAW_HEADER = /^:([0-7]{6}) ([0-7]{6}) ([0-9a-f]{40,64}) ([0-9a-f]{40,64}) 
 const SAFE_REF = /^refs\/[A-Za-z0-9][^\s~^:?*\\[]*$/;
 const GIT_HEADER = /^([a-z][a-z0-9-]*) (.*)$/;
 const GIT_IDENTITY =
-  /^(author|committer|tagger) ([^<>\r\n]+) <([^<>\r\n]+)> (-?(?:0|[1-9][0-9]*)) ([+-](?:(?:0[0-9]|1[0-3])[0-5][0-9]|1400))$/;
+  /^(author|committer|tagger) ([^<>\r\n]+) <([^<>\r\n]+)> ((?:0|[1-9][0-9]*)) ([+-](?:(?:0[0-9]|1[0-3])[0-5][0-9]|1400))$/;
 const TERMINAL_DCO = /^Signed-off-by: ([^<>\r\n]+) <([^<>\r\n]+)>$/;
+// Git fsck parses into uintmax_t, then rejects values that cannot round-trip through time_t.
+// The supported 64-bit Unix toolchain therefore admits at most signed time_t, not uint64 max.
+const MAX_GIT_TIMESTAMP = 9_223_372_036_854_775_807n;
+const MAX_GIT_TIMESTAMP_TEXT = MAX_GIT_TIMESTAMP.toString();
+const COMMIT_RESERVED_HEADERS = new Set(["tree", "parent", "author", "committer", "tagger"]);
+const TAG_SIGNATURE_HEADERS = new Set(["gpgsig", "gpgsig-sha256"]);
 
 async function runGit(
   arguments_: readonly string[],
@@ -270,6 +276,12 @@ function isValidTagName(value: string): boolean {
   return true;
 }
 
+function isValidGitTimestamp(value: string): boolean {
+  if (!/^(?:0|[1-9][0-9]*)$/.test(value)) return false;
+  if (value.length > MAX_GIT_TIMESTAMP_TEXT.length) return false;
+  return BigInt(value) <= MAX_GIT_TIMESTAMP;
+}
+
 function parseHeaders(headerText: string): readonly GitHeader[] | null {
   const headers: GitHeader[] = [];
   let offset = 0;
@@ -308,7 +320,65 @@ function replaceValidatedRanges(
   return result + source.slice(offset);
 }
 
-function inspectGitMetadata(
+function hasSimpleHeader(
+  header: GitHeader | undefined,
+  name: string,
+  validateValue: (value: string) => boolean,
+): header is GitHeader {
+  return (
+    header !== undefined &&
+    header.name === name &&
+    !header.hasContinuation &&
+    validateValue(header.value)
+  );
+}
+
+function selectCommitIdentityHeaders(headers: readonly GitHeader[]): readonly GitHeader[] | null {
+  if (!hasSimpleHeader(headers[0], "tree", (value) => OBJECT_ID.test(value))) return null;
+  let index = 1;
+  while (hasSimpleHeader(headers[index], "parent", (value) => OBJECT_ID.test(value))) {
+    index += 1;
+  }
+  const author = headers[index];
+  const committer = headers[index + 1];
+  if (
+    !hasSimpleHeader(author, "author", () => true) ||
+    !hasSimpleHeader(committer, "committer", () => true)
+  ) {
+    return null;
+  }
+  const extensions = headers.slice(index + 2);
+  if (extensions.some(({ name }) => COMMIT_RESERVED_HEADERS.has(name))) return null;
+  return [author, committer];
+}
+
+function selectTagIdentityHeaders(headers: readonly GitHeader[]): readonly GitHeader[] | null {
+  const object = headers[0];
+  const type = headers[1];
+  const tag = headers[2];
+  const tagger = headers[3];
+  if (
+    !hasSimpleHeader(object, "object", (value) => OBJECT_ID.test(value)) ||
+    !hasSimpleHeader(type, "type", (value) => SUPPORTED_OBJECT_TYPES.has(value)) ||
+    !hasSimpleHeader(tag, "tag", isValidTagName) ||
+    !hasSimpleHeader(tagger, "tagger", () => true)
+  ) {
+    return null;
+  }
+
+  // Git fsck accepts only one optional signature header after tagger; arbitrary custom tag
+  // headers are rejected as extraHeaderEntry and must never earn structural neutralization.
+  const extensions = headers.slice(4);
+  if (
+    extensions.length > 1 ||
+    (extensions.length === 1 && !TAG_SIGNATURE_HEADERS.has(extensions[0]?.name ?? ""))
+  ) {
+    return null;
+  }
+  return [tagger];
+}
+
+export function inspectGitMetadata(
   content: Uint8Array,
   objectType: "commit" | "tag",
   allowedIdentities: readonly PublicGitIdentity[],
@@ -319,19 +389,11 @@ function inspectGitMetadata(
   const headers = parseHeaders(source.slice(0, separator));
   if (!headers) return { approved: false, contentForBoundary: source };
 
-  const expectedIdentityHeaders = objectType === "commit" ? ["author", "committer"] : ["tagger"];
-  const identityHeaders = headers.filter(({ name }) =>
-    ["author", "committer", "tagger"].includes(name),
-  );
-  if (
-    identityHeaders.length !== expectedIdentityHeaders.length ||
-    expectedIdentityHeaders.some(
-      (expected) => identityHeaders.filter(({ name }) => name === expected).length !== 1,
-    ) ||
-    identityHeaders.some(({ name }) => !expectedIdentityHeaders.includes(name))
-  ) {
-    return { approved: false, contentForBoundary: source };
-  }
+  const identityHeaders =
+    objectType === "commit"
+      ? selectCommitIdentityHeaders(headers)
+      : selectTagIdentityHeaders(headers);
+  if (!identityHeaders) return { approved: false, contentForBoundary: source };
 
   const validatedIdentities: PublicGitIdentity[] = [];
   const ranges: { start: number; end: number; label: string }[] = [];
@@ -339,7 +401,14 @@ function inspectGitMetadata(
     const match = GIT_IDENTITY.exec(`${header.name} ${header.value}`);
     const name = match?.[2];
     const email = match?.[3];
-    if (header.hasContinuation || name === undefined || email === undefined) {
+    const timestamp = match?.[4];
+    if (
+      header.hasContinuation ||
+      name === undefined ||
+      email === undefined ||
+      timestamp === undefined ||
+      !isValidGitTimestamp(timestamp)
+    ) {
       return { approved: false, contentForBoundary: source };
     }
     const identity = { name, email };
@@ -348,36 +417,6 @@ function inspectGitMetadata(
     }
     validatedIdentities.push(identity);
     ranges.push({ start: header.start, end: header.end, label: `${header.name} <validated>` });
-  }
-
-  if (objectType === "commit") {
-    const trees = headers.filter(({ name }) => name === "tree");
-    const parents = headers.filter(({ name }) => name === "parent");
-    if (
-      trees.length !== 1 ||
-      trees[0]?.hasContinuation ||
-      !OBJECT_ID.test(trees[0]?.value ?? "") ||
-      parents.some(({ value, hasContinuation }) => hasContinuation || !OBJECT_ID.test(value))
-    ) {
-      return { approved: false, contentForBoundary: source };
-    }
-  } else {
-    const objects = headers.filter(({ name }) => name === "object");
-    const types = headers.filter(({ name }) => name === "type");
-    const tags = headers.filter(({ name }) => name === "tag");
-    if (
-      objects.length !== 1 ||
-      objects[0]?.hasContinuation ||
-      !OBJECT_ID.test(objects[0]?.value ?? "") ||
-      types.length !== 1 ||
-      types[0]?.hasContinuation ||
-      !SUPPORTED_OBJECT_TYPES.has(types[0]?.value ?? "") ||
-      tags.length !== 1 ||
-      tags[0]?.hasContinuation ||
-      !isValidTagName(tags[0]?.value ?? "")
-    ) {
-      return { approved: false, contentForBoundary: source };
-    }
   }
 
   const messageStart = separator + 2;
