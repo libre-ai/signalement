@@ -6,7 +6,9 @@ import { join } from "node:path";
 import {
   inspectGitMetadata,
   inspectReachableHistory,
+  type PublicHistoryManifest,
   type PublicHistoryResult,
+  parseRawGitTree,
   renderPublicHistoryManifest,
 } from "./public-history";
 
@@ -16,6 +18,92 @@ const TEST_GITHUB_IDENTITY = {
   name: "Signalement Test",
   email: ["12345+signalement-test", "@users.noreply.github.com"].join(""),
 } as const;
+const OBJECT_A = "a".repeat(40);
+const OBJECT_B = "b".repeat(40);
+
+function manifestFixture(treeEntries: PublicHistoryManifest["treeEntries"]): PublicHistoryManifest {
+  return {
+    gitObjectFormat: "sha1",
+    objects: [{ objectId: OBJECT_B, size: 4, type: "blob" }],
+    repository: "libre-ai/signalement",
+    refs: [{ name: "refs/heads/main", objectId: OBJECT_A }],
+    schemaVersion: "libre-ai.git-object-manifest.v2",
+    treeEntries,
+  };
+}
+
+async function sha256(source: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(source));
+  return Buffer.from(digest).toString("hex");
+}
+
+function bytesFromHex(hex: string): Uint8Array {
+  return Uint8Array.from(hex.match(/../g) ?? [], (byte) => Number.parseInt(byte, 16));
+}
+
+function concatenate(...parts: readonly Uint8Array[]): Uint8Array {
+  const result = new Uint8Array(parts.reduce((length, part) => length + part.byteLength, 0));
+  let offset = 0;
+  for (const part of parts) {
+    result.set(part, offset);
+    offset += part.byteLength;
+  }
+  return result;
+}
+
+function rawTreeEntry(mode: string, name: string, objectId = OBJECT_B): Uint8Array {
+  return concatenate(new TextEncoder().encode(`${mode} ${name}\0`), bytesFromHex(objectId));
+}
+
+const TEST_TREE_OBJECT_ID = "c".repeat(40);
+const TEST_OBJECT_TYPES = new Map([
+  [OBJECT_A, "tree"],
+  [OBJECT_B, "blob"],
+] as const);
+
+interface SchemaObjectShape {
+  readonly additionalProperties: boolean;
+  readonly properties: Readonly<
+    Record<string, { readonly minimum?: number; readonly pattern?: string }>
+  >;
+  readonly required: readonly string[];
+  readonly type: string;
+}
+
+interface TreeEntrySchemaAlternative {
+  readonly additionalProperties: boolean;
+  readonly properties: {
+    readonly mode: { readonly const?: string; readonly enum?: readonly string[] };
+    readonly type: { readonly const: string };
+  };
+}
+
+interface ManifestSchema {
+  readonly $id: string;
+  readonly $schema: string;
+  readonly type: string;
+  readonly additionalProperties: boolean;
+  readonly required: readonly string[];
+  readonly properties: {
+    readonly gitObjectFormat: { readonly const: string };
+    readonly objects: { readonly maxItems: number };
+    readonly repository: { readonly const: string };
+    readonly refs: { readonly maxItems: number };
+    readonly schemaVersion: { readonly const: string };
+    readonly treeEntries: { readonly maxItems: number };
+  };
+  readonly $defs: {
+    readonly gitObject: SchemaObjectShape;
+    readonly gitRef: SchemaObjectShape;
+    readonly sha1: { readonly pattern: string };
+    readonly treeEntry: { readonly oneOf: readonly TreeEntrySchemaAlternative[] };
+    readonly treeEntryName: {
+      readonly maxLength: number;
+      readonly minLength: number;
+      readonly type: string;
+    };
+  };
+}
 
 function dco(
   identity: { readonly name: string; readonly email: string } = TEST_IDENTITIES[0],
@@ -143,29 +231,74 @@ afterEach(async () => {
 });
 
 describe("inspectReachableHistory", () => {
-  test("renders the object manifest with RFC 8785 lexical key order and no whitespace", () => {
+  test("renders the v2 manifest with lexical key order and no whitespace", () => {
     expect(
-      renderPublicHistoryManifest({
-        schemaVersion: "libre-ai.git-object-manifest.v1",
-        refs: [{ name: "refs/heads/main", objectId: "a".repeat(40) }],
-        objects: [{ objectId: "b".repeat(40), type: "blob", size: 4 }],
-      }),
+      renderPublicHistoryManifest(
+        manifestFixture([
+          {
+            mode: "100644",
+            name: "safe.txt",
+            objectId: OBJECT_B,
+            treeObjectId: OBJECT_A,
+            type: "blob",
+          },
+        ]),
+      ),
     ).toBe(
-      `{"objects":[{"objectId":"${"b".repeat(40)}","size":4,"type":"blob"}],"refs":[{"name":"refs/heads/main","objectId":"${"a".repeat(40)}"}],"schemaVersion":"libre-ai.git-object-manifest.v1"}`,
+      `{"gitObjectFormat":"sha1","objects":[{"objectId":"${OBJECT_B}","size":4,"type":"blob"}],"repository":"libre-ai/signalement","refs":[{"name":"refs/heads/main","objectId":"${OBJECT_A}"}],"schemaVersion":"libre-ai.git-object-manifest.v2","treeEntries":[{"mode":"100644","name":"safe.txt","objectId":"${OBJECT_B}","treeObjectId":"${OBJECT_A}","type":"blob"}]}`,
     );
   });
 
   test("sorts ref names by UTF-8 bytes rather than host locale", () => {
     const rendered = renderPublicHistoryManifest({
-      schemaVersion: "libre-ai.git-object-manifest.v1",
+      gitObjectFormat: "sha1",
+      repository: "libre-ai/signalement",
+      schemaVersion: "libre-ai.git-object-manifest.v2",
       refs: [
         { name: "refs/heads/ä", objectId: "a".repeat(40) },
         { name: "refs/heads/z", objectId: "b".repeat(40) },
       ],
       objects: [],
+      treeEntries: [],
     });
 
     expect(rendered.indexOf("refs/heads/z")).toBeLessThan(rendered.indexOf("refs/heads/ä"));
+  });
+
+  test("sorts tree entries by tree ID and direct UTF-8 name bytes", () => {
+    const rendered = JSON.parse(
+      renderPublicHistoryManifest(
+        manifestFixture([
+          {
+            mode: "100644",
+            name: "ä.txt",
+            objectId: OBJECT_B,
+            treeObjectId: OBJECT_B,
+            type: "blob",
+          },
+          {
+            mode: "100644",
+            name: "z.txt",
+            objectId: OBJECT_B,
+            treeObjectId: OBJECT_B,
+            type: "blob",
+          },
+          {
+            mode: "100644",
+            name: "last-by-name.txt",
+            objectId: OBJECT_B,
+            treeObjectId: OBJECT_A,
+            type: "blob",
+          },
+        ]),
+      ),
+    ) as PublicHistoryManifest;
+
+    expect(rendered.treeEntries.map(({ treeObjectId, name }) => [treeObjectId, name])).toEqual([
+      [OBJECT_A, "last-by-name.txt"],
+      [OBJECT_B, "z.txt"],
+      [OBJECT_B, "ä.txt"],
+    ]);
   });
 
   test("finds a sensitive blob deleted from the current tree", async () => {
@@ -236,9 +369,11 @@ describe("inspectReachableHistory", () => {
     expect(result.objectCount).toBeGreaterThanOrEqual(3);
     expect(result.objectManifestSha256).toMatch(/^[0-9a-f]{64}$/);
     expect(result.refs).toEqual([
-      { name: "refs/heads/main", objectId: expect.stringMatching(/^[0-9a-f]{40,64}$/) },
+      { name: "refs/heads/main", objectId: expect.stringMatching(/^[0-9a-f]{40}$/) },
     ]);
-    expect(result.manifest.schemaVersion).toBe("libre-ai.git-object-manifest.v1");
+    expect(result.manifest.schemaVersion).toBe("libre-ai.git-object-manifest.v2");
+    expect(result.manifest.repository).toBe("libre-ai/signalement");
+    expect(result.manifest.gitObjectFormat).toBe("sha1");
     expect(result.manifest.refs).toEqual(result.refs);
     expect(result.manifest.objects).toHaveLength(result.objectCount);
     expect(result.manifest.objects).toEqual(
@@ -246,6 +381,257 @@ describe("inspectReachableHistory", () => {
         left.objectId.localeCompare(right.objectId),
       ),
     );
+    expect(result.manifest.treeEntries.length).toBeGreaterThan(0);
+  });
+
+  test("inventories nested tree entries retained only in deleted history", async () => {
+    const root = await createRepository();
+    await mkdir(join(root, "nested"));
+    await commitFile(root, "nested/old.txt", "historical");
+    await unlink(join(root, "nested/old.txt"));
+    await run(["git", "add", "--all"], root);
+    await run(["git", "commit", "--quiet", "--signoff", "-m", "test: delete nested file"], root);
+
+    const result = await inspectReachableHistory(root, { allowedIdentities: TEST_IDENTITIES });
+
+    expect(result.manifest.treeEntries.some(({ name }) => name === "nested")).toBe(true);
+    expect(result.manifest.treeEntries.some(({ name }) => name === "old.txt")).toBe(true);
+  });
+
+  test("changes the manifest digest when only a tree entry changes", async () => {
+    const first = manifestFixture([
+      {
+        mode: "100644",
+        name: "first.txt",
+        objectId: OBJECT_B,
+        treeObjectId: OBJECT_A,
+        type: "blob",
+      },
+    ]);
+    const second = manifestFixture([
+      {
+        mode: "100644",
+        name: "second.txt",
+        objectId: OBJECT_B,
+        treeObjectId: OBJECT_A,
+        type: "blob",
+      },
+    ]);
+
+    expect(await sha256(renderPublicHistoryManifest(first))).not.toBe(
+      await sha256(renderPublicHistoryManifest(second)),
+    );
+  });
+
+  test.each([
+    {
+      name: "a truncated object ID",
+      content: rawTreeEntry("100644", "safe.txt").subarray(0, -1),
+    },
+    {
+      name: "an empty direct name",
+      content: rawTreeEntry("100644", ""),
+    },
+    {
+      name: "an invalid UTF-8 direct name",
+      content: concatenate(
+        new TextEncoder().encode("100644 "),
+        new Uint8Array([0xff, 0]),
+        bytesFromHex(OBJECT_B),
+      ),
+    },
+    {
+      name: "an invalid UTF-8 raw mode",
+      content: concatenate(
+        new Uint8Array([0xff, 32]),
+        new TextEncoder().encode("safe.txt\0"),
+        bytesFromHex(OBJECT_B),
+      ),
+    },
+    {
+      name: "a padded non-canonical tree mode",
+      content: rawTreeEntry("040000", "nested", OBJECT_A),
+    },
+  ])("refuses $name with one generic parser error", ({ content }) => {
+    expect(() => parseRawGitTree(content, TEST_TREE_OBJECT_ID, TEST_OBJECT_TYPES)).toThrow(
+      "Git data is invalid",
+    );
+  });
+
+  test("refuses duplicate direct names inside one tree", () => {
+    const content = concatenate(
+      rawTreeEntry("100644", "same.txt", OBJECT_A),
+      rawTreeEntry("100644", "same.txt", OBJECT_B),
+    );
+
+    expect(() =>
+      parseRawGitTree(
+        content,
+        TEST_TREE_OBJECT_ID,
+        new Map([
+          [OBJECT_A, "blob"],
+          [OBJECT_B, "blob"],
+        ]),
+      ),
+    ).toThrow("Git data is invalid");
+  });
+
+  test.each([
+    {
+      name: "mode and target type differ",
+      content: rawTreeEntry("40000", "nested", OBJECT_B),
+      objectTypes: TEST_OBJECT_TYPES,
+    },
+    {
+      name: "the referenced target is absent",
+      content: rawTreeEntry("100644", "missing.txt", "d".repeat(40)),
+      objectTypes: TEST_OBJECT_TYPES,
+    },
+  ])("refuses when $name", ({ content, objectTypes }) => {
+    expect(() => parseRawGitTree(content, TEST_TREE_OBJECT_ID, objectTypes)).toThrow(
+      "Git data is invalid",
+    );
+  });
+
+  test("refuses the direct-entry bound before collecting another entry", () => {
+    const content = concatenate(
+      rawTreeEntry("100644", "first.txt"),
+      rawTreeEntry("100644", "second.txt"),
+    );
+
+    expect(() =>
+      parseRawGitTree(content, TEST_TREE_OBJECT_ID, TEST_OBJECT_TYPES, { maxEntries: 1 }),
+    ).toThrow("Git data is invalid");
+  });
+
+  test("accepts 4,096 UTF-8 bytes and refuses the next byte", () => {
+    const boundedName = "a".repeat(4_096);
+    expect(
+      parseRawGitTree(
+        rawTreeEntry("100644", boundedName),
+        TEST_TREE_OBJECT_ID,
+        TEST_OBJECT_TYPES,
+      )[0]?.name,
+    ).toBe(boundedName);
+    expect(() =>
+      parseRawGitTree(
+        rawTreeEntry("100644", `${boundedName}a`),
+        TEST_TREE_OBJECT_ID,
+        TEST_OBJECT_TYPES,
+      ),
+    ).toThrow("Git data is invalid");
+  });
+
+  test.each([
+    ".",
+    "..",
+    "nested/name",
+    `hidden\u2060name`,
+    "line\nbreak",
+  ])("refuses the unsafe direct component %s", (name) => {
+    expect(() =>
+      parseRawGitTree(rawTreeEntry("100644", name), TEST_TREE_OBJECT_ID, TEST_OBJECT_TYPES),
+    ).toThrow("Git data is invalid");
+  });
+
+  test.each([
+    ".git",
+    ".GIT",
+    ".git.",
+    ".git ",
+    ".git~1",
+    ".git::$INDEX_ALLOCATION",
+  ])("refuses the strict-fsck dot-git alias %s", (name) => {
+    expect(() =>
+      parseRawGitTree(rawTreeEntry("100644", name), TEST_TREE_OBJECT_ID, TEST_OBJECT_TYPES),
+    ).toThrow("Git data is invalid");
+  });
+
+  test.each([
+    {
+      name: "descending byte names",
+      content: concatenate(rawTreeEntry("100644", "z.txt"), rawTreeEntry("100644", "a.txt")),
+    },
+    {
+      name: "a directory before a file sharing its prefix",
+      content: concatenate(
+        rawTreeEntry("40000", "foo", OBJECT_A),
+        rawTreeEntry("100644", "foo.bar", OBJECT_B),
+      ),
+    },
+  ])("refuses non-canonical Git tree order: $name", ({ content }) => {
+    expect(() => parseRawGitTree(content, TEST_TREE_OBJECT_ID, TEST_OBJECT_TYPES)).toThrow(
+      "Git data is invalid",
+    );
+  });
+
+  test("accepts Git's canonical file-before-directory prefix order", () => {
+    const content = concatenate(
+      rawTreeEntry("100644", "foo.bar", OBJECT_B),
+      rawTreeEntry("40000", "foo", OBJECT_A),
+    );
+
+    expect(parseRawGitTree(content, TEST_TREE_OBJECT_ID, TEST_OBJECT_TYPES)).toHaveLength(2);
+  });
+
+  test("publishes a closed v2 schema with constants, maxima, and mode coherence", async () => {
+    const schemaFile = Bun.file(
+      join(import.meta.dir, "../../schemas/git-object-manifest.v2.schema.json"),
+    );
+    const exists = await schemaFile.exists();
+    expect(exists).toBe(true);
+    if (!exists) return;
+    const schema = (await schemaFile.json()) as ManifestSchema;
+
+    expect(schema).toMatchObject({
+      $id: "https://raw.githubusercontent.com/libre-ai/signalement/main/schemas/git-object-manifest.v2.schema.json",
+      $schema: "https://json-schema.org/draft/2020-12/schema",
+      type: "object",
+      additionalProperties: false,
+      required: [
+        "gitObjectFormat",
+        "objects",
+        "repository",
+        "refs",
+        "schemaVersion",
+        "treeEntries",
+      ],
+    });
+    expect(schema.properties.gitObjectFormat.const).toBe("sha1");
+    expect(schema.properties.repository.const).toBe("libre-ai/signalement");
+    expect(schema.properties.schemaVersion.const).toBe("libre-ai.git-object-manifest.v2");
+    expect(schema.properties.objects.maxItems).toBe(100_000);
+    expect(schema.properties.refs.maxItems).toBe(1_024);
+    expect(schema.properties.treeEntries.maxItems).toBe(100_000);
+    expect(schema.$defs.gitObject).toMatchObject({
+      type: "object",
+      additionalProperties: false,
+      required: ["objectId", "size", "type"],
+    });
+    expect(schema.$defs.gitObject.properties.size?.minimum).toBe(0);
+    expect(schema.$defs.gitRef).toMatchObject({
+      type: "object",
+      additionalProperties: false,
+      required: ["name", "objectId"],
+    });
+    expect(schema.$defs.treeEntryName).toEqual({
+      type: "string",
+      minLength: 1,
+      maxLength: 4_096,
+    });
+    expect(schema.$defs.sha1.pattern).toBe("^[0-9a-f]{40}$");
+    const coherentPairs = schema.$defs.treeEntry.oneOf.map(
+      (alternative: TreeEntrySchemaAlternative) => ({
+        additionalProperties: alternative.additionalProperties,
+        modes: alternative.properties.mode.enum ?? [alternative.properties.mode.const],
+        type: alternative.properties.type.const,
+      }),
+    );
+    expect(coherentPairs).toEqual([
+      { additionalProperties: false, modes: ["040000"], type: "tree" },
+      { additionalProperties: false, modes: ["100644", "100755", "120000"], type: "blob" },
+      { additionalProperties: false, modes: ["160000"], type: "commit" },
+    ]);
   });
 
   test("rejects a secret embedded only in a commit message", async () => {
@@ -725,6 +1111,14 @@ describe("inspectReachableHistory", () => {
     const root = await createRepository();
 
     await expect(inspectReachableHistory(root)).rejects.toThrow("no reachable commit");
+  });
+
+  test("refuses a non-SHA-1 Git object format", async () => {
+    const root = await mkdtemp(join(tmpdir(), "signalement-history-sha256-"));
+    temporaryDirectories.push(root);
+    await run(["git", "init", "--quiet", "--initial-branch=main", "--object-format=sha256"], root);
+
+    await expect(inspectReachableHistory(root)).rejects.toThrow("Unsupported Git object format");
   });
 
   test("refuses the local ref bound before dependent history reads", async () => {

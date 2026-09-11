@@ -40,13 +40,10 @@ async function main(): Promise<void> {
         },
   );
   if (result.findings.length > 0) {
-    for (const finding of result.findings) {
-      console.error(`${finding.path}: ${finding.code}`);
-    }
-    throw new Error(`Public history rejected ${result.findings.length} finding(s)`);
+    throw new Error("Public history rejected");
   }
 
-  const verification = `Public history verified: ${result.refs.length} ref(s), ${result.commitCount} commit(s), ${result.blobCount} unique blob(s), ${result.objectCount} object(s), manifest sha256:${result.objectManifestSha256}, 0 findings`;
+  const verification = `Public history verified: ${result.refs.length} ref(s), ${result.commitCount} commit(s), ${result.blobCount} unique blob(s), ${result.objectCount} object(s), ${result.manifest.treeEntries.length} tree entries, manifest sha256:${result.objectManifestSha256}, 0 findings`;
   if (arguments_.printManifest) {
     console.log(renderPublicHistoryManifest(result.manifest));
     console.error(verification);

@@ -17,7 +17,6 @@ import {
 
 export type PublicHistoryCode =
   | PublicBoundaryCode
-  | "history-volume-exceeded"
   | "missing-authorized-ref"
   | "unapproved-identity"
   | "unexpected-object-type"
@@ -36,14 +35,25 @@ export interface PublicGitRef {
 
 export interface PublicGitObject {
   readonly objectId: string;
-  readonly type: string;
+  readonly type: GitObjectMetadata["type"];
   readonly size: number;
 }
 
+export interface PublicGitTreeEntry {
+  readonly treeObjectId: string;
+  readonly name: string;
+  readonly mode: "040000" | "100644" | "100755" | "120000" | "160000";
+  readonly type: "blob" | "commit" | "tree";
+  readonly objectId: string;
+}
+
 export interface PublicHistoryManifest {
-  readonly schemaVersion: "libre-ai.git-object-manifest.v1";
+  readonly gitObjectFormat: "sha1";
+  readonly repository: "libre-ai/signalement";
+  readonly schemaVersion: "libre-ai.git-object-manifest.v2";
   readonly refs: readonly PublicGitRef[];
   readonly objects: readonly PublicGitObject[];
+  readonly treeEntries: readonly PublicGitTreeEntry[];
 }
 
 export interface PublicHistoryResult {
@@ -64,6 +74,7 @@ export interface PublicHistoryOptions extends PublicBoundaryOptions {
   readonly maxObjects?: number;
   readonly maxPathComponentBytes?: number;
   readonly maxRefs?: number;
+  readonly maxTreeEntries?: number;
 }
 
 export interface PublicGitIdentity {
@@ -105,12 +116,13 @@ const MAX_COMMITS = 50_000;
 const MAX_OBJECTS = 100_000;
 const MAX_PATH_COMPONENT_BYTES = 4_096;
 const MAX_REFS = 1_024;
-const OBJECT_ID = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/;
+const MAX_TREE_ENTRIES = 100_000;
+const HEX_BYTES = Array.from({ length: 256 }, (_, byte) => byte.toString(16).padStart(2, "0"));
+const OBJECT_ID = /^[0-9a-f]{40}$/;
 const ZERO_OBJECT = /^0+$/;
 const REGULAR_MODES = new Set(["100644", "100755"]);
 const SUPPORTED_OBJECT_TYPES = new Set(["blob", "commit", "tag", "tree"]);
-const RAW_HEADER =
-  /^:([0-7]{6}) ([0-7]{6}) ((?:[0-9a-f]{40}|[0-9a-f]{64})) ((?:[0-9a-f]{40}|[0-9a-f]{64})) ([A-Z][0-9]*)$/;
+const RAW_HEADER = /^:([0-7]{6}) ([0-7]{6}) ([0-9a-f]{40}) ([0-9a-f]{40}) ([A-Z][0-9]*)$/;
 const SAFE_REF = /^refs\/[A-Za-z0-9][^\s~^:?*\\[]*$/;
 const GIT_HEADER = /^([a-z][a-z0-9-]*) (.*)$/;
 const GIT_IDENTITY =
@@ -121,6 +133,16 @@ const TERMINAL_DCO = /^Signed-off-by: ([^<>\r\n]+) <([^<>\r\n]+)>$/;
 const MAX_GIT_TIMESTAMP = 9_223_372_036_854_775_807n;
 const MAX_GIT_TIMESTAMP_TEXT = MAX_GIT_TIMESTAMP.toString();
 const COMMIT_RESERVED_HEADERS = new Set(["tree", "parent", "author", "committer", "tagger"]);
+const TREE_MODES = new Map<
+  string,
+  { readonly mode: PublicGitTreeEntry["mode"]; readonly type: PublicGitTreeEntry["type"] }
+>([
+  ["40000", { mode: "040000", type: "tree" }],
+  ["100644", { mode: "100644", type: "blob" }],
+  ["100755", { mode: "100755", type: "blob" }],
+  ["120000", { mode: "120000", type: "blob" }],
+  ["160000", { mode: "160000", type: "commit" }],
+]);
 
 function decode(output: Uint8Array): string {
   return new TextDecoder("utf-8", { fatal: true }).decode(output);
@@ -467,15 +489,145 @@ export function inspectGitMetadata(
 
 export function renderPublicHistoryManifest(manifest: PublicHistoryManifest): string {
   const canonical = {
+    gitObjectFormat: manifest.gitObjectFormat,
     objects: [...manifest.objects]
       .sort((left, right) => compareUtf8(left.objectId, right.objectId))
       .map(({ objectId, size, type }) => ({ objectId, size, type })),
+    repository: manifest.repository,
     refs: [...manifest.refs]
       .sort((left, right) => compareUtf8(left.name, right.name))
       .map(({ name, objectId }) => ({ name, objectId })),
     schemaVersion: manifest.schemaVersion,
+    treeEntries: [...manifest.treeEntries]
+      .sort(
+        (left, right) =>
+          compareUtf8(left.treeObjectId, right.treeObjectId) ||
+          compareUtf8(left.name, right.name) ||
+          compareUtf8(left.mode, right.mode) ||
+          compareUtf8(left.type, right.type) ||
+          compareUtf8(left.objectId, right.objectId),
+      )
+      .map(({ mode, name, objectId, treeObjectId, type }) => ({
+        mode,
+        name,
+        objectId,
+        treeObjectId,
+        type,
+      })),
   };
   return JSON.stringify(canonical);
+}
+
+function compareGitTreeEntryNames(
+  left: Uint8Array,
+  leftIsTree: boolean,
+  right: Uint8Array,
+  rightIsTree: boolean,
+): number {
+  const commonLength = Math.min(left.byteLength, right.byteLength);
+  for (let index = 0; index < commonLength; index += 1) {
+    const difference = (left[index] ?? 0) - (right[index] ?? 0);
+    if (difference !== 0) return difference;
+  }
+  const leftTerminator =
+    left.byteLength === commonLength ? (leftIsTree ? 47 : 0) : left[commonLength];
+  const rightTerminator =
+    right.byteLength === commonLength ? (rightIsTree ? 47 : 0) : right[commonLength];
+  return (leftTerminator ?? 0) - (rightTerminator ?? 0);
+}
+
+function isDotGitAlias(name: string): boolean {
+  const asciiLower = name
+    .normalize("NFKC")
+    .replace(/[A-Z]/g, (character) => character.toLowerCase());
+  const withoutTrailingSpaceOrPeriod = asciiLower.replace(/[ .]+$/u, "");
+  return (
+    withoutTrailingSpaceOrPeriod === ".git" ||
+    /^\.git~[1-9][0-9]*$/u.test(withoutTrailingSpaceOrPeriod) ||
+    asciiLower.startsWith(".git:")
+  );
+}
+
+export function parseRawGitTree(
+  content: Uint8Array,
+  treeObjectId: string,
+  objectTypes: ReadonlyMap<string, GitObjectMetadata["type"]>,
+  options: {
+    readonly maxEntries?: number;
+    readonly maxPathComponentBytes?: number;
+  } = {},
+): readonly PublicGitTreeEntry[] {
+  if (!OBJECT_ID.test(treeObjectId)) invalidGitData();
+  const maxEntries = boundedPolicyValue(options.maxEntries, MAX_TREE_ENTRIES);
+  const maxPathComponentBytes = boundedPolicyValue(
+    options.maxPathComponentBytes,
+    MAX_PATH_COMPONENT_BYTES,
+  );
+  const entries: PublicGitTreeEntry[] = [];
+  const names = new Set<string>();
+  let previousNameBytes: Uint8Array | undefined;
+  let previousWasTree = false;
+  let offset = 0;
+  while (offset < content.byteLength) {
+    if (entries.length >= maxEntries) invalidGitData();
+    const space = content.indexOf(32, offset);
+    const nul = content.indexOf(0, space + 1);
+    if (
+      space <= offset ||
+      nul <= space + 1 ||
+      nul + 21 > content.byteLength ||
+      nul - (space + 1) > maxPathComponentBytes
+    ) {
+      invalidGitData();
+    }
+    let rawMode: string;
+    try {
+      rawMode = decode(content.subarray(offset, space));
+    } catch {
+      invalidGitData();
+    }
+    const mapping = TREE_MODES.get(rawMode);
+    if (!mapping) invalidGitData();
+    const nameBytes = content.subarray(space + 1, nul);
+    let name: string;
+    try {
+      name = decode(nameBytes);
+    } catch {
+      invalidGitData();
+    }
+    if (
+      name === "." ||
+      name === ".." ||
+      name.includes("/") ||
+      isDotGitAlias(name) ||
+      names.has(name) ||
+      inspectPublicTree([{ path: name, content: "" }]).some(({ code }) => code === "unsafe-path")
+    ) {
+      invalidGitData();
+    }
+    let objectId = "";
+    for (let index = nul + 1; index < nul + 21; index += 1) {
+      objectId += HEX_BYTES[content[index] ?? 0] ?? "";
+    }
+    if (objectTypes.get(objectId) !== mapping.type) invalidGitData();
+    if (
+      previousNameBytes !== undefined &&
+      compareGitTreeEntryNames(
+        previousNameBytes,
+        previousWasTree,
+        nameBytes,
+        mapping.type === "tree",
+      ) >= 0
+    ) {
+      invalidGitData();
+    }
+    names.add(name);
+    entries.push({ ...mapping, name, objectId, treeObjectId });
+    previousNameBytes = nameBytes;
+    previousWasTree = mapping.type === "tree";
+    offset = nul + 21;
+  }
+  return entries;
 }
 
 async function digestObjectManifest(manifest: PublicHistoryManifest): Promise<string> {
@@ -497,6 +649,7 @@ export async function inspectReachableHistory(
   const maxRefs = boundedPolicyValue(options.maxRefs, MAX_REFS);
   const maxCommits = boundedPolicyValue(options.maxCommits, MAX_COMMITS);
   const maxObjects = boundedPolicyValue(options.maxObjects, MAX_OBJECTS);
+  const maxTreeEntries = boundedPolicyValue(options.maxTreeEntries, MAX_TREE_ENTRIES);
   const maxPathComponentBytes = boundedPolicyValue(
     options.maxPathComponentBytes,
     MAX_PATH_COMPONENT_BYTES,
@@ -505,6 +658,13 @@ export async function inspectReachableHistory(
   if (requestedAuthorizedRefs.length > maxRefs) invalidGitData();
   const authorizedRefNames = validateAuthorizedRefs(requestedAuthorizedRefs);
   const allowedIdentities = options.allowedIdentities ?? [];
+  const objectFormatResult = await runGitBounded(["rev-parse", "--show-object-format"], {
+    cwd: root,
+    maxStdoutBytes: GIT_METADATA_STDOUT_LIMIT,
+  });
+  if (objectFormatResult.exitCode !== 0 || decode(objectFormatResult.stdout) !== "sha1\n") {
+    throw new Error("Unsupported Git object format");
+  }
   const refsResult = await runGitBounded(
     ["for-each-ref", "--format=%(refname)%00%(objectname)%00%(objecttype)"],
     { cwd: root, maxStdoutBytes: GIT_METADATA_STDOUT_LIMIT },
@@ -594,12 +754,6 @@ export async function inspectReachableHistory(
     requestedObjectIds,
   ).map((object) => ({ ...object, sha: object.objectId }));
   const refs = authorizedRefs.map(({ name, objectId }) => ({ name, objectId }));
-  const manifest: PublicHistoryManifest = {
-    schemaVersion: "libre-ai.git-object-manifest.v1",
-    refs,
-    objects: metadata.map(({ sha, type, size }) => ({ objectId: sha, type, size })),
-  };
-  const objectManifestSha256 = await digestObjectManifest(manifest);
 
   const maxFileBytes = boundedPolicyValue(options.maxFileBytes, DEFAULT_MAX_FILE_BYTES);
   const maxHistoryBytes = boundedPolicyValue(
@@ -615,6 +769,10 @@ export async function inspectReachableHistory(
       continue;
     }
     if (object.type === "tree") {
+      if (object.size > maxFileBytes) invalidGitData();
+      if (object.size > maxHistoryBytes - readableBytes) invalidGitData();
+      readableBytes += object.size;
+      readable.push(object);
       continue;
     }
     const paths = object.type === "blob" ? index.blobPaths.get(object.sha) : undefined;
@@ -631,13 +789,12 @@ export async function inspectReachableHistory(
       }
       continue;
     }
+    if (object.size > maxHistoryBytes - readableBytes) invalidGitData();
     readableBytes += object.size;
     readable.push(object);
   }
 
-  if (readableBytes > maxHistoryBytes) {
-    report("<history>", "history-volume-exceeded");
-  } else if (readable.length > 0) {
+  if (readable.length > 0) {
     const bodyRequest = new TextEncoder().encode(
       `${readable.map(({ objectId }) => objectId).join("\n")}\n`,
     );
@@ -650,7 +807,29 @@ export async function inspectReachableHistory(
       throw new Error("Unable to read reachable objects");
     }
     const objects = parseBatchOutput(objectResult.stdout, readable);
+    const objectTypes = new Map(metadata.map(({ objectId, type }) => [objectId, type]));
+    const treeEntries: PublicGitTreeEntry[] = [];
     for (const object of readable) {
+      if (object.type !== "tree") continue;
+      const content = objects.get(object.objectId);
+      if (!content) invalidGitData();
+      const entries = parseRawGitTree(content, object.objectId, objectTypes, {
+        maxEntries: maxTreeEntries - treeEntries.length,
+        maxPathComponentBytes,
+      });
+      treeEntries.push(...entries);
+    }
+    const manifest: PublicHistoryManifest = {
+      gitObjectFormat: "sha1",
+      objects: metadata.map(({ sha, type, size }) => ({ objectId: sha, type, size })),
+      repository: "libre-ai/signalement",
+      refs,
+      schemaVersion: "libre-ai.git-object-manifest.v2",
+      treeEntries,
+    };
+    const objectManifestSha256 = await digestObjectManifest(manifest);
+    for (const object of readable) {
+      if (object.type === "tree") continue;
       const content = objects.get(object.objectId);
       if (!content) {
         throw new Error("Reachable object content is incomplete");
@@ -683,17 +862,18 @@ export async function inspectReachableHistory(
         }
       }
     }
-  }
 
-  return {
-    commitCount,
-    blobCount: metadata.filter(({ type }) => type === "blob").length,
-    objectCount: metadata.length,
-    objectManifestSha256,
-    refs,
-    manifest,
-    findings: [...findings.values()].sort(
-      (left, right) => compareUtf8(left.path, right.path) || compareUtf8(left.code, right.code),
-    ),
-  };
+    return {
+      commitCount,
+      blobCount: metadata.filter(({ type }) => type === "blob").length,
+      objectCount: metadata.length,
+      objectManifestSha256,
+      refs,
+      manifest,
+      findings: [...findings.values()].sort(
+        (left, right) => compareUtf8(left.path, right.path) || compareUtf8(left.code, right.code),
+      ),
+    };
+  }
+  invalidGitData();
 }

@@ -1,0 +1,158 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/libre-ai/signalement/main/schemas/git-object-manifest.v2.schema.json",
+  "title": "Libre AI canonical Git object manifest v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["gitObjectFormat", "objects", "repository", "refs", "schemaVersion", "treeEntries"],
+  "properties": {
+    "gitObjectFormat": {
+      "const": "sha1"
+    },
+    "objects": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100000,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/gitObject"
+      }
+    },
+    "repository": {
+      "const": "libre-ai/signalement"
+    },
+    "refs": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1024,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/gitRef"
+      }
+    },
+    "schemaVersion": {
+      "const": "libre-ai.git-object-manifest.v2"
+    },
+    "treeEntries": {
+      "type": "array",
+      "maxItems": 100000,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/treeEntry"
+      }
+    }
+  },
+  "$defs": {
+    "gitObject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["objectId", "size", "type"],
+      "properties": {
+        "objectId": {
+          "$ref": "#/$defs/sha1"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "type": {
+          "enum": ["blob", "commit", "tag", "tree"]
+        }
+      }
+    },
+    "gitRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "objectId"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^refs/"
+        },
+        "objectId": {
+          "$ref": "#/$defs/sha1"
+        }
+      }
+    },
+    "sha1": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "treeEntry": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "name", "objectId", "treeObjectId", "type"],
+          "properties": {
+            "mode": {
+              "const": "040000"
+            },
+            "name": {
+              "$ref": "#/$defs/treeEntryName"
+            },
+            "objectId": {
+              "$ref": "#/$defs/sha1"
+            },
+            "treeObjectId": {
+              "$ref": "#/$defs/sha1"
+            },
+            "type": {
+              "const": "tree"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "name", "objectId", "treeObjectId", "type"],
+          "properties": {
+            "mode": {
+              "enum": ["100644", "100755", "120000"]
+            },
+            "name": {
+              "$ref": "#/$defs/treeEntryName"
+            },
+            "objectId": {
+              "$ref": "#/$defs/sha1"
+            },
+            "treeObjectId": {
+              "$ref": "#/$defs/sha1"
+            },
+            "type": {
+              "const": "blob"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "name", "objectId", "treeObjectId", "type"],
+          "properties": {
+            "mode": {
+              "const": "160000"
+            },
+            "name": {
+              "$ref": "#/$defs/treeEntryName"
+            },
+            "objectId": {
+              "$ref": "#/$defs/sha1"
+            },
+            "treeObjectId": {
+              "$ref": "#/$defs/sha1"
+            },
+            "type": {
+              "const": "commit"
+            }
+          }
+        }
+      ]
+    },
+    "treeEntryName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096
+    }
+  }
+}
