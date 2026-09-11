@@ -81,6 +81,24 @@ describe("inspectPublicTree", () => {
     expect(inspectPublicTree([{ path: "notes.txt", content }])).toEqual([]);
   });
 
+  test("allows a canonical reserved example followed by sentence punctuation", () => {
+    const content = ["reporter", "@example.com."].join("");
+
+    expect(inspectPublicTree([{ path: "notes.txt", content }])).toEqual([]);
+  });
+
+  test.each([
+    ["leading hyphen", ["reporter", "@-.example"].join("")],
+    ["trailing hyphen", ["reporter", "@bad-.example"].join("")],
+    ["underscore", ["reporter", "@bad_name.example"].join("")],
+    ["empty punycode payload", ["reporter", "@xn--.example"].join("")],
+  ])("rejects a reserved example with a non-canonical DNS label: %s", (_label, content) => {
+    expect(inspectPublicTree([{ path: "notes.txt", content }])).toContainEqual({
+      path: "notes.txt",
+      code: "personal-email",
+    });
+  });
+
   test.each([
     ["quoted email", ['"reporter"', "@customer.company"].join("")],
     ["commented email", ["reporter(comment)", String.fromCodePoint(0x40), "customer.company"].join("")],
@@ -172,6 +190,41 @@ describe("inspectPublicTree", () => {
   });
 
   test.each([
+    ["NUL", "\u0000"],
+    ["TAB", "\u0009"],
+    ["LF", "\u000A"],
+    ["CR", "\u000D"],
+    ["ESC", "\u001B"],
+    ["DEL", "\u007F"],
+    ["C1 NEL", "\u0085"],
+  ])("refuses and redacts a path containing raw %s", (_label, control) => {
+    const findings = inspectPublicTree([{ path: `capture${control}.har`, content: "safe" }]);
+
+    expect(findings).toContainEqual({ path: "<redacted-path:1>", code: "unsafe-path" });
+    expect(findings.every(({ path }) => path === "<redacted-path:1>")).toBe(true);
+  });
+
+  test.each([
+    ["percent NUL", "%00"],
+    ["percent TAB", "%09"],
+    ["percent LF", "%0A"],
+    ["percent CR", "%0D"],
+    ["percent ESC", "%1B"],
+    ["percent DEL", "%7F"],
+    ["percent C1 NEL", "%C2%85"],
+    ["HTML ESC", "&#x1B;"],
+  ])("refuses and redacts a path containing decoded %s", (_label, encodedControl) => {
+    const path = `capture${encodedControl}.har`;
+    const findings = inspectPublicTree([{ path, content: "safe" }]);
+
+    expect(findings).toContainEqual({ path: "<redacted-path:1>", code: "unsafe-path" });
+    expect(findings.every(({ path: findingPath }) => findingPath === "<redacted-path:1>")).toBe(
+      true,
+    );
+    expect(JSON.stringify(findings)).not.toContain(encodedControl);
+  });
+
+  test.each([
     "capture.har",
     "recording.webm",
     "screen.mp4",
@@ -195,6 +248,19 @@ describe("inspectPublicTree", () => {
     expect(inspectPublicTree([{ path, content: "CREATE TABLE example (id INTEGER);" }])).toEqual(
       [],
     );
+  });
+
+  test.each([
+    "migrations%2Fcustomer.sql",
+    "migrations&sol;customer.sql",
+    "docs%2Fmigrations/customer.sql",
+    "migrations%252Fcustomer.sql",
+    "migrations/customer%2Esql",
+  ])("does not grant the migration exception from a decoded path: %s", (path) => {
+    expect(inspectPublicTree([{ path, content: "safe" }])).toContainEqual({
+      path,
+      code: "forbidden-artifact",
+    });
   });
 
   test.each([
