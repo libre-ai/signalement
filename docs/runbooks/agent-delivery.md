@@ -1,5 +1,13 @@
 # Agent delivery runbook
 
+## Current entry point: product delivery
+
+The owner selected addon-first delivery with focused qualification inside the first
+lot. Start with [the product handoff](product-session.md) and
+[its launch prompt](product-session.prompt.md). The standalone qualification flow below
+remains available for a new material design inquiry; it does not block this approved
+product session. Close each delivery with [the conclusion prompt](session-conclusion.prompt.md).
+
 This runbook separates deep qualification from autonomous delivery. Codex is a
 development tool in this workflow; Signalement does not depend on Codex or any AI
 provider at runtime.

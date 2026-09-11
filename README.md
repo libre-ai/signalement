@@ -48,6 +48,13 @@ critères de promotion et des prédicats d'arrêt.
 
 ## Documents
 
+Prochaine session : [passation produit et critères du premier lot](docs/runbooks/product-session.md),
+[prompt de démarrage de l'addon](docs/runbooks/product-session.prompt.md) et
+[prompt de conclusion](docs/runbooks/session-conclusion.prompt.md).
+La priorité est le parcours capture → relecture → brouillon → export sur les trois
+navigateurs. Ces documents préparent le développement ; ils ne déclarent aucune
+nouvelle capacité opérationnelle.
+
 | Document | Rôle |
 | --- | --- |
 | [`AGENTS.md`](AGENTS.md) | frontières canoniques pour tout agent |
