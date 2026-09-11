@@ -75,14 +75,30 @@ describe("inspectPublicTree", () => {
     "reporter@signalement.test",
     "reporter@signalement.invalid",
     "Install @libre-ai/governance from the pinned commit.",
-  ])("allows reserved synthetic identities and package scopes", (content) => {
+    "package@1.2.3",
+    "release@2",
+  ])("allows canonical reserved examples, package scopes, and version notation", (content) => {
     expect(inspectPublicTree([{ path: "notes.txt", content }])).toEqual([]);
   });
 
   test.each([
-    ["Unicode email", ["Élodie", "@customer.company"].join("")],
+    ["quoted email", ['"reporter"', "@customer.company"].join("")],
+    ["commented email", ["reporter(comment)", String.fromCodePoint(0x40), "customer.company"].join("")],
+    ["SMTPUTF8 email", ["reporter🦀", "@customer.company"].join("")],
+    ["domain-literal email", ["reporter", "@[192.0.2.1]"].join("")],
     ["HTML-encoded email", ["reporter&comm", "at;customer&per", "iod;company"].join("")],
   ])("rejects a %s", (_label, content) => {
+    expect(inspectPublicTree([{ path: "notes.txt", content }])).toContainEqual({
+      path: "notes.txt",
+      code: "personal-email",
+    });
+  });
+
+  test.each([
+    ["quoted local part", ['"reporter"', "@example.com"].join("")],
+    ["commented local part", ["reporter(comment)", String.fromCodePoint(0x40), "example.org"].join("")],
+    ["SMTPUTF8 local part", ["reporter🦀", "@signalement.test"].join("")],
+  ])("does not exempt a reserved-domain email with a %s", (_label, content) => {
     expect(inspectPublicTree([{ path: "notes.txt", content }])).toContainEqual({
       path: "notes.txt",
       code: "personal-email",
@@ -99,14 +115,10 @@ describe("inspectPublicTree", () => {
     });
   });
 
-  test("allows only an explicitly attested public contributor identity", () => {
-    const allowed = ["12345+signalement-test", "@users.noreply.github.com"].join("");
-    const unlisted = ["67890+unlisted", "@users.noreply.github.com"].join("");
+  test("does not exempt a contributor identity embedded in content", () => {
+    const contributor = ["12345+signalement-test", "@users.noreply.github.com"].join("");
 
-    expect(
-      inspectPublicTree([{ path: "notes.txt", content: allowed }], { allowedEmails: [allowed] }),
-    ).toEqual([]);
-    expect(inspectPublicTree([{ path: "notes.txt", content: unlisted }])).toEqual([
+    expect(inspectPublicTree([{ path: "notes.txt", content: contributor }])).toEqual([
       { path: "notes.txt", code: "personal-email" },
     ]);
   });
@@ -121,17 +133,68 @@ describe("inspectPublicTree", () => {
   });
 
   test.each([
+    ["HTML-encoded traversal", "&period;&period;/outside.txt", "unsafe-path"],
+    ["percent-encoded traversal", "%2e%2e/outside.txt", "unsafe-path"],
+    ["percent-encoded artifact extension", "capture%2Ehar", "forbidden-artifact"],
+    ["NFKC artifact extension", "capture\uFF0Ehar", "forbidden-artifact"],
+    ["percent-encoded instance directory", "instances%2Fjira.yaml", "instance-configuration"],
+    ["percent-encoded data directory", "d%61ta/report.txt", "forbidden-artifact"],
+  ] as const)("rejects a %s path evasion", (_label, path, code) => {
+    expect(inspectPublicTree([{ path, content: "safe" }])).toContainEqual({ path, code });
+  });
+
+  test("decodes a personal email in a path and redacts the diagnostic", () => {
+    const path = ["docs/reporter%4", "0customer%2Ecompany", ".txt"].join("");
+
+    const findings = inspectPublicTree([{ path, content: "safe" }]);
+
+    expect(findings).toContainEqual({ path: "<redacted-path:1>", code: "personal-email" });
+    expect(JSON.stringify(findings)).not.toContain("reporter");
+    expect(JSON.stringify(findings)).not.toContain("customer");
+  });
+
+  test("rejects decoded-equivalent paths as duplicates", () => {
+    expect(
+      inspectPublicTree([
+        { path: "docs/report%2Etxt", content: "first" },
+        { path: "docs/report.txt", content: "second" },
+      ]),
+    ).toContainEqual({ path: "docs/report.txt", code: "duplicate-path" });
+  });
+
+  test("refuses and redacts every path containing a default-ignorable code point", () => {
+    const path = "docs/re\u200Bport.txt";
+
+    const findings = inspectPublicTree([{ path, content: "safe" }]);
+
+    expect(findings).toContainEqual({ path: "<redacted-path:1>", code: "unsafe-path" });
+    expect(JSON.stringify(findings)).not.toContain(path);
+  });
+
+  test.each([
     "capture.har",
     "recording.webm",
     "screen.mp4",
     "screenshot.png",
     "archive.zip",
     "customer-export.csv",
+    "database.sql",
+    "data/example.txt",
+    "docs/exports/report.txt",
   ])("rejects captured or unbounded artifacts by path", (path) => {
     expect(inspectPublicTree([{ path, content: "" }])).toContainEqual({
       path,
       code: "forbidden-artifact",
     });
+  });
+
+  test.each([
+    "migrations/0001_initial.sql",
+    "database/migrations/0002_index.sql",
+  ])("allows a migration SQL file in a migrations directory", (path) => {
+    expect(inspectPublicTree([{ path, content: "CREATE TABLE example (id INTEGER);" }])).toEqual(
+      [],
+    );
   });
 
   test.each([
@@ -167,7 +230,7 @@ describe("inspectPublicTree", () => {
     const disguisedTraversal = `.\u200B./outside.txt`;
 
     expect(inspectPublicTree([{ path: disguisedTraversal, content: "safe" }])).toEqual([
-      { path: disguisedTraversal, code: "unsafe-path" },
+      { path: "<redacted-path:1>", code: "unsafe-path" },
     ]);
   });
 
