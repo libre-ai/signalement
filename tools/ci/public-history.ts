@@ -110,7 +110,6 @@ const TERMINAL_DCO = /^Signed-off-by: ([^<>\r\n]+) <([^<>\r\n]+)>$/;
 const MAX_GIT_TIMESTAMP = 9_223_372_036_854_775_807n;
 const MAX_GIT_TIMESTAMP_TEXT = MAX_GIT_TIMESTAMP.toString();
 const COMMIT_RESERVED_HEADERS = new Set(["tree", "parent", "author", "committer", "tagger"]);
-const TAG_SIGNATURE_HEADERS = new Set(["gpgsig", "gpgsig-sha256"]);
 
 async function runGit(
   arguments_: readonly string[],
@@ -366,15 +365,9 @@ function selectTagIdentityHeaders(headers: readonly GitHeader[]): readonly GitHe
     return null;
   }
 
-  // Git fsck accepts only one optional signature header after tagger; arbitrary custom tag
-  // headers are rejected as extraHeaderEntry and must never earn structural neutralization.
-  const extensions = headers.slice(4);
-  if (
-    extensions.length > 1 ||
-    (extensions.length === 1 && !TAG_SIGNATURE_HEADERS.has(extensions[0]?.name ?? ""))
-  ) {
-    return null;
-  }
+  // Annotated-tag signatures belong to the message body. Git fsck reports every header after
+  // tagger as extraHeaderEntry, so such objects must never earn structural neutralization.
+  if (headers.length !== 4) return null;
   return [tagger];
 }
 

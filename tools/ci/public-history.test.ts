@@ -614,27 +614,33 @@ describe("inspectReachableHistory", () => {
     expect(inspection.approved).toBe(false);
   });
 
-  test("rejects an arbitrary annotated-tag extension header", () => {
-    const identity = "Signalement Test <tester@signalement.test> 1770000000 +0000";
-    const inspection = inspectGitMetadata(
-      new TextEncoder().encode(
-        [
-          `object ${"a".repeat(40)}`,
-          "type commit",
-          "tag v1",
-          `tagger ${identity}`,
-          "custom unsupported",
-          "",
-          `test: tag extension\n\n${dco()}`,
-          "",
-        ].join("\n"),
-      ),
-      "tag",
-      TEST_IDENTITIES,
-    );
+  for (const extensionHeader of [
+    "custom unsupported",
+    "gpgsig synthetic-signature",
+    "gpgsig-sha256 synthetic-signature",
+  ]) {
+    test(`rejects annotated-tag extension header ${extensionHeader.split(" ")[0]}`, () => {
+      const identity = "Signalement Test <tester@signalement.test> 1770000000 +0000";
+      const inspection = inspectGitMetadata(
+        new TextEncoder().encode(
+          [
+            `object ${"a".repeat(40)}`,
+            "type commit",
+            "tag v1",
+            `tagger ${identity}`,
+            extensionHeader,
+            "",
+            `test: tag extension\n\n${dco()}`,
+            "",
+          ].join("\n"),
+        ),
+        "tag",
+        TEST_IDENTITIES,
+      );
 
-    expect(inspection.approved).toBe(false);
-  });
+      expect(inspection.approved).toBe(false);
+    });
+  }
 
   test("rejects every local branch or tag outside the authorized ref set", async () => {
     const root = await createRepository();
