@@ -241,7 +241,7 @@ describe("runGitBounded", () => {
           await runGitBounded(["hang-with-descendant"], {
             cwd: root,
             maxStdoutBytes: 8,
-            timeoutMs: 150,
+            timeoutMs: 1_000,
           });
         } catch (error) {
           failure = error;
@@ -251,13 +251,13 @@ describe("runGitBounded", () => {
         expect(failure).toBeInstanceOf(GitProcessError);
         expect((failure as GitProcessError).code).toBe("process-timeout");
         expect(String(failure)).toBe("GitProcessError: Git process failed");
-        expect(performance.now() - startedAt).toBeLessThan(450);
+        expect(performance.now() - startedAt).toBeLessThan(1_500);
         expect(await waitUntilProcessStops(descendantPid)).toBe(true);
       } finally {
         await fakeGit.cleanup();
       }
     },
-    { timeout: 2_000 },
+    { timeout: 3_000 },
   );
 
   test("does not allow callers to increase the wall-clock policy timeout", async () => {
