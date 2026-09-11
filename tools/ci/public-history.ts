@@ -145,7 +145,7 @@ const TREE_MODES = new Map<
 ]);
 
 function decode(output: Uint8Array): string {
-  return new TextDecoder("utf-8", { fatal: true }).decode(output);
+  return new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(output);
 }
 
 function invalidGitData(): never {
@@ -495,7 +495,10 @@ export function renderPublicHistoryManifest(manifest: PublicHistoryManifest): st
       .map(({ objectId, size, type }) => ({ objectId, size, type })),
     repository: manifest.repository,
     refs: [...manifest.refs]
-      .sort((left, right) => compareUtf8(left.name, right.name))
+      .sort(
+        (left, right) =>
+          compareUtf8(left.name, right.name) || compareUtf8(left.objectId, right.objectId),
+      )
       .map(({ name, objectId }) => ({ name, objectId })),
     schemaVersion: manifest.schemaVersion,
     treeEntries: [...manifest.treeEntries]

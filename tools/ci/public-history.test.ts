@@ -265,6 +265,18 @@ describe("inspectReachableHistory", () => {
     expect(rendered.indexOf("refs/heads/z")).toBeLessThan(rendered.indexOf("refs/heads/ä"));
   });
 
+  test("renders ref permutations with the same name in one total order", () => {
+    const first = manifestFixture([]);
+    const duplicateNameRefs = [
+      { name: "refs/heads/main", objectId: OBJECT_A },
+      { name: "refs/heads/main", objectId: OBJECT_B },
+    ];
+
+    expect(renderPublicHistoryManifest({ ...first, refs: duplicateNameRefs })).toBe(
+      renderPublicHistoryManifest({ ...first, refs: [...duplicateNameRefs].reverse() }),
+    );
+  });
+
   test("sorts tree entries by tree ID and direct UTF-8 name bytes", () => {
     const rendered = JSON.parse(
       renderPublicHistoryManifest(
@@ -453,6 +465,25 @@ describe("inspectReachableHistory", () => {
       content: rawTreeEntry("040000", "nested", OBJECT_A),
     },
   ])("refuses $name with one generic parser error", ({ content }) => {
+    expect(() => parseRawGitTree(content, TEST_TREE_OBJECT_ID, TEST_OBJECT_TYPES)).toThrow(
+      "Git data is invalid",
+    );
+  });
+
+  test("refuses a UTF-8 BOM before the raw mode", () => {
+    const content = concatenate(
+      new Uint8Array([0xef, 0xbb, 0xbf]),
+      rawTreeEntry("100644", "safe.txt"),
+    );
+
+    expect(() => parseRawGitTree(content, TEST_TREE_OBJECT_ID, TEST_OBJECT_TYPES)).toThrow(
+      "Git data is invalid",
+    );
+  });
+
+  test("refuses a UTF-8 BOM before the direct name", () => {
+    const content = rawTreeEntry("100644", "\uFEFFsafe.txt");
+
     expect(() => parseRawGitTree(content, TEST_TREE_OBJECT_ID, TEST_OBJECT_TYPES)).toThrow(
       "Git data is invalid",
     );
