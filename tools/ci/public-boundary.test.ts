@@ -225,6 +225,42 @@ describe("inspectPublicTree", () => {
   });
 
   test.each([
+    ["Unicode line separator", "\u2028"],
+    ["Unicode paragraph separator", "\u2029"],
+  ])("refuses and redacts a path containing raw %s", (_label, separator) => {
+    const findings = inspectPublicTree([
+      { path: `capture${separator}forged.har`, content: "safe" },
+    ]);
+
+    expect(findings).toContainEqual({ path: "<redacted-path:1>", code: "unsafe-path" });
+    expect(findings.every(({ path }) => path === "<redacted-path:1>")).toBe(true);
+  });
+
+  test.each([
+    ["percent line separator", "%E2%80%A8"],
+    ["percent paragraph separator", "%E2%80%A9"],
+    ["HTML line separator", "&#x2028;"],
+    ["HTML paragraph separator", "&#x2029;"],
+  ])("refuses and redacts a path containing decoded %s", (_label, encodedSeparator) => {
+    const path = `capture${encodedSeparator}forged.har`;
+    const findings = inspectPublicTree([{ path, content: "safe" }]);
+
+    expect(findings).toContainEqual({ path: "<redacted-path:1>", code: "unsafe-path" });
+    expect(findings.every(({ path: findingPath }) => findingPath === "<redacted-path:1>")).toBe(
+      true,
+    );
+    expect(JSON.stringify(findings)).not.toContain(encodedSeparator);
+  });
+
+  test.each([
+    "docs/café-🦀.txt",
+    "docs/research\u00A0notes.txt",
+    "docs/日本語.txt",
+  ])("allows a legitimate Unicode path: %s", (path) => {
+    expect(inspectPublicTree([{ path, content: "safe" }])).toEqual([]);
+  });
+
+  test.each([
     "capture.har",
     "recording.webm",
     "screen.mp4",
