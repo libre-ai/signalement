@@ -22,8 +22,9 @@ authority and retains the final private-state attestation.
 - Decision order is Security, Quality, Performance, Completeness.
 - Tests precede every non-trivial production change and each new test must be observed red.
 - Diagnostics never echo a sensitive byte, path, ref, credential, or ambient machine path.
-- No dependency, product runtime, remote repository, provider mutation, or visibility change
-  is introduced by this remediation.
+- No new third-party dependency, product runtime, remote repository, provider mutation, or
+  visibility change is introduced by this remediation. The existing Governance pin may advance
+  only to an immutable reviewed merge that closes a reproduced authority-parser defect.
 - The only authorized public Git identity is the exact `Constantin Jais` GitHub noreply tuple.
 - Every collection has a fixed policy bound before allocation; increasing a bound is an
   explicit policy change.
@@ -61,6 +62,34 @@ authority and retains the final private-state attestation.
 
 **Acceptation:** Every reproduced bypass returns a non-sensitive finding; package scopes and
 version notation remain accepted; only canonical reserved-domain example addresses pass.
+
+### Task 1A: Integrate the reviewed Governance email authority
+
+**Files:**
+
+- Modify: `package.json`
+- Modify: `bun.lock`
+- Modify: `tools/ci/public-boundary.ts`
+- Modify: `tools/ci/public-boundary.test.ts`
+
+**Authority:** Governance PR #107 merged as
+`e115dd1ff40e4e71b9160d263a684024ddba29ed` after an independent ACCEPT on its reviewed candidate
+and green GitHub checks.
+
+**Steps:**
+
+- [ ] Re-pin the existing Governance dependency to the reviewed merge commit and install frozen.
+- [ ] Replace the local RFC 2606 masking grammar with
+      `containsEmailIdentifierExcludingRfc2606Examples(rawSource)`.
+- [ ] Preserve raw-source provenance for content and path calls; never pass an already decoded
+      projection to the exemption-aware API.
+- [ ] Make the mixed-address RED matrix green before removing the obsolete local masking code.
+- [ ] Verify the historical Markdown adapter no longer creates a bare-LF false positive.
+- [ ] Run the focused boundary suites, typecheck, and executable public-boundary gate.
+
+**Acceptation:** Canonical raw RFC 2606 examples pass; encoded or non-canonical examples and every
+adjacent personal identifier fail closed; the repository typecheck has no Task-1 API mismatch
+except the explicitly coupled structural-history consumer resolved by Task 3.
 
 ### Task 2: Bounded Git plumbing without index materialization
 
