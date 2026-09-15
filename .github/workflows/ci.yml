@@ -39,4 +39,6 @@ jobs:
         run: |
           test "$(bun --revision)" = "1.4.0-canary.1+57f349f63"
           bun run check:toolchain
+      - name: Prepare exact-main bootstrap checkout
+        run: sh tools/ci/prepare-bootstrap-checkout.sh
       - run: bun run check

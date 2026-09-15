@@ -90,7 +90,8 @@ bun run check
 ## Licences
 
 - Code et outillage de première partie : EUPL-1.2.
-- Contrat d'adoption `packages/connector-sdk/` : Apache-2.0.
+- Futur contrat d'adoption `packages/connector-sdk/` : Apache-2.0. Aucun fichier de
+  ce SDK n'existe encore ; son texte de licence sera ajouté avec ses premiers fichiers.
 - Documentation éditoriale : CC-BY-4.0.
 
 L'attribution machine-lisible par chemin dans [`REUSE.toml`](REUSE.toml) fait foi.
