@@ -40,7 +40,7 @@ non_goals:
 dependencies:
   - on: libre-ai/governance
     why: "doctrine de flotte, schéma de fiche, gates de sécurité et workflows réutilisables"
-    pinned: "94fc054c6b16e047eb0736e12444a08d50728efc"
+    pinned: "e115dd1ff40e4e71b9160d263a684024ddba29ed"
   - on: libre-ai/contracts
     why: "autorité future des schémas publics de dossier, scénario, exécution et connecteur"
     pinned: "aucun contrat consommé au stade de fondation"
