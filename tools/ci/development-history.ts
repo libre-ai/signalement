@@ -4,7 +4,11 @@ import { isAbsolute, join, resolve } from "node:path";
 
 import { GIT_METADATA_STDOUT_LIMIT, runGitBounded } from "./git-process";
 import { inspectReachableHistory, type PublicHistoryResult } from "./public-history";
-import { APPROVED_FORGE_COMMITTER_IDENTITIES, APPROVED_PUBLIC_IDENTITIES } from "./public-policy";
+import {
+  APPROVED_DEVELOPMENT_AUTHOR_ALIASES,
+  APPROVED_FORGE_COMMITTER_IDENTITIES,
+  APPROVED_PUBLIC_IDENTITIES,
+} from "./public-policy";
 
 const OBJECT_ID = /^[0-9a-f]{40}$/;
 const decoder = new TextDecoder("utf-8", { fatal: true });
@@ -99,6 +103,7 @@ export async function inspectDevelopmentHistory(
     await git(snapshot, ["update-ref", "refs/heads/main", head]);
     const result = await inspectReachableHistory(snapshot, {
       allowedIdentities: APPROVED_PUBLIC_IDENTITIES,
+      allowedAuthorAliases: APPROVED_DEVELOPMENT_AUTHOR_ALIASES,
       allowedCommitterIdentities: APPROVED_FORGE_COMMITTER_IDENTITIES,
       gitEnvironment: env,
     });

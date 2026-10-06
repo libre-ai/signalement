@@ -52,3 +52,12 @@ contracts catalog; its ownership decision is pending and blocks public export de
 
 No force push, protection relaxation, new runtime dependency or public schema is
 part of this increment. Historical attestations retain their original digests.
+
+## Post-merge regression
+
+PR #1's actual merge rendered the human author's public profile name differently
+from the canonical DCO name. The post-merge gate correctly refused the unlisted
+tuple. Add an explicit same-address author alias in development policy, retaining
+the canonical DCO and strict first-publication behavior. Reproduce with real Git
+commits and test rejection of unlisted names, changed addresses, wrong roles and
+unapproved canonical identities before fixing and reviewing a separate PR.

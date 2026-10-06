@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { inspectDevelopmentHistory } from "./development-history";
-import { APPROVED_PUBLIC_IDENTITIES } from "./public-policy";
+import { APPROVED_DEVELOPMENT_AUTHOR_ALIASES, APPROVED_PUBLIC_IDENTITIES } from "./public-policy";
 
 const roots: string[] = [];
 async function git(root: string, ...args: string[]): Promise<string> {
@@ -161,4 +161,21 @@ test("CI validates the integration tree before auditing immutable contributor hi
     expect(checkout).toContain("          fetch-depth: 0\n");
     expect(checkout).toContain("          persist-credentials: false\n");
   }
+});
+
+test("audits forge-rendered author names with the canonical DCO", async () => {
+  const root = await repository();
+  const { alias } = APPROVED_DEVELOPMENT_AUTHOR_ALIASES[0];
+  await git(
+    root,
+    "-c",
+    "commit.gpgsign=false",
+    "commit",
+    "--allow-empty",
+    "--signoff",
+    `--author=${alias.name} <${alias.email}>`,
+    "-m",
+    "test: forge author rendering",
+  );
+  expect((await inspectDevelopmentHistory(root)).findings).toEqual([]);
 });

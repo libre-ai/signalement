@@ -11,3 +11,11 @@ export const APPROVED_PUBLIC_IDENTITIES = [
 export const APPROVED_FORGE_COMMITTER_IDENTITIES = [
   { name: "GitHub", email: ["noreply", "@github.com"].join("") },
 ] as const;
+
+// Observed on the GitHub merge of PR #1; the address and canonical DCO stay identical.
+export const APPROVED_DEVELOPMENT_AUTHOR_ALIASES = [
+  {
+    canonical: APPROVED_PUBLIC_IDENTITIES[0],
+    alias: { name: "Constantin", email: APPROVED_PUBLIC_IDENTITIES[0].email },
+  },
+] as const;
