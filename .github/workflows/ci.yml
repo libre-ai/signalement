@@ -25,6 +25,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: Install archived Bun toolchain
         env:
           BUN_ARCHIVE_URL: https://github.com/libre-ai/governance/releases/download/toolchain-bun-1.4.0-canary.1-57f349f63/bun-linux-x64.zip
@@ -39,6 +40,13 @@ jobs:
         run: |
           test "$(bun --revision)" = "1.4.0-canary.1+57f349f63"
           bun run check:toolchain
-      - name: Prepare exact-main bootstrap checkout
-        run: sh tools/ci/prepare-bootstrap-checkout.sh
-      - run: bun run check
+      - run: bun run check:tree
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - run: bun install --frozen-lockfile
+      - run: bun run check:development-history
+        env:
+          EXPECTED_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}

@@ -31,6 +31,7 @@
     "check:card": "bun run check:bun:runtime && bun node_modules/@libre-ai/governance/ecosystem/validate-cards.ts",
     "check:qualification": "bun run check:bun:runtime && bun tools/ci/check-qualification.ts",
     "check:public-boundary": "bun run check:bun:runtime && bun tools/ci/check-public-boundary.ts",
+    "check:development-history": "bun run check:bun:runtime && bun tools/ci/check-development-history.ts",
     "check:public-history": "bun run check:bun:runtime && bun tools/ci/check-public-history.ts",
     "check:remote-attestation": "bun run check:bun:runtime && bun tools/publication/check-remote-attestation.ts",
     "lint": "bun run check:bun:runtime && biome ci .",
@@ -38,6 +39,6 @@
     "pretest": "bun run check:bun",
     "test": "bun test",
     "check:tree": "bun run check:bun:runtime && bun run check:toolchain && bun run check:secret-scan && bun run check:personal-data && bun run check:public-boundary && bun run check:card && bun run check:qualification && bun run lint && bun run typecheck && bun run test",
-    "check": "bun run check:bun && bun run check:tree && bun run check:public-history"
+    "check": "bun run check:bun && bun run check:tree && bun run check:development-history"
   }
 }

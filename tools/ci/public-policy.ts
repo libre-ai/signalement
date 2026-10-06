@@ -6,3 +6,8 @@ export const APPROVED_PUBLIC_IDENTITIES = [
     email: ["74049135+constantin-jais", "@users.noreply.github.com"].join(""),
   },
 ] as const;
+
+// This tuple is authorized only as a technical committer by the development gate.
+export const APPROVED_FORGE_COMMITTER_IDENTITIES = [
+  { name: "GitHub", email: ["noreply", "@github.com"].join("") },
+] as const;

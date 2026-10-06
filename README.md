@@ -27,6 +27,15 @@ Ce dépôt contient actuellement une spécification de fondation et des garde-fo
 publication développés en TDD. Il ne contient encore aucune extension installable,
 API opérationnelle, synchronisation fournisseur ni worker d'exécution qualifié.
 
+La publication de la fondation porte sur le commit
+`8b02f8e61e1675948caaea5be3c57a898cbd624b`, attesté par la
+[PR Governance 112](https://github.com/libre-ai/governance/pull/112).
+La disponibilité publique a été revérifiée le 2026-10-06.
+L’[attestation privée historique](https://github.com/libre-ai/governance/blob/8bc106b5be319be81616ba30ee3ab92e4ffdd253/docs/reviews/signalement-bootstrap/8b02f8e61e1675948caaea5be3c57a898cbd624b/ATTESTATION.md)
+décrit les contrôles effectués avant exposition ; elle ne qualifie aucune capacité produit.
+Le critère de revue architecture, sécurité, qualité et souveraineté reste en attente :
+les preuves disponibles ne démontrent pas ces quatre revues au même commit.
+
 Chrome, Firefox et Safari font partie de la cible, mais restent trois profils de
 qualification distincts. Le partage de plusieurs API WebExtension ne constitue pas
 une preuve de parité.
@@ -34,12 +43,12 @@ une preuve de parité.
 <!-- libre-ai:project-status:begin -->
 <!-- Section générée depuis project.v1.yaml — ne pas éditer à la main. -->
 
-- Situation actuelle : Le nom et l'enrôlement sont signés dans Governance; la fondation locale est acceptée dans ce dépôt. Le dépôt reste scellé avant son attestation privée et sa publication; aucune capture, extension, API, synchronisation, exécution ni intégration fournisseur n'est qualifiée ou opérationnelle.
+- Situation actuelle : La fondation est publiée au commit 8b02f8e61e1675948caaea5be3c57a898cbd624b, attesté dans Governance par la PR 112 fusionnée; sa disponibilité publique a été revérifiée le 2026-10-06. Aucune capture, extension, API, synchronisation, exécution ni intégration fournisseur n'est qualifiée ou opérationnelle.
 - Maturité : specified
-- Exposition : idea
+- Exposition : spec-published
 - Confiance : medium
-- Preuves vérifiées le : 2026-09-10
-- Avancement : 0 % du périmètre actuellement déclaré
+- Preuves vérifiées le : 2026-10-06
+- Avancement : 18,8 % du périmètre actuellement déclaré
 
 <!-- libre-ai:project-status:end -->
 
@@ -72,20 +81,31 @@ nouvelle capacité opérationnelle.
 
 ## Vérification locale
 
-Avant le commit racine, après avoir indexé l'arbre candidat :
+Pour le développement après publication, installer les dépendances et indexer uniquement
+les fichiers du changement à vérifier, puis exécuter :
 
 ```sh
 bun install --frozen-lockfile
-git add --all
-bun run check:tree
-```
-
-Après le commit racine, le gate obligatoire inspecte les refs locales autorisées, tous
-leurs objets accessibles et les métadonnées de commits et tags :
-
-```sh
 bun run check
 ```
+
+`check:tree` inspecte l'arbre indexé et exécute les contrôles de qualité.
+`check:development-history`, inclus dans `check`, inspecte le commit `HEAD` et toute
+son ascendance dans une copie d'audit isolée. Il ne modifie aucune ref du dépôt source.
+Avant commit, ces deux contrôles portent respectivement sur l'index candidat et
+l'historique déjà commité ; relancer `check` après commit pour couvrir le nouveau commit.
+
+Le protocole historique de première publication conserve son contrôle distinct :
+
+```sh
+bun run check:public-history
+```
+
+Ce dernier exige l'inventaire exact des refs autorisées et inspecte tous leurs objets
+accessibles ainsi que les métadonnées des commits et tags. Le contrôle de développement
+ne remplace pas cette attestation exhaustive de publication. Le
+[runbook de première publication](docs/runbooks/private-first-publication.md)
+conserve ce protocole et ses preuves immuables.
 
 ## Licences
 

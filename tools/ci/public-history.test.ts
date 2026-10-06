@@ -231,6 +231,66 @@ afterEach(async () => {
 });
 
 describe("inspectReachableHistory", () => {
+  test("uses independently sorted JSON object keys for canonical bytes", () => {
+    function canonical(value: unknown): unknown {
+      if (Array.isArray(value)) return value.map(canonical);
+      if (value !== null && typeof value === "object") {
+        return Object.fromEntries(
+          Object.entries(value)
+            .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+            .map(([key, item]) => [key, canonical(item)]),
+        );
+      }
+      return value;
+    }
+    const output = renderPublicHistoryManifest(manifestFixture([]));
+    expect(output).toBe(JSON.stringify(canonical(JSON.parse(output))));
+  });
+
+  test("allows a technical committer only in its explicit role", () => {
+    const forge = { name: "GitHub", email: ["noreply", "@github.com"].join("") };
+    const human = "Signalement Test <tester@signalement.test> 1770000000 +0000";
+    const technical = `${forge.name} <${forge.email}> 1770000000 +0000`;
+    const encode = (headers: readonly string[], message?: string) =>
+      new TextEncoder().encode(
+        rawCommit(OBJECT_A, { headers, ...(message === undefined ? {} : { message }) }),
+      );
+    const valid = encode([`author ${human}`, `committer ${technical}`]);
+    expect(inspectGitMetadata(valid, "commit", TEST_IDENTITIES).approved).toBe(false);
+    expect(inspectGitMetadata(valid, "commit", TEST_IDENTITIES, [forge]).approved).toBe(true);
+    expect(
+      inspectGitMetadata(
+        encode([`author ${technical}`, `committer ${human}`]),
+        "commit",
+        TEST_IDENTITIES,
+        [forge],
+      ).approved,
+    ).toBe(false);
+    expect(
+      inspectGitMetadata(
+        encode([`author ${human}`, `committer ${technical}`], "missing DCO"),
+        "commit",
+        TEST_IDENTITIES,
+        [forge],
+      ).approved,
+    ).toBe(false);
+    expect(
+      inspectGitMetadata(
+        encode(
+          [`author ${human}`, `committer ${technical}`],
+          `test: forge DCO\n\nSigned-off-by: ${forge.name} <${forge.email}>`,
+        ),
+        "commit",
+        TEST_IDENTITIES,
+        [forge],
+      ).approved,
+    ).toBe(false);
+    const tag = new TextEncoder().encode(
+      `object ${OBJECT_A}\ntype commit\ntag v1\ntagger ${technical}\n\ntest\n\n${dco()}\n`,
+    );
+    expect(inspectGitMetadata(tag, "tag", TEST_IDENTITIES, [forge]).approved).toBe(false);
+  });
+
   test("renders the v2 manifest with lexical key order and no whitespace", () => {
     expect(
       renderPublicHistoryManifest(
@@ -245,7 +305,7 @@ describe("inspectReachableHistory", () => {
         ]),
       ),
     ).toBe(
-      `{"gitObjectFormat":"sha1","objects":[{"objectId":"${OBJECT_B}","size":4,"type":"blob"}],"repository":"libre-ai/signalement","refs":[{"name":"refs/heads/main","objectId":"${OBJECT_A}"}],"schemaVersion":"libre-ai.git-object-manifest.v2","treeEntries":[{"mode":"100644","name":"safe.txt","objectId":"${OBJECT_B}","treeObjectId":"${OBJECT_A}","type":"blob"}]}`,
+      `{"gitObjectFormat":"sha1","objects":[{"objectId":"${OBJECT_B}","size":4,"type":"blob"}],"refs":[{"name":"refs/heads/main","objectId":"${OBJECT_A}"}],"repository":"libre-ai/signalement","schemaVersion":"libre-ai.git-object-manifest.v2","treeEntries":[{"mode":"100644","name":"safe.txt","objectId":"${OBJECT_B}","treeObjectId":"${OBJECT_A}","type":"blob"}]}`,
     );
   });
 

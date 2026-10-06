@@ -22,10 +22,10 @@ summary: >-
   Signalement web relu, reproduction exécutable et vérification déterministe,
   avec projections portables vers plusieurs systèmes de travail.
 current_situation: >-
-  Le nom et l'enrôlement sont signés dans Governance; la fondation locale est acceptée
-  dans ce dépôt. Le dépôt reste scellé avant son attestation privée et sa publication;
-  aucune capture, extension, API, synchronisation, exécution ni intégration fournisseur
-  n'est qualifiée ou opérationnelle.
+  La fondation est publiée au commit 8b02f8e61e1675948caaea5be3c57a898cbd624b,
+  attesté dans Governance par la PR 112 fusionnée; sa disponibilité publique a été
+  revérifiée le 2026-10-06. Aucune capture, extension, API, synchronisation, exécution
+  ni intégration fournisseur n'est qualifiée ou opérationnelle.
 scope:
   - "Capture volontaire, bornée et relue depuis Chrome, Firefox et Safari, chacun qualifié séparément."
   - "Dossier canonique exportable avec preuves, contexte filtré et historique de redaction."
@@ -46,9 +46,9 @@ dependencies:
     pinned: "aucun contrat consommé au stade de fondation"
 maturity: specified
 confidence: medium
-exposure: idea
+exposure: spec-published
 freshness:
-  last_verified_on: "2026-09-10"
+  last_verified_on: "2026-10-06"
 scope_stability: stable
 hypothesis: >-
   Un dossier canonique relu, doté d'un scénario et de projections idempotentes, réduit
@@ -98,15 +98,24 @@ phases:
       - id: boundary-red-green
         text: "Le gate de frontière rejette un canari synthétique externe au repo puis accepte l'index assaini."
         weight: 5
-        status: pending
+        status: accepted
+        evidence:
+          date: "2026-09-10"
+          reference: "docs/evidence/2026-09-10-bootstrap-tree.md"
       - id: all-history-clean
         text: "Toutes les refs autorisées, objets accessibles et métadonnées Git destinés au premier push sont inspectés sans exclusion de chemin."
         weight: 5
-        status: pending
+        status: accepted
+        evidence:
+          date: "2026-09-15"
+          reference: "https://github.com/libre-ai/governance/blob/8bc106b5be319be81616ba30ee3ab92e4ffdd253/docs/reviews/signalement-bootstrap/8b02f8e61e1675948caaea5be3c57a898cbd624b/ATTESTATION.md"
       - id: card-and-licenses
-        text: "La fiche valide et les licences EUPL-1.2, Apache-2.0 et CC-BY-4.0 sont attribuées par chemin."
+        text: "La fiche valide et les fichiers présents sont attribués EUPL-1.2 ou CC-BY-4.0 par chemin; Apache-2.0 est réservé au futur SDK, dont le texte de licence sera ajouté avec ses premiers fichiers."
         weight: 3
-        status: pending
+        status: accepted
+        evidence:
+          date: "2026-09-15"
+          reference: "https://github.com/libre-ai/governance/blob/8bc106b5be319be81616ba30ee3ab92e4ffdd253/docs/reviews/signalement-bootstrap/8b02f8e61e1675948caaea5be3c57a898cbd624b/ATTESTATION.md"
       - id: independent-bootstrap-review
         text: "Les revues architecture, sécurité, qualité et souveraineté acceptent le même commit immuable."
         weight: 4
