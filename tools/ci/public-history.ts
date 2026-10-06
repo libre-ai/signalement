@@ -69,6 +69,7 @@ export interface PublicHistoryResult {
 export interface PublicHistoryOptions extends PublicBoundaryOptions {
   readonly allowedIdentities?: readonly PublicGitIdentity[];
   readonly allowedCommitterIdentities?: readonly PublicGitIdentity[];
+  readonly allowedAuthorAliases?: readonly PublicGitAuthorAlias[];
   readonly gitEnvironment?: Readonly<Record<string, string>>;
   readonly authorizedRefs?: readonly string[];
   readonly maxCommits?: number;
@@ -82,6 +83,11 @@ export interface PublicHistoryOptions extends PublicBoundaryOptions {
 export interface PublicGitIdentity {
   readonly name: string;
   readonly email: string;
+}
+
+export interface PublicGitAuthorAlias {
+  readonly canonical: PublicGitIdentity;
+  readonly alias: PublicGitIdentity;
 }
 
 interface HistoricalIndex {
@@ -421,6 +427,7 @@ export function inspectGitMetadata(
   objectType: "commit" | "tag",
   allowedIdentities: readonly PublicGitIdentity[],
   allowedCommitterIdentities: readonly PublicGitIdentity[] = [],
+  allowedAuthorAliases: readonly PublicGitAuthorAlias[] = [],
 ): GitMetadataInspection {
   const source = decode(content);
   const separator = source.indexOf("\n\n");
@@ -456,10 +463,25 @@ export function inspectGitMetadata(
       objectType === "commit" &&
       header.name === "committer" &&
       matchesAllowedIdentity(identity, allowedCommitterIdentities);
-    if (!matchesAllowedIdentity(identity, allowedIdentities) && !technicalCommitter) {
+    // GitHub may render a nominated author using their public profile name.
+    // Only a declared same-address author alias can resolve to the canonical signer.
+    const authorAlias =
+      objectType === "commit" && header.name === "author"
+        ? allowedAuthorAliases.find(
+            ({ canonical, alias }) =>
+              alias.email === canonical.email &&
+              matchesAllowedIdentity(identity, [alias]) &&
+              matchesAllowedIdentity(canonical, allowedIdentities),
+          )
+        : undefined;
+    if (
+      !matchesAllowedIdentity(identity, allowedIdentities) &&
+      !technicalCommitter &&
+      !authorAlias
+    ) {
       return { approved: false, contentForBoundary: source };
     }
-    validatedIdentities.push(identity);
+    validatedIdentities.push(authorAlias?.canonical ?? identity);
     ranges.push({ start: header.start, end: header.end, label: `${header.name} <validated>` });
   }
 
@@ -868,6 +890,7 @@ export async function inspectReachableHistory(
               object.type,
               allowedIdentities,
               options.allowedCommitterIdentities,
+              options.allowedAuthorAliases,
             )
           : null;
       const paths =

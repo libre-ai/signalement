@@ -291,6 +291,56 @@ describe("inspectReachableHistory", () => {
     expect(inspectGitMetadata(tag, "tag", TEST_IDENTITIES, [forge]).approved).toBe(false);
   });
 
+  test("maps only an explicitly approved author alias to its canonical DCO", () => {
+    const canonical = TEST_IDENTITIES[0];
+    const alias = { name: "Test", email: canonical.email };
+    const aliases = [{ canonical, alias }];
+    const encode = (name: string, email: string, role = "author") =>
+      new TextEncoder().encode(
+        rawCommit(OBJECT_A, {
+          headers: [
+            `author ${role === "author" ? name : canonical.name} <${role === "author" ? email : canonical.email}> 1770000000 +0000`,
+            `committer ${role === "committer" ? name : canonical.name} <${role === "committer" ? email : canonical.email}> 1770000000 +0000`,
+          ],
+        }),
+      );
+    const input = encode(alias.name, alias.email);
+    expect(inspectGitMetadata(input, "commit", TEST_IDENTITIES).approved).toBe(false);
+    expect(inspectGitMetadata(input, "commit", TEST_IDENTITIES, [], aliases).approved).toBe(true);
+    expect(
+      inspectGitMetadata(encode("Unlisted", alias.email), "commit", TEST_IDENTITIES, [], aliases)
+        .approved,
+    ).toBe(false);
+    expect(
+      inspectGitMetadata(
+        encode(alias.name, "other@signalement.test"),
+        "commit",
+        TEST_IDENTITIES,
+        [],
+        aliases,
+      ).approved,
+    ).toBe(false);
+    expect(
+      inspectGitMetadata(
+        encode(alias.name, alias.email, "committer"),
+        "commit",
+        TEST_IDENTITIES,
+        [],
+        aliases,
+      ).approved,
+    ).toBe(false);
+    expect(inspectGitMetadata(input, "commit", [], [], aliases).approved).toBe(false);
+    expect(
+      inspectGitMetadata(
+        encode(alias.name, "other@signalement.test"),
+        "commit",
+        TEST_IDENTITIES,
+        [],
+        [{ canonical, alias: { name: alias.name, email: "other@signalement.test" } }],
+      ).approved,
+    ).toBe(false);
+  });
+
   test("renders the v2 manifest with lexical key order and no whitespace", () => {
     expect(
       renderPublicHistoryManifest(

@@ -16,6 +16,13 @@ Development mode permits the exact GitHub technical committer tuple only in the
 committer header. Authors and terminal DCO signers must still match the approved
 public identities. The original publication gate does not enable this exception.
 
+The merge of PR #1 demonstrated that GitHub renders the nominated author's name
+differently from the canonical DCO name. Development mode contains one explicit
+author-alias mapping for this observed tuple. Both names retain the same approved
+address. The alias is valid only in the author header, resolves to an already
+approved canonical signer, and cannot authorize another address, tagger, committer,
+or DCO signer. The first-publication gate does not enable alias resolution.
+
 The manifest renderer now orders `refs` before `repository`, fixing the lexical-key
 ordering defect. A separate recursive key-order oracle tests the canonical output
 for the fixed manifest schema. Earlier native manifest hashes are not rewritten:
