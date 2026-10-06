@@ -139,3 +139,26 @@ test("CLI rejects historical findings with generic diagnostics", async () => {
   expect(output).toBe("");
   expect(error).toBe("Development history check failed\n");
 });
+
+test("CI validates the integration tree before auditing immutable contributor history", async () => {
+  const workflow = await readFile(join(import.meta.dir, "../../.github/workflows/ci.yml"), "utf8");
+  const checkouts = workflow.split("      - uses: actions/checkout@").slice(1);
+  expect(checkouts).toHaveLength(2);
+  const integration = checkouts[0] ?? "";
+  const history = checkouts[1] ?? "";
+  expect(integration.split("      - name:")[0]).not.toContain("          ref:");
+  expect(integration).toContain("      - run: bun run check:tree\n");
+  expect(history).toContain(
+    `          ref: \${{ github.event.pull_request.head.sha || github.sha }}\n`,
+  );
+  expect(history).toContain("      - run: bun install --frozen-lockfile\n");
+  expect(history).toContain("      - run: bun run check:development-history\n");
+  expect(history).toContain(
+    `          EXPECTED_HEAD_SHA: \${{ github.event.pull_request.head.sha || github.sha }}\n`,
+  );
+  for (const checkout of checkouts) {
+    expect(checkout).toStartWith("3d3c42e5aac5ba805825da76410c181273ba90b1\n");
+    expect(checkout).toContain("          fetch-depth: 0\n");
+    expect(checkout).toContain("          persist-credentials: false\n");
+  }
+});

@@ -14,7 +14,7 @@ contracts catalog; its ownership decision is pending and blocks public export de
 ## Implementation sequence and ownership
 
 1. Development CI worker owns `tools/ci/development-history.ts`, its tests, its CLI,
-   `package.json`, and `.github/workflows/ci.yml`. Verify the exact PR head or push
+   `package.json`, and `.github/workflows/ci.yml`. Test the PR merge tree, then verify the exact PR head or push
    revision in an isolated audit repository containing only the selected history.
    Keep the first-publication ref inventory gate unchanged. Reject incomplete or
    rewritten input history. Never delete refs from the source checkout.

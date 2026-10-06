@@ -1,7 +1,7 @@
 # Development history boundary
 
-Normal CI audits the actual immutable pull-request head or pushed commit, including
-all ancestors. It packs that history into a temporary isolated bare repository and
+Normal CI tests the pull-request merge tree against the target branch, then audits
+the actual immutable pull-request head or pushed commit, including all ancestors. It packs that history into a temporary isolated bare repository and
 runs the existing exhaustive object scanner there. Unrelated local branches remain
 untouched and are not covered by this result. The first-publication command remains
 responsible for validating an exact complete authorized-ref inventory.
