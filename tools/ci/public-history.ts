@@ -68,6 +68,8 @@ export interface PublicHistoryResult {
 
 export interface PublicHistoryOptions extends PublicBoundaryOptions {
   readonly allowedIdentities?: readonly PublicGitIdentity[];
+  readonly allowedCommitterIdentities?: readonly PublicGitIdentity[];
+  readonly gitEnvironment?: Readonly<Record<string, string>>;
   readonly authorizedRefs?: readonly string[];
   readonly maxCommits?: number;
   readonly maxHistoryBytes?: number;
@@ -418,6 +420,7 @@ export function inspectGitMetadata(
   content: Uint8Array,
   objectType: "commit" | "tag",
   allowedIdentities: readonly PublicGitIdentity[],
+  allowedCommitterIdentities: readonly PublicGitIdentity[] = [],
 ): GitMetadataInspection {
   const source = decode(content);
   const separator = source.indexOf("\n\n");
@@ -448,7 +451,12 @@ export function inspectGitMetadata(
       return { approved: false, contentForBoundary: source };
     }
     const identity = { name, email };
-    if (!matchesAllowedIdentity(identity, allowedIdentities)) {
+    // A forge may commit a human-authored change, but never becomes its author or signer.
+    const technicalCommitter =
+      objectType === "commit" &&
+      header.name === "committer" &&
+      matchesAllowedIdentity(identity, allowedCommitterIdentities);
+    if (!matchesAllowedIdentity(identity, allowedIdentities) && !technicalCommitter) {
       return { approved: false, contentForBoundary: source };
     }
     validatedIdentities.push(identity);
@@ -493,13 +501,13 @@ export function renderPublicHistoryManifest(manifest: PublicHistoryManifest): st
     objects: [...manifest.objects]
       .sort((left, right) => compareUtf8(left.objectId, right.objectId))
       .map(({ objectId, size, type }) => ({ objectId, size, type })),
-    repository: manifest.repository,
     refs: [...manifest.refs]
       .sort(
         (left, right) =>
           compareUtf8(left.name, right.name) || compareUtf8(left.objectId, right.objectId),
       )
       .map(({ name, objectId }) => ({ name, objectId })),
+    repository: manifest.repository,
     schemaVersion: manifest.schemaVersion,
     treeEntries: [...manifest.treeEntries]
       .sort(
@@ -663,6 +671,7 @@ export async function inspectReachableHistory(
   const allowedIdentities = options.allowedIdentities ?? [];
   const objectFormatResult = await runGitBounded(["rev-parse", "--show-object-format"], {
     cwd: root,
+    ...(options.gitEnvironment === undefined ? {} : { env: options.gitEnvironment }),
     maxStdoutBytes: GIT_METADATA_STDOUT_LIMIT,
   });
   if (objectFormatResult.exitCode !== 0 || decode(objectFormatResult.stdout) !== "sha1\n") {
@@ -670,7 +679,11 @@ export async function inspectReachableHistory(
   }
   const refsResult = await runGitBounded(
     ["for-each-ref", "--format=%(refname)%00%(objectname)%00%(objecttype)"],
-    { cwd: root, maxStdoutBytes: GIT_METADATA_STDOUT_LIMIT },
+    {
+      cwd: root,
+      ...(options.gitEnvironment === undefined ? {} : { env: options.gitEnvironment }),
+      maxStdoutBytes: GIT_METADATA_STDOUT_LIMIT,
+    },
   );
   if (refsResult.exitCode !== 0) {
     throw new Error("Unable to enumerate local refs");
@@ -708,6 +721,7 @@ export async function inspectReachableHistory(
 
   const commitCountResult = await runGitBounded(["rev-list", "--count", ...refTips], {
     cwd: root,
+    ...(options.gitEnvironment === undefined ? {} : { env: options.gitEnvironment }),
     maxStdoutBytes: GIT_METADATA_STDOUT_LIMIT,
   });
   const rawCommitCount = decode(commitCountResult.stdout).trim();
@@ -723,7 +737,11 @@ export async function inspectReachableHistory(
 
   const rawHistory = await runGitBounded(
     ["log", ...refTips, "--format=", "--raw", "--root", "--no-abbrev", "--no-renames", "-z"],
-    { cwd: root, maxStdoutBytes: GIT_METADATA_STDOUT_LIMIT },
+    {
+      cwd: root,
+      ...(options.gitEnvironment === undefined ? {} : { env: options.gitEnvironment }),
+      maxStdoutBytes: GIT_METADATA_STDOUT_LIMIT,
+    },
   );
   if (rawHistory.exitCode !== 0) {
     throw new Error("Unable to enumerate authorized reachable history");
@@ -735,7 +753,11 @@ export async function inspectReachableHistory(
 
   const objectsResult = await runGitBounded(
     ["rev-list", "--objects", "--no-object-names", ...refTips],
-    { cwd: root, maxStdoutBytes: GIT_METADATA_STDOUT_LIMIT },
+    {
+      cwd: root,
+      ...(options.gitEnvironment === undefined ? {} : { env: options.gitEnvironment }),
+      maxStdoutBytes: GIT_METADATA_STDOUT_LIMIT,
+    },
   );
   if (objectsResult.exitCode !== 0) {
     throw new Error("Unable to enumerate every authorized reachable object");
@@ -746,6 +768,7 @@ export async function inspectReachableHistory(
   const requestedObjects = new TextEncoder().encode(`${requestedObjectIds.join("\n")}\n`);
   const metadataResult = await runGitBounded(["cat-file", "--batch-check"], {
     cwd: root,
+    ...(options.gitEnvironment === undefined ? {} : { env: options.gitEnvironment }),
     maxStdoutBytes: GIT_METADATA_STDOUT_LIMIT,
     stdin: { data: requestedObjects, maxBytes: GIT_METADATA_STDOUT_LIMIT },
   });
@@ -803,6 +826,7 @@ export async function inspectReachableHistory(
     );
     const objectResult = await runGitBounded(["cat-file", "--batch"], {
       cwd: root,
+      ...(options.gitEnvironment === undefined ? {} : { env: options.gitEnvironment }),
       maxStdoutBytes: batchOutputByteLength(readable),
       stdin: { data: bodyRequest, maxBytes: GIT_METADATA_STDOUT_LIMIT },
     });
@@ -839,7 +863,12 @@ export async function inspectReachableHistory(
       }
       const metadataInspection =
         object.type === "commit" || object.type === "tag"
-          ? inspectGitMetadata(content, object.type, allowedIdentities)
+          ? inspectGitMetadata(
+              content,
+              object.type,
+              allowedIdentities,
+              options.allowedCommitterIdentities,
+            )
           : null;
       const paths =
         object.type === "blob" ? index.blobPaths.get(object.sha) : new Set([metadataPath(object)]);

@@ -19,6 +19,7 @@ export interface BoundedStdin {
 
 export interface RunGitBoundedOptions {
   readonly cwd: string;
+  readonly env?: Readonly<Record<string, string>>;
   readonly maxStdoutBytes: number;
   readonly stdin?: BoundedStdin;
   readonly timeoutMs?: number;
@@ -167,7 +168,7 @@ export async function runGitBounded(
     child = Bun.spawn(["git", ...arguments_], {
       cwd: options.cwd,
       detached: true,
-      env: process.env,
+      env: options.env ?? process.env,
       stdin,
       stdout: "pipe",
       stderr: "pipe",

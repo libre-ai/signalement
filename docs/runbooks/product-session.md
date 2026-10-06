@@ -92,19 +92,21 @@ verification; bidirectional field authority and enterprise adapters; broader con
 qualification. RAG and drafting remain optional. Do not choose the second real provider
 or a conflict authority implicitly while implementing local capture.
 
-## Separate publication workstream
+## Published foundation and development checks
 
-Recheck all status claims. At handoff, local history inspection is known to reject old
-test blobs with one generic `personal-email` finding although the current tree gates
-passed. This is a publication blocker, not a qualified exception. Do not weaken the
-scanner, rewrite history, publish, merge a red candidate, or claim the full gate green.
-Local implementation and tests can continue while that blocker remains explicit.
+The foundation was published at `8b02f8e61e1675948caaea5be3c57a898cbd624b` after
+[Governance PR 112](https://github.com/libre-ai/governance/pull/112) was merged.
+Public availability was rechecked on 2026-10-06. The former historical test-blob
+blocker was resolved in the isolated publication history; it is not an active blocker
+of this published base. Preserve the historical first-publication evidence and protocol.
+Publication proves no installable extension or runtime capability.
 
-The GitHub App/PAT decision and remaining remote attestation work are separate from
-addon delivery. No remote creation or visibility change is part of this session.
-Extra worktree refs can violate the bootstrap exact-ref policy: inspect current policy
-before creating a worktree; never relax it for convenience. Documentation-only handoff
-does not require one.
+Run `bun run check` for development: staged-tree checks plus the `HEAD` ancestry audit
+in an isolated copy. Rerun after committing the candidate. The separate
+`check:public-history` remains the strict first-publication inventory check; its exact
+ref policy must not be weakened to accommodate ordinary development branches.
+Neither GitHub App/PAT selection, remote creation nor visibility changes belong to
+this addon delivery session.
 
 Use only the approved personal identity. Verify repository-local Git attribution and
 GitHub account before any authorized commit or provider operation; never inherit a

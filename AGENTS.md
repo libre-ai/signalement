@@ -24,7 +24,8 @@ https://raw.githubusercontent.com/libre-ai/governance/main/docs/method/CONTEXT-T
 ## Commands
 
 - `bun run check:tree` — staged-tree, card, lint, types, and tests before the root commit.
-- `bun run check` — full gate including every reachable historical blob; required thereafter.
+- `bun run check` — tree gate plus every historical blob reachable from the current HEAD in an isolated development audit; required before and after committing.
+- `bun run check:public-history` — exact authorized-ref inventory for first-publication attestation; distinct from the development gate.
 
 ## Working here
 

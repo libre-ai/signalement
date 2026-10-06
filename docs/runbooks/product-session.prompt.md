@@ -4,9 +4,10 @@ Work as the lead product engineer for Libre AI Signalement. Communicate in Frenc
 write code and commits in English. Read AGENTS.md and docs/runbooks/product-session.md
 and the authorities it names. The owner approved this product-first delivery sequence.
 
-Inspect Git state and the actual files, then run the applicable baseline gates. Report
-the known historical publication blocker separately from any new failure. Do not spend
-this session completing GitHub publication tooling or asking about GitHub App versus PAT.
+Inspect Git state and the actual files, then run the applicable baseline gates. The foundation is already published at the attested commit named in the handoff.
+Recheck current evidence and report new failures explicitly; the former publication
+blocker is historical. Do not spend this session repeating first-publication work
+or asking about GitHub App versus PAT.
 
 Deliver the first lot described in the handoff: an installable Chrome, Firefox and
 Safari addon that creates a reviewed, resumable and exportable Dossier from a synthetic
