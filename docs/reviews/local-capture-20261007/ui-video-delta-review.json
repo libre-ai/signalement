@@ -1,0 +1,53 @@
+{
+  "reviewer": "/root/export_contract_review",
+  "reviewType": "independent read-only final delta review",
+  "baseHead": "0d3d3044b67297cef00be15e8fb4b751dd1df5bb",
+  "priorReviewSha256": "175ca7f9719517285d407a2b0c4bf8a9b985e36f470873dc6f1474efc2515c8b",
+  "sources": {
+    "editor.ts": "a0c355e21e12acc800344189c64ee37bad8cc8757b7250d2488a15c918f3f128",
+    "video-sanitizer.ts": "8e9a18dbb3f7a4957168f9fd46f14e4fc65766f0224c0d18c2413e5010250e3d",
+    "video-sanitizer.test.ts": "e8371b12ef62bc5477804caa29f5f9a9ff9a7348a7248f7a82b7016399124566",
+    "editor.browser-check.ts": "41b710252addd7b4f076889f3779b385fc0b773a00da643de91814de6a272299",
+    "editor.browser-fixture.ts": "0795e38bd523c3b2ab3b46b190a7b915b3d69127575cd5e98cec3565142ecd85",
+    "video.browser-check.ts": "0f102aab55acb13fe820cd4e541a3b4df03339cca0913aa831a78eb5c566f439",
+    "video.browser-fixture.ts": "f4712f59aa53ec558a83cc5b6a3f17d2eee72e4de6eba381a53833bf18f3f4c8"
+  },
+  "findings": [],
+  "verdict": "approve-scoped-wip-delta",
+  "evidence": {
+    "ui-audio.log": {
+      "exitCode": 0,
+      "assertions": 23,
+      "sha256": "f20d35050a491f59fc3bcd93b3471b8f20b2d163dde536f8eaa139da5cd38d1d"
+    },
+    "pipeline.log": {
+      "exitCode": 0,
+      "assertions": 10,
+      "sha256": "9ce0b529afaf3bbb1d4a5ead8bb233b083730766d6a434130ecf891e3471b2e9"
+    },
+    "init-lock.log": {
+      "exitCode": 0,
+      "assertions": 2,
+      "sha256": "fbc7fa4cd3022120ed543d08c95ca4d1045b9bb86a2d02480643bc5f7aed5202"
+    },
+    "unit.log": {
+      "exitCode": 0,
+      "tests": 13,
+      "assertions": 33,
+      "sha256": "9cb1c2f912fb25003be104c574aa906d586934a2dab0f4a68b60c16d9d083aa3"
+    }
+  },
+  "axes": {
+    "security": "Explicit audio opt-in and separate approval retained. Original MIME and captured-audio state stored only in encrypted draft metadata. Export remains derivative-only. Source restoration does not copy source bytes to export.",
+    "quality": "Preview replacement now pauses, removes src and calls load, releasing active playback/decoder; lock clears controls. MIME selects VP8/VP9 with Opus only for requested audio. Output tracks stopped after recorder.stop before awaiting stop event; browser regressions pass.",
+    "performance": "Changes add constant-sized flags and bounded teardown; no new loop, allocation amplification or persistent background playback introduced.",
+    "completeness": "Own unit and Chrome UI/audio/pipeline/init-lock executions pass at exact final hashes. Prior four defect fixes remain exercised. Immutable commit/full gate and branded installed-extension qualification are outside this verdict."
+  },
+  "limits": [
+    "Mutable workspace; approval applies only to listed exact hashes and prior reviewed unchanged scope.",
+    "No Firefox/Safari qualification inferred or asserted.",
+    "Synthetic Chrome browser fixture execution does not qualify native source-picker or installed-extension behavior.",
+    "No source files edited.",
+    "Full repository gate and immutable-commit merge review remain separate."
+  ]
+}

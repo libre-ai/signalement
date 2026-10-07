@@ -1,0 +1,81 @@
+:root {
+  --background: #f5f6f8;
+  --surface: #ffffff;
+  --text: #182332;
+  --border: #66758a;
+  --accent: #174a92;
+  --focus: #ab3f00;
+}
+body {
+  background: var(--background);
+  color: var(--text);
+  font:
+    1rem / 1.5 system-ui,
+    sans-serif;
+  margin: 0;
+}
+main {
+  max-width: 70rem;
+  margin: auto;
+  padding: 2rem;
+}
+section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  margin-block: 1rem;
+}
+label {
+  display: block;
+  margin-block: 0.8rem;
+}
+input,
+textarea,
+select,
+button {
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.25rem;
+  padding: 0.5rem;
+}
+textarea {
+  width: 95%;
+  min-height: 5rem;
+  display: block;
+}
+button {
+  cursor: pointer;
+  margin: 0.3rem;
+  border-color: var(--accent);
+}
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+img,
+video {
+  max-width: 100%;
+  max-height: 36rem;
+  object-fit: contain;
+}
+pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--border);
+  padding: 1rem;
+}
+.coordinates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.coordinates input {
+  width: 6rem;
+  display: block;
+}
+[hidden] {
+  display: none;
+}

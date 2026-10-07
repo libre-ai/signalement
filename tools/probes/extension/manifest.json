@@ -1,0 +1,9 @@
+{
+  "manifest_version": 3,
+  "name": "Signalement Synthetic Capability Probe",
+  "version": "0.0.1",
+  "description": "Explicit local synthetic capture and storage probes. No automatic collection.",
+  "permissions": ["activeTab", "storage"],
+  "action": { "default_popup": "probe.html", "default_title": "Synthetic capture probe" },
+  "browser_specific_settings": { "gecko": { "id": "signalement-probe@libre-ai.invalid" } }
+}

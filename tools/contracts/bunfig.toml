@@ -1,0 +1,9 @@
+[test]
+coverage = true
+coverageReporter = ["text", "lcov"]
+coverageDir = "./coverage/export"
+coverageThreshold = 0.9
+coverageSkipTestFiles = true
+# Generated schema and byte-exact upstream authorities are verified by drift,
+# canonical fixtures and an independent consumer; coverage gates our adapter.
+coveragePathIgnorePatterns = ["**/vendor/**", "**/schema-validator.js", "**/node_modules/**"]

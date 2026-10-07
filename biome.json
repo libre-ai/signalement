@@ -6,7 +6,7 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**"]
+    "includes": ["**", "!!vendor/contracts", "!!packages/domain/schema-validator.js"]
   },
   "formatter": {
     "enabled": true,

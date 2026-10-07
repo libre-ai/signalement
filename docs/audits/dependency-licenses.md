@@ -50,3 +50,21 @@ bun audit --json
 
 Re-run on every lockfile change. A changed, missing, ambiguous, AGPL, SSPL, or
 proprietary license blocks adoption until reviewed explicitly.
+
+## Product implementation recheck — 2026-10-07
+
+Ajv 8.20.0 and ajv-formats 3.0.1 are now explicit development dependencies at the
+versions already present in the locked governance graph. The standalone generated
+validator is distributed under MIT with its upstream attribution; extension bundles
+include that notice, the EUPL-1.2 license and the application attribution.
+
+The fresh Bun audit initially rejected fast-uri 4.1.4 for
+[host normalization](https://github.com/advisories/GHSA-hrr3-gc8f-f4qj) and
+[mailto header handling](https://github.com/advisories/GHSA-jvvf-x445-j334).
+The exact override and lock were updated to the upstream patch 4.1.5.
+`bun audit --json` then exited 0 with `{}`; `bun pm ls --all` lists only fast-uri
+4.1.5 in the resolved graph. Old unreferenced install-cache manifests are not an
+alternative lock authority. Installed manifest license inspection found the same
+permitted license families, including BSD-3-Clause for the patch. The repository
+toolchain gate passed. This is an advisory-database snapshot, not a claim that no
+unknown vulnerabilities exist.
