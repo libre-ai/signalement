@@ -6,7 +6,7 @@ Libre AI Signalement is a couche 1 product for reviewed incident and improvement
 reporting, executable reproduction, deterministic fix verification, and
 multi-system projection. `project.v1.yaml` owns current state; the foundation
 specification owns target architecture. Fleet doctrine comes from:
-https://raw.githubusercontent.com/libre-ai/governance/main/docs/method/CONTEXT-TEMPLATE.md
+https://raw.githubusercontent.com/libre-ai/project-governance/migrate/recover-code/docs/method/CONTEXT-TEMPLATE.md
 
 ## Domain doctrine
 

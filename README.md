@@ -11,7 +11,7 @@ destination en échec ne doit ni bloquer ni dupliquer les autres.
 
 Ce parcours ne reçoit jamais les vulnérabilités suspectées, secrets exposés ou détails
 d'exploitation. Ils suivent exclusivement le canal
-[privé de sécurité de la flotte](https://github.com/libre-ai/governance/security/advisories/new),
+[privé de sécurité de la flotte](https://github.com/libre-ai/project-governance/security/advisories/new),
 défini par le `SECURITY.md` canonique de Governance.
 
 Projet de la constellation [Libre AI](https://libre-ai.fr) — couche 1.
@@ -28,10 +28,11 @@ publication développés en TDD. Il ne contient encore aucune extension installa
 API opérationnelle, synchronisation fournisseur ni worker d'exécution qualifié.
 
 La publication de la fondation porte sur le commit
-`8b02f8e61e1675948caaea5be3c57a898cbd624b`, attesté par la
-[PR Governance 112](https://github.com/libre-ai/governance/pull/112).
+`8b02f8e61e1675948caaea5be3c57a898cbd624b`, attesté par la PR 112 du dépôt
+`governance`, retiré le 2026-10-07 (ADR-0041) : son lien n'est donc plus donné,
+et l'attestation citée ci-dessous a suivi l'autorité par transfert tracé.
 La disponibilité publique a été revérifiée le 2026-10-06.
-L’[attestation privée historique](https://github.com/libre-ai/governance/blob/8bc106b5be319be81616ba30ee3ab92e4ffdd253/docs/reviews/signalement-bootstrap/8b02f8e61e1675948caaea5be3c57a898cbd624b/ATTESTATION.md)
+L’[attestation privée historique](https://github.com/libre-ai/project-governance/blob/2024a4884b314df99be457618be9c3b48a0287f7/docs/reviews/signalement-bootstrap/8b02f8e61e1675948caaea5be3c57a898cbd624b/ATTESTATION.md)
 décrit les contrôles effectués avant exposition ; elle ne qualifie aucune capacité produit.
 Le critère de revue architecture, sécurité, qualité et souveraineté reste en attente :
 les preuves disponibles ne démontrent pas ces quatre revues au même commit.
