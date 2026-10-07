@@ -8,6 +8,8 @@
         "@biomejs/biome": "2.5.3",
         "@libre-ai/governance": "github:libre-ai/project-governance#2024a4884b314df99be457618be9c3b48a0287f7",
         "@types/bun": "1.3.14",
+        "ajv": "8.20.0",
+        "ajv-formats": "3.0.1",
         "typescript": "7.0.2",
       },
     },

@@ -23,9 +23,16 @@ joindre les résultats aux systèmes choisis.
 
 ## État vérifié
 
-Ce dépôt contient actuellement une spécification de fondation et des garde-fous de
-publication développés en TDD. Il ne contient encore aucune extension installable,
-API opérationnelle, synchronisation fournisseur ni worker d'exécution qualifié.
+Ce dépôt contient la fondation, les garde-fous de publication et une extension locale
+expérimentale en cours de validation : capture volontaire, masquage par pixels,
+brouillons chiffrés par phrase secrète et export ZIP relu. Le contrat d'export v1
+est verrouillé dans Contracts. La qualification complète de Chrome, Firefox et
+Safari reste ouverte ; aucune API serveur, synchronisation fournisseur ni worker
+de reproduction n'est livré.
+
+Les [recettes de qualification](tools/browser-check/README.md) distinguent le parcours
+réellement exécuté dans Chrome des contrôles encore incomplets dans les autres
+navigateurs. Un paquet compilé ne suffit pas à qualifier un navigateur.
 
 La publication de la fondation porte sur le commit
 `8b02f8e61e1675948caaea5be3c57a898cbd624b`, attesté par la PR 112 du dépôt
@@ -44,11 +51,11 @@ une preuve de parité.
 <!-- libre-ai:project-status:begin -->
 <!-- Section générée depuis project.v1.yaml — ne pas éditer à la main. -->
 
-- Situation actuelle : La fondation est publiée au commit 8b02f8e61e1675948caaea5be3c57a898cbd624b, attesté dans Governance par la PR 112 fusionnée; sa disponibilité publique a été revérifiée le 2026-10-06. Aucune capture, extension, API, synchronisation, exécution ni intégration fournisseur n'est qualifiée ou opérationnelle.
+- Situation actuelle : La fondation est publique. Une implémentation locale de capture relue, brouillons chiffrés et export portable est en validation, contre le contrat v1 verrouillé. La qualification complète des trois navigateurs reste ouverte. Aucun connecteur fournisseur, API serveur ni worker de reproduction n'est livré.
 - Maturité : specified
 - Exposition : spec-published
 - Confiance : medium
-- Preuves vérifiées le : 2026-10-06
+- Preuves vérifiées le : 2026-10-07
 - Avancement : 18,8 % du périmètre actuellement déclaré
 
 <!-- libre-ai:project-status:end -->

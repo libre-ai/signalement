@@ -1,0 +1,306 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.libre-ai.fr/schemas/signalement-local-export.v1.schema.json",
+  "title": "Signalement local export v1 candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "payload", "approval", "exportedAt"],
+  "properties": {
+    "schemaVersion": {
+      "const": "libre-ai.signalement-local-export.v1"
+    },
+    "payload": {
+      "$ref": "#/$defs/payload"
+    },
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target", "payloadDigest", "approvedAt"],
+      "properties": {
+        "target": {
+          "const": "local-export"
+        },
+        "payloadDigest": {
+          "$ref": "#/$defs/digest"
+        },
+        "approvedAt": {
+          "$ref": "#/$defs/timestamp"
+        }
+      }
+    },
+    "exportedAt": {
+      "$ref": "#/$defs/timestamp"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dossierId",
+        "dossierRevision",
+        "createdAt",
+        "reviewedAt",
+        "statements",
+        "context",
+        "observations",
+        "hypotheses",
+        "document",
+        "files"
+      ],
+      "properties": {
+        "dossierId": {
+          "$ref": "#/$defs/id"
+        },
+        "dossierRevision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "createdAt": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "reviewedAt": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "statements": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["expected", "observed"],
+          "properties": {
+            "expected": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096
+            },
+            "observed": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096
+            }
+          }
+        },
+        "context": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["provenance", "application", "environment", "steps"],
+          "properties": {
+            "provenance": {
+              "const": "user-statement"
+            },
+            "application": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "environment": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1024
+            },
+            "steps": {
+              "type": "array",
+              "minItems": 0,
+              "maxItems": 100,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 1024
+              }
+            }
+          }
+        },
+        "observations": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 100,
+          "items": {
+            "$ref": "#/$defs/observation"
+          }
+        },
+        "hypotheses": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 100,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "text"],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "text": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4096
+              }
+            }
+          }
+        },
+        "document": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["text", "observationIds"],
+          "properties": {
+            "text": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 262144
+            },
+            "observationIds": {
+              "type": "array",
+              "minItems": 0,
+              "maxItems": 100,
+              "items": {
+                "$ref": "#/$defs/id"
+              },
+              "uniqueItems": true
+            }
+          }
+        },
+        "files": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 33,
+          "items": {
+            "$ref": "#/$defs/file"
+          }
+        }
+      }
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "provenance", "text", "capturedAt", "mediaIds"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "provenance": {
+          "enum": ["user-statement", "capture-observation"]
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "capturedAt": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "mediaIds": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 100,
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "role", "mimeType", "byteLength", "sha256", "media"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "maxLength": 80,
+          "pattern": "^(README\\.md|media/(?!(?:con|prn|aux|nul|com[1-9]|lpt[1-9])\\.)[a-z][a-z0-9-]{0,63}\\.(png|webm|mp4))$"
+        },
+        "role": {
+          "enum": ["document", "screenshot", "video"]
+        },
+        "mimeType": {
+          "enum": ["text/markdown", "image/png", "video/webm", "video/mp4"]
+        },
+        "byteLength": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 67108864
+        },
+        "sha256": {
+          "$ref": "#/$defs/digest"
+        },
+        "media": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/media"
+            }
+          ]
+        }
+      }
+    },
+    "media": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "capturedAt",
+        "derivation",
+        "audioIncluded",
+        "audioReviewed",
+        "sanitation"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "enum": ["screenshot", "video"]
+        },
+        "capturedAt": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "derivation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["sourceId", "operations"],
+          "properties": {
+            "sourceId": {
+              "$ref": "#/$defs/id"
+            },
+            "operations": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 5,
+              "items": {
+                "enum": ["metadata-removal", "redaction", "crop", "transcode", "audio-removal"]
+              },
+              "uniqueItems": true
+            }
+          }
+        },
+        "audioIncluded": {
+          "type": "boolean"
+        },
+        "audioReviewed": {
+          "type": "boolean"
+        },
+        "sanitation": {
+          "const": "reviewed-with-limitations"
+        }
+      }
+    }
+  }
+}

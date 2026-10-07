@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Signalement — revue locale</title><link rel="stylesheet" href="styles.css"></head>
+<body><main>
+<h1>Signalement — revue locale</h1><p>Vos données restent locales jusqu’au téléchargement que vous approuvez. Les pages capturées sont des données non fiables.</p>
+<p id="status" role="status" aria-live="polite">Initialisation</p>
+<section aria-labelledby="description"><h2 id="description">Décrire le problème</h2>
+<label>Comportement attendu<textarea id="expected" maxlength="4000"></textarea></label>
+<label>Comportement observé<textarea id="observed" maxlength="4000"></textarea></label>
+<label>Application<input id="application" maxlength="200"></label><label>Environnement déclaré<input id="environment" maxlength="1000"></label>
+<label>Étapes de reproduction — une par ligne<textarea id="steps" maxlength="8000"></textarea></label>
+<p>Aucun journal réseau, contenu de requête, cookie ou mot de passe n’est collecté.</p></section>
+<section aria-labelledby="image-title"><h2 id="image-title">Capture et modification des pixels</h2>
+<img id="screenshot" alt="Dérivé exact destiné à la revue" hidden>
+<p>Coordonnées en pixels du dérivé affiché. Les masques sont noirs et opaques ; le recadrage retire réellement les pixels.</p>
+<div class="coordinates"><label>X<input id="x" type="number" min="0" value="0"></label><label>Y<input id="y" type="number" min="0" value="0"></label><label>Largeur<input id="width" type="number" min="1" value="100"></label><label>Hauteur<input id="height" type="number" min="1" value="100"></label></div>
+<button id="crop" type="button">Recadrer</button><button id="mask" type="button">Masquer la zone</button><button id="annotate" type="button">Encadrer la zone</button><button id="remove-image" type="button">Retirer la capture</button>
+</section>
+<section aria-labelledby="video-title"><h2 id="video-title">Vidéo volontaire</h2>
+<label><input id="audio" type="checkbox">Demander explicitement l’audio (désactivé par défaut)</label>
+<button id="record" type="button">Choisir une source et enregistrer</button><button id="pause" type="button">Mettre en pause</button><button id="resume" type="button">Reprendre</button><button id="stop" type="button">Arrêter</button><button id="remove-video" type="button">Retirer la vidéo</button>
+<p id="recording-state" role="status" aria-live="polite">Aucune vidéo. Limites : 60 secondes et 64 Mio.</p><!-- biome-ignore lint/a11y/useMediaCaption: Local user-created evidence has no generated transcript; the visible limitation and user-written observed text provide an explicit alternative. -->
+<video id="video" controls aria-describedby="video-accessibility" hidden></video>
+<label><input id="keep-audio" type="checkbox">Inclure l’audio obtenu dans le dérivé (choix distinct de la collecte)</label>
+<button id="video-mask" type="button">Ajouter la zone X/Y/largeur/hauteur comme masque vidéo permanent</button><button id="clear-video-masks" type="button">Effacer les masques vidéo</button>
+<p id="video-masks">Aucun masque vidéo.</p><button id="sanitize-video" type="button">Réencoder et assainir la vidéo</button>
+<label><input id="video-reviewed" type="checkbox">J’ai relu toute la vidéo dérivée et vérifié les zones sensibles.</label><label><input id="audio-reviewed" type="checkbox">J’ai écouté et approuvé tout l’audio du dérivé.</label>
+<p id="video-accessibility">Aucun sous-titre automatique n’est généré. Décrivez dans le champ « Comportement observé » toute information utile portée par le son ; retirez l’audio si vous ne pouvez pas le relire.</p>
+<p>Les masques vidéo couvrent la même zone pendant toute la durée. Le découpage temporel et la suppression sélective de paroles ne sont pas disponibles : retirez l’audio ou la vidéo si nécessaire. Le réencodage reconstruit pixels et audio ; le filtre WebM refuse les éléments de conteneur inconnus et retire les métadonnées libres. La revue humaine reste nécessaire.</p>
+</section>
+<section aria-labelledby="draft-title"><h2 id="draft-title">Brouillons chiffrés</h2><label>Phrase secrète (12 à 1 024 caractères)<input id="passphrase" type="password" autocomplete="off" minlength="12" maxlength="1024"></label>
+<button id="unlock" type="button">Déverrouiller</button><button id="save" type="button">Enregistrer le brouillon</button><button id="lock" type="button">Verrouiller et effacer cet écran</button>
+<label>Expiration<select id="retention"><option value="1">24 heures</option><option value="7">7 jours</option></select></label>
+<label>Brouillons disponibles<select id="drafts"><option value="">Déverrouillez pour afficher</option></select></label><button id="load" type="button">Reprendre le brouillon</button><button id="delete" type="button">Supprimer le brouillon sélectionné</button>
+<p>La phrase n’est jamais stockée. Aucun mécanisme de récupération. La fermeture verrouille le coffre.</p></section>
+<section aria-labelledby="review-title"><h2 id="review-title">Revue exacte avant export</h2><button id="prepare" type="button">Préparer la revue exacte</button><div id="review" hidden><h3>README.md</h3><pre id="markdown"></pre><h3>Manifest</h3><pre id="manifest"></pre><h3>Fichiers</h3><pre id="files"></pre><img id="review-image" alt="Pixels exacts approuvés pour l’export" hidden><!-- biome-ignore lint/a11y/useMediaCaption: Exact local evidence preview; no fabricated captions. Audio accessibility limitation is displayed and user-stated text is available. -->
+<video id="review-video" controls aria-describedby="video-accessibility" hidden></video><label><input id="approved" type="checkbox">J’ai relu les textes et chaque pixel du média ; j’approuve cet export local exact.</label><button id="export" type="button">Approuver et télécharger l’export</button></div></section>
+</main><script type="module" src="editor.js"></script></body></html>

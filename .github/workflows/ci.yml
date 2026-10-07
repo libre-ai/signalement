@@ -41,6 +41,21 @@ jobs:
           test "$(bun --revision)" = "1.4.0-canary.1+57f349f63"
           bun run check:toolchain
       - run: bun run check:tree
+      - name: Verify native video and editor regressions
+        env:
+          CHROME_BINARY: /usr/bin/google-chrome
+        run: |
+          test -x "$CHROME_BINARY"
+          bun apps/extension-shared/video.browser-check.ts
+          bun apps/extension-shared/editor.browser-check.ts
+          bun apps/extension-shared/editor.browser-check.ts --audio-fixture
+          bun apps/extension-shared/editor.browser-check.ts --init-lock
+      - name: Verify installed Chrome local capture and export
+        env:
+          CHROME_BINARY: /usr/bin/google-chrome
+        run: |
+          test -x "$CHROME_BINARY"
+          bun tools/browser-check/chrome.ts
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 0
