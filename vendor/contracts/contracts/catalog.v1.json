@@ -1,0 +1,1250 @@
+{
+  "schemaVersion": "libre-ai.contract-catalog.v1",
+  "contracts": [
+    {
+      "id": "common-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/common.v1.schema.json",
+      "owners": ["canonical-core"],
+      "consumers": ["all"],
+      "compatibility": "additive-v1",
+      "classification": "public",
+      "status": "locked"
+    },
+    {
+      "id": "problem-details-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/problem-details.v1.schema.json",
+      "owners": ["web-platform"],
+      "consumers": ["all-http-apis"],
+      "compatibility": "additive-v1",
+      "classification": "public",
+      "status": "locked"
+    },
+    {
+      "id": "browser-session-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/browser-session.v1.schema.json",
+      "owners": ["auth-web"],
+      "consumers": ["web-platform", "authz-biscuit"],
+      "compatibility": "additive-v1",
+      "classification": "internal",
+      "status": "locked"
+    },
+    {
+      "id": "deletion-receipt-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/deletion-receipt.v1.schema.json",
+      "owners": ["canonical-core"],
+      "consumers": ["tenant-applications", "proof"],
+      "compatibility": "additive-v1",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "retention-policy-schema-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/retention-policy.v1.schema.json",
+      "owners": ["canonical-core"],
+      "consumers": ["tenant-applications", "operations"],
+      "compatibility": "additive-v1",
+      "classification": "public",
+      "status": "locked"
+    },
+    {
+      "id": "work-package-plan-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/work-package-plan.v1.schema.json",
+      "owners": ["architecture"],
+      "consumers": ["implementation-agents", "release"],
+      "compatibility": "major-versioned",
+      "classification": "public",
+      "status": "locked"
+    },
+    {
+      "id": "activity-definition-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/activity-definition.v1.schema.json",
+      "owners": ["practices"],
+      "consumers": ["practices", "practice-scoring"],
+      "compatibility": "additive-v1",
+      "classification": "public",
+      "status": "locked"
+    },
+    {
+      "id": "activity-outcome-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/activity-outcome.v1.schema.json",
+      "owners": ["practices"],
+      "consumers": ["practices"],
+      "compatibility": "additive-v1",
+      "classification": "personal",
+      "status": "locked"
+    },
+    {
+      "id": "practice-progress-export-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/practice-progress-export.v1.schema.json",
+      "owners": ["practices"],
+      "consumers": ["practices"],
+      "compatibility": "additive-v1",
+      "classification": "personal",
+      "status": "locked"
+    },
+    {
+      "id": "public-projection-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/public-projection.v1.schema.json",
+      "owners": ["website"],
+      "consumers": ["website"],
+      "compatibility": "additive-v1",
+      "classification": "public",
+      "status": "locked"
+    },
+    {
+      "id": "correction-record-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/correction-record.v1.schema.json",
+      "owners": ["website"],
+      "consumers": ["website"],
+      "compatibility": "additive-v1",
+      "classification": "public",
+      "status": "locked"
+    },
+    {
+      "id": "feed-fetch-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/feed-fetch.v1.schema.json",
+      "owners": ["radar"],
+      "consumers": ["radar", "radar-engine"],
+      "compatibility": "additive-v1",
+      "classification": "internal",
+      "status": "locked"
+    },
+    {
+      "id": "curation-rule-set-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/curation-rule-set.v1.schema.json",
+      "owners": ["radar"],
+      "consumers": ["radar", "radar-engine"],
+      "compatibility": "additive-v1",
+      "classification": "personal",
+      "status": "locked"
+    },
+    {
+      "id": "curated-item-export-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/curated-item-export.v1.schema.json",
+      "owners": ["radar"],
+      "consumers": ["radar"],
+      "compatibility": "additive-v1",
+      "classification": "personal",
+      "status": "locked"
+    },
+    {
+      "id": "context-document-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/context-document.v1.schema.json",
+      "owners": ["notebook"],
+      "consumers": ["notebook", "context"],
+      "compatibility": "additive-v1",
+      "classification": "personal",
+      "status": "locked"
+    },
+    {
+      "id": "notebook-backup-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/notebook-backup.v1.schema.json",
+      "owners": ["notebook"],
+      "consumers": ["notebook"],
+      "compatibility": "additive-v1",
+      "classification": "personal",
+      "status": "locked"
+    },
+    {
+      "id": "session-event-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/session-event.v1.schema.json",
+      "owners": ["sessions"],
+      "consumers": ["sessions"],
+      "compatibility": "additive-v1",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "session-export-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/session-export.v1.schema.json",
+      "owners": ["sessions"],
+      "consumers": ["sessions"],
+      "compatibility": "additive-v1",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "policy-definition-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/policy-definition.v1.schema.json",
+      "owners": ["model-policy"],
+      "consumers": ["model-policy", "policy-core"],
+      "compatibility": "additive-v1",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "policy-need-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/policy-need.v1.schema.json",
+      "owners": ["model-policy", "canonical-core"],
+      "consumers": ["model-policy", "policy-core"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "model-snapshot-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/model-snapshot.v1.schema.json",
+      "owners": ["model-policy"],
+      "consumers": ["model-policy", "policy-core"],
+      "compatibility": "additive-v1",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "policy-evaluation-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/policy-evaluation.v1.schema.json",
+      "owners": ["model-policy", "policy-core"],
+      "consumers": ["model-policy"],
+      "compatibility": "additive-v1",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "public-vote-dataset-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/public-vote-dataset.v1.schema.json",
+      "owners": ["boussole"],
+      "consumers": ["boussole", "boussole-scoring"],
+      "compatibility": "additive-v1",
+      "classification": "public",
+      "status": "locked"
+    },
+    {
+      "id": "boussole-method-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/boussole-method.v1.schema.json",
+      "owners": ["boussole"],
+      "consumers": ["boussole", "boussole-scoring"],
+      "compatibility": "additive-v1",
+      "classification": "public",
+      "status": "locked"
+    },
+    {
+      "id": "local-comparison-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/local-comparison.v1.schema.json",
+      "owners": ["boussole"],
+      "consumers": ["boussole"],
+      "compatibility": "additive-v1",
+      "classification": "personal",
+      "status": "locked"
+    },
+    {
+      "id": "spec-package-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/spec-package.v1.schema.json",
+      "owners": ["specifications"],
+      "consumers": ["specifications", "missions"],
+      "compatibility": "additive-v1",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "agent-handoff-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/agent-handoff.v1.schema.json",
+      "owners": ["specifications"],
+      "consumers": ["missions", "agent-orchestrator"],
+      "compatibility": "additive-v1",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "orchestrator-event-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/orchestrator-event.v1.schema.json",
+      "owners": ["agent-orchestrator"],
+      "consumers": ["missions"],
+      "compatibility": "additive-v1",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "mission-record-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/mission-record.v1.schema.json",
+      "owners": ["missions"],
+      "consumers": ["missions", "agent-orchestrator"],
+      "compatibility": "additive-v1",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "execution-plan-body-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/execution-plan-body.v1.schema.json",
+      "owners": ["agent-orchestrator"],
+      "consumers": ["missions", "agent-harness"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "agent-contributor-lineage-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/agent-contributor-lineage.v1.schema.json",
+      "owners": ["agent-harness"],
+      "consumers": ["missions", "proof"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "agent-review-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/agent-review.v1.schema.json",
+      "owners": ["missions", "agent-harness"],
+      "consumers": ["missions", "proof"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "agent-review-session-attestation-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/agent-review-session-attestation.v1.schema.json",
+      "owners": ["agent-harness", "security"],
+      "consumers": ["missions", "proof"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "agent-review-quorum-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/agent-review-quorum.v1.schema.json",
+      "owners": ["missions"],
+      "consumers": ["missions", "agent-orchestrator"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "agent-review-quorum-view-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/agent-review-quorum-view.v1.schema.json",
+      "owners": ["missions"],
+      "consumers": ["browser", "proof"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "execution-authorization-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/execution-authorization.v1.schema.json",
+      "owners": ["missions"],
+      "consumers": ["agent-orchestrator", "authz-biscuit"],
+      "compatibility": "major-versioned",
+      "classification": "internal",
+      "status": "locked"
+    },
+    {
+      "id": "orchestrator-control-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/orchestrator-control.v1.schema.json",
+      "owners": ["agent-orchestrator"],
+      "consumers": ["missions", "agent-harness"],
+      "compatibility": "major-versioned",
+      "classification": "internal",
+      "status": "locked"
+    },
+    {
+      "id": "orchestrator-event-v2",
+      "kind": "json-schema",
+      "path": "contracts/schemas/orchestrator-event.v2.schema.json",
+      "owners": ["agent-orchestrator"],
+      "consumers": ["missions", "proof"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "harness-profile-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/harness-profile.v1.schema.json",
+      "owners": ["agent-harness", "security"],
+      "consumers": ["agent-orchestrator", "proof"],
+      "compatibility": "major-versioned",
+      "classification": "internal",
+      "status": "locked"
+    },
+    {
+      "id": "harness-profile-v2",
+      "kind": "json-schema",
+      "path": "contracts/schemas/harness-profile.v2.schema.json",
+      "owners": ["agent-harness", "security"],
+      "consumers": ["agent-orchestrator", "proof"],
+      "compatibility": "major-versioned",
+      "classification": "internal",
+      "status": "candidate",
+      "review": {
+        "state": "pending-independent-agent-review",
+        "reviewerKind": "agent",
+        "separation": "role-scoped-review-pass",
+        "required": ["architecture", "security"],
+        "dossier": "docs/reviews/harness-profile-v2-review.md"
+      }
+    },
+    {
+      "id": "harness-attestation-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/harness-attestation.v1.schema.json",
+      "owners": ["agent-harness", "security"],
+      "consumers": ["missions", "agent-orchestrator", "proof"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "mission-record-v2",
+      "kind": "json-schema",
+      "path": "contracts/schemas/mission-record.v2.schema.json",
+      "owners": ["missions"],
+      "consumers": ["missions", "agent-orchestrator"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "missions-api-v2",
+      "kind": "openapi",
+      "path": "contracts/openapi/missions.v2.yaml",
+      "owners": ["missions"],
+      "consumers": ["browser", "agent-orchestrator", "agent-harness"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "agent-runs-authz-v1",
+      "kind": "biscuit-policy",
+      "path": "contracts/authz/agent-runs-v1.datalog",
+      "owners": ["missions", "authz-biscuit"],
+      "consumers": ["missions", "agent-orchestrator", "agent-harness"],
+      "compatibility": "major-versioned",
+      "classification": "internal",
+      "status": "locked"
+    },
+    {
+      "id": "agent-runs-authz-v2",
+      "kind": "biscuit-policy",
+      "path": "contracts/authz/agent-runs-v2.datalog",
+      "owners": ["missions", "authz-biscuit", "security"],
+      "consumers": ["missions", "agent-orchestrator", "agent-harness"],
+      "compatibility": "major-versioned",
+      "classification": "internal",
+      "status": "locked"
+    },
+    {
+      "id": "evidence-report-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/evidence-report.v1.schema.json",
+      "owners": ["proof"],
+      "consumers": ["all"],
+      "compatibility": "additive-v1",
+      "classification": "internal",
+      "status": "locked"
+    },
+    {
+      "id": "artifact-manifest-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/artifact-manifest.v1.schema.json",
+      "owners": ["artifact"],
+      "consumers": ["all"],
+      "compatibility": "additive-v1",
+      "classification": "internal",
+      "status": "locked"
+    },
+    {
+      "id": "retention-policy-v1",
+      "kind": "data-policy",
+      "path": "contracts/data/retention.v1.json",
+      "owners": ["canonical-core"],
+      "consumers": ["tenant-applications", "operations", "proof"],
+      "compatibility": "major-versioned",
+      "classification": "public",
+      "status": "locked"
+    },
+    {
+      "id": "auth-api-v1",
+      "kind": "openapi",
+      "path": "contracts/openapi/auth.v1.yaml",
+      "owners": ["auth-web", "authz-biscuit"],
+      "consumers": ["web-platform", "tenant-applications"],
+      "compatibility": "additive-v1",
+      "classification": "internal",
+      "status": "locked"
+    },
+    {
+      "id": "website-api-v1",
+      "kind": "openapi",
+      "path": "contracts/openapi/website.v1.yaml",
+      "owners": ["website"],
+      "consumers": ["public"],
+      "compatibility": "additive-v1",
+      "classification": "public",
+      "status": "locked"
+    },
+    {
+      "id": "practices-api-v1",
+      "kind": "openapi",
+      "path": "contracts/openapi/practices.v1.yaml",
+      "owners": ["practices"],
+      "consumers": ["browser"],
+      "compatibility": "additive-v1",
+      "classification": "mixed",
+      "status": "locked"
+    },
+    {
+      "id": "radar-api-v1",
+      "kind": "openapi",
+      "path": "contracts/openapi/radar.v1.yaml",
+      "owners": ["radar"],
+      "consumers": ["browser"],
+      "compatibility": "additive-v1",
+      "classification": "personal",
+      "status": "locked"
+    },
+    {
+      "id": "sessions-api-v1",
+      "kind": "openapi",
+      "path": "contracts/openapi/sessions.v1.yaml",
+      "owners": ["sessions"],
+      "consumers": ["browser"],
+      "compatibility": "additive-v1",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "model-policy-api-v1",
+      "kind": "openapi",
+      "path": "contracts/openapi/model-policy.v1.yaml",
+      "owners": ["model-policy"],
+      "consumers": ["browser"],
+      "compatibility": "additive-v1",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "specifications-api-v1",
+      "kind": "openapi",
+      "path": "contracts/openapi/specifications.v1.yaml",
+      "owners": ["specifications"],
+      "consumers": ["browser", "missions"],
+      "compatibility": "additive-v1",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "missions-api-v1",
+      "kind": "openapi",
+      "path": "contracts/openapi/missions.v1.yaml",
+      "owners": ["missions"],
+      "consumers": ["browser", "agent-orchestrator"],
+      "compatibility": "additive-v1",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "practice-scoring-v1",
+      "kind": "wit",
+      "path": "contracts/wit/practice-scoring-v1/world.wit",
+      "owners": ["practices", "specialized-rust"],
+      "consumers": ["practices"],
+      "compatibility": "major-versioned",
+      "classification": "local",
+      "status": "locked"
+    },
+    {
+      "id": "radar-engine-v1",
+      "kind": "wit",
+      "path": "contracts/wit/radar-engine-v1/world.wit",
+      "owners": ["radar", "specialized-rust"],
+      "consumers": ["radar"],
+      "compatibility": "major-versioned",
+      "classification": "internal",
+      "status": "locked"
+    },
+    {
+      "id": "notebook-core-v1",
+      "kind": "wit",
+      "path": "contracts/wit/notebook-core-v1/world.wit",
+      "owners": ["notebook", "specialized-rust"],
+      "consumers": ["notebook"],
+      "compatibility": "major-versioned",
+      "classification": "local",
+      "status": "locked"
+    },
+    {
+      "id": "policy-core-v1",
+      "kind": "wit",
+      "path": "contracts/wit/policy-core-v1/world.wit",
+      "profiles": ["contracts/wit/policy-core-v1/SEMANTICS.md"],
+      "vectors": [
+        "contracts/fixtures/policy-core-v1/operators.json",
+        "contracts/fixtures/policy-core-v1/golden.json"
+      ],
+      "owners": ["model-policy", "specialized-rust"],
+      "consumers": ["model-policy"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "boussole-scoring-v1",
+      "kind": "wit",
+      "path": "contracts/wit/boussole-scoring-v1/world.wit",
+      "owners": ["boussole", "specialized-rust"],
+      "consumers": ["boussole"],
+      "compatibility": "major-versioned",
+      "classification": "local",
+      "status": "locked"
+    },
+    {
+      "id": "authority-v1",
+      "kind": "biscuit-authority",
+      "path": "contracts/authz/authority-v1.datalog",
+      "owners": ["authz-biscuit"],
+      "consumers": ["auth-web", "tenant-applications"],
+      "compatibility": "major-versioned",
+      "classification": "internal",
+      "status": "locked"
+    },
+    {
+      "id": "authority-v2",
+      "kind": "biscuit-authority",
+      "path": "contracts/authz/authority-v2.datalog",
+      "owners": ["authz-biscuit", "security"],
+      "consumers": ["agent-orchestrator", "authz-biscuit"],
+      "compatibility": "major-versioned",
+      "classification": "internal",
+      "status": "locked"
+    },
+    {
+      "id": "sessions-authz-v1",
+      "kind": "biscuit-policy",
+      "path": "contracts/authz/sessions-v1.datalog",
+      "owners": ["sessions", "authz-biscuit"],
+      "consumers": ["sessions"],
+      "compatibility": "major-versioned",
+      "classification": "internal",
+      "status": "locked"
+    },
+    {
+      "id": "missions-authz-v1",
+      "kind": "biscuit-policy",
+      "path": "contracts/authz/missions-v1.datalog",
+      "owners": ["missions", "authz-biscuit"],
+      "consumers": ["missions", "agent-orchestrator"],
+      "compatibility": "major-versioned",
+      "classification": "internal",
+      "status": "locked"
+    },
+    {
+      "id": "radar-normalized-item-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/radar-normalized-item.v1.schema.json",
+      "owners": ["radar", "specialized-rust"],
+      "consumers": ["radar", "radar-engine"],
+      "compatibility": "major-versioned",
+      "classification": "internal",
+      "status": "locked"
+    },
+    {
+      "id": "radar-normalized-feed-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/radar-normalized-feed.v1.schema.json",
+      "owners": ["radar", "specialized-rust"],
+      "consumers": ["radar", "radar-engine"],
+      "compatibility": "major-versioned",
+      "classification": "internal",
+      "status": "locked"
+    },
+    {
+      "id": "radar-rule-evaluation-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/radar-rule-evaluation.v1.schema.json",
+      "owners": ["radar", "specialized-rust"],
+      "consumers": ["radar", "radar-engine"],
+      "compatibility": "major-versioned",
+      "classification": "personal",
+      "status": "locked"
+    },
+    {
+      "id": "curation-rule-set-v2",
+      "kind": "json-schema",
+      "path": "contracts/schemas/curation-rule-set.v2.schema.json",
+      "owners": ["radar", "specialized-rust"],
+      "consumers": ["radar", "radar-engine"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "curated-item-export-v2",
+      "kind": "json-schema",
+      "path": "contracts/schemas/curated-item-export.v2.schema.json",
+      "owners": ["radar", "specialized-rust"],
+      "consumers": ["radar", "radar-engine"],
+      "compatibility": "major-versioned",
+      "classification": "personal",
+      "status": "locked"
+    },
+    {
+      "id": "context-document-v2",
+      "kind": "json-schema",
+      "path": "contracts/schemas/context-document.v2.schema.json",
+      "owners": ["notebook", "specialized-rust"],
+      "consumers": ["notebook", "notebook-core"],
+      "compatibility": "major-versioned",
+      "classification": "local",
+      "status": "locked"
+    },
+    {
+      "id": "notebook-backup-seal-request-v2",
+      "kind": "json-schema",
+      "path": "contracts/schemas/notebook-backup-seal-request.v2.schema.json",
+      "owners": ["notebook", "specialized-rust"],
+      "consumers": ["notebook", "notebook-core"],
+      "compatibility": "major-versioned",
+      "classification": "local",
+      "status": "locked"
+    },
+    {
+      "id": "notebook-backup-v2",
+      "kind": "json-schema",
+      "path": "contracts/schemas/notebook-backup.v2.schema.json",
+      "owners": ["notebook", "specialized-rust"],
+      "consumers": ["notebook", "notebook-core"],
+      "compatibility": "major-versioned",
+      "classification": "local",
+      "status": "locked"
+    },
+    {
+      "id": "policy-definition-v2",
+      "kind": "json-schema",
+      "path": "contracts/schemas/policy-definition.v2.schema.json",
+      "owners": ["model-policy", "specialized-rust"],
+      "consumers": ["model-policy", "policy-core"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "policy-need-v2",
+      "kind": "json-schema",
+      "path": "contracts/schemas/policy-need.v2.schema.json",
+      "owners": ["model-policy", "specialized-rust"],
+      "consumers": ["model-policy", "policy-core"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "model-snapshot-v2",
+      "kind": "json-schema",
+      "path": "contracts/schemas/model-snapshot.v2.schema.json",
+      "owners": ["model-policy", "specialized-rust"],
+      "consumers": ["model-policy", "policy-core"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "policy-evaluation-v2",
+      "kind": "json-schema",
+      "path": "contracts/schemas/policy-evaluation.v2.schema.json",
+      "owners": ["model-policy", "specialized-rust"],
+      "consumers": ["model-policy", "policy-core"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "public-vote-dataset-v2",
+      "kind": "json-schema",
+      "path": "contracts/schemas/public-vote-dataset.v2.schema.json",
+      "owners": ["boussole", "specialized-rust"],
+      "consumers": ["boussole", "boussole-scoring"],
+      "compatibility": "major-versioned",
+      "classification": "public",
+      "status": "locked"
+    },
+    {
+      "id": "boussole-method-v2",
+      "kind": "json-schema",
+      "path": "contracts/schemas/boussole-method.v2.schema.json",
+      "owners": ["boussole", "specialized-rust"],
+      "consumers": ["boussole", "boussole-scoring"],
+      "compatibility": "major-versioned",
+      "classification": "public",
+      "status": "locked"
+    },
+    {
+      "id": "boussole-response-set-v2",
+      "kind": "json-schema",
+      "path": "contracts/schemas/boussole-response-set.v2.schema.json",
+      "owners": ["boussole", "specialized-rust"],
+      "consumers": ["boussole", "boussole-scoring"],
+      "compatibility": "major-versioned",
+      "classification": "local",
+      "status": "locked"
+    },
+    {
+      "id": "local-comparison-v2",
+      "kind": "json-schema",
+      "path": "contracts/schemas/local-comparison.v2.schema.json",
+      "owners": ["boussole", "specialized-rust"],
+      "consumers": ["boussole", "boussole-scoring"],
+      "compatibility": "major-versioned",
+      "classification": "local",
+      "status": "locked"
+    },
+    {
+      "id": "public-vote-dataset-v3",
+      "kind": "json-schema",
+      "path": "contracts/schemas/public-vote-dataset.v3.schema.json",
+      "owners": ["boussole", "specialized-rust"],
+      "consumers": ["boussole", "boussole-scoring"],
+      "compatibility": "major-versioned",
+      "classification": "public",
+      "status": "candidate",
+      "review": {
+        "state": "pending-independent-agent-review",
+        "reviewerKind": "agent",
+        "separation": "role-scoped-review-pass",
+        "required": ["architecture", "security", "methodology", "privacy"],
+        "dossier": "docs/reviews/boussole-v3-numeric-polarity-omission-review.md"
+      }
+    },
+    {
+      "id": "boussole-method-v3",
+      "kind": "json-schema",
+      "path": "contracts/schemas/boussole-method.v3.schema.json",
+      "owners": ["boussole", "specialized-rust"],
+      "consumers": ["boussole", "boussole-scoring"],
+      "compatibility": "major-versioned",
+      "classification": "public",
+      "status": "candidate",
+      "review": {
+        "state": "pending-independent-agent-review",
+        "reviewerKind": "agent",
+        "separation": "role-scoped-review-pass",
+        "required": ["architecture", "security", "methodology", "privacy"],
+        "dossier": "docs/reviews/boussole-v3-numeric-polarity-omission-review.md"
+      }
+    },
+    {
+      "id": "local-comparison-v3",
+      "kind": "json-schema",
+      "path": "contracts/schemas/local-comparison.v3.schema.json",
+      "owners": ["boussole", "specialized-rust"],
+      "consumers": ["boussole", "boussole-scoring"],
+      "compatibility": "major-versioned",
+      "classification": "local",
+      "status": "candidate",
+      "review": {
+        "state": "pending-independent-agent-review",
+        "reviewerKind": "agent",
+        "separation": "role-scoped-review-pass",
+        "required": ["architecture", "security", "methodology", "privacy"],
+        "dossier": "docs/reviews/boussole-v3-numeric-polarity-omission-review.md"
+      }
+    },
+    {
+      "id": "engine-golden-vectors-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/engine-golden-vectors.v1.schema.json",
+      "owners": ["canonical-core", "specialized-rust"],
+      "consumers": ["specialized-rust", "quality"],
+      "compatibility": "major-versioned",
+      "classification": "internal",
+      "status": "locked"
+    },
+    {
+      "id": "radar-api-v2",
+      "kind": "openapi",
+      "path": "contracts/openapi/radar.v2.yaml",
+      "owners": ["radar"],
+      "consumers": ["browser"],
+      "compatibility": "major-versioned",
+      "classification": "personal",
+      "status": "locked"
+    },
+    {
+      "id": "model-policy-api-v2",
+      "kind": "openapi",
+      "path": "contracts/openapi/model-policy.v2.yaml",
+      "owners": ["model-policy"],
+      "consumers": ["browser"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "radar-engine-v2",
+      "kind": "wit",
+      "path": "contracts/wit/radar-engine-v2/world.wit",
+      "owners": ["radar", "specialized-rust"],
+      "consumers": ["radar"],
+      "compatibility": "major-versioned",
+      "classification": "internal",
+      "status": "locked",
+      "profiles": ["contracts/wit/radar-engine-v2/PROFILE.md"],
+      "vectors": [
+        "contracts/fixtures/radar-engine-v2/golden-vectors.v1.json",
+        "contracts/fixtures/radar-engine-v2/security-vectors.v1.json"
+      ]
+    },
+    {
+      "id": "notebook-core-v2",
+      "kind": "wit",
+      "path": "contracts/wit/notebook-core-v2/world.wit",
+      "owners": ["notebook", "specialized-rust"],
+      "consumers": ["notebook"],
+      "compatibility": "major-versioned",
+      "classification": "local",
+      "status": "locked",
+      "profiles": ["contracts/wit/notebook-core-v2/SEMANTICS.md"],
+      "vectors": ["contracts/fixtures/notebook-core-v2/golden-vectors.v1.json"]
+    },
+    {
+      "id": "policy-core-v2",
+      "kind": "wit",
+      "path": "contracts/wit/policy-core-v2/world.wit",
+      "owners": ["model-policy", "specialized-rust"],
+      "consumers": ["model-policy"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "locked",
+      "profiles": ["contracts/wit/policy-core-v2/SEMANTICS.md"],
+      "vectors": [
+        "contracts/fixtures/policy-core-v2/operators.json",
+        "contracts/fixtures/policy-core-v2/golden.json",
+        "contracts/fixtures/policy-core-v2/resource-budgets.v1.json",
+        "contracts/fixtures/policy-core-invalid-json/manifest.json"
+      ]
+    },
+    {
+      "id": "boussole-scoring-v2",
+      "kind": "wit",
+      "path": "contracts/wit/boussole-scoring-v2/world.wit",
+      "owners": ["boussole", "specialized-rust"],
+      "consumers": ["boussole"],
+      "compatibility": "major-versioned",
+      "classification": "local",
+      "status": "locked",
+      "profiles": ["contracts/wit/boussole-scoring-v2/SEMANTICS.md"],
+      "vectors": [
+        "contracts/fixtures/boussole-scoring-v2/golden-vectors.v1.json",
+        "contracts/fixtures/boussole-scoring-v2/security-vectors.v1.json"
+      ]
+    },
+    {
+      "id": "envelope-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/envelope.v1.schema.json",
+      "owners": ["envelope", "security"],
+      "consumers": ["forge", "harness"],
+      "compatibility": "additive-v1",
+      "classification": "internal",
+      "status": "locked"
+    },
+    {
+      "id": "execution-graph-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/execution-graph.v1.schema.json",
+      "owners": ["missions", "agent-orchestrator"],
+      "consumers": ["missions", "agent-orchestrator", "sdk-ts", "sdk-rs"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "execution-plan-body-v2",
+      "kind": "json-schema",
+      "path": "contracts/schemas/execution-plan-body.v2.schema.json",
+      "owners": ["missions", "agent-orchestrator"],
+      "consumers": ["missions", "agent-orchestrator", "sdk-ts", "sdk-rs"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "execution-transfer-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/execution-transfer.v1.schema.json",
+      "owners": ["missions"],
+      "consumers": ["agent-orchestrator", "sdk-ts", "sdk-rs"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "execution-authorization-v2",
+      "kind": "json-schema",
+      "path": "contracts/schemas/execution-authorization.v2.schema.json",
+      "owners": ["missions"],
+      "consumers": ["agent-orchestrator", "sdk-ts", "sdk-rs"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "human-decision-request-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/human-decision-request.v1.schema.json",
+      "owners": ["missions"],
+      "consumers": ["agent-orchestrator", "sdk-ts", "sdk-rs"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "human-decision-response-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/human-decision-response.v1.schema.json",
+      "owners": ["missions"],
+      "consumers": ["agent-orchestrator", "sdk-ts", "sdk-rs"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "step-invocation-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/step-invocation.v1.schema.json",
+      "owners": ["agent-orchestrator"],
+      "consumers": ["harness", "sdk-ts", "sdk-rs"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "effect-attestation-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/effect-attestation.v1.schema.json",
+      "owners": ["agent-orchestrator", "harness"],
+      "consumers": ["missions", "agent-orchestrator", "sdk-ts", "sdk-rs"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "orchestrator-event-v3",
+      "kind": "json-schema",
+      "path": "contracts/schemas/orchestrator-event.v3.schema.json",
+      "owners": ["agent-orchestrator"],
+      "consumers": ["missions", "sdk-ts", "sdk-rs"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "retention-policy-schema-v2",
+      "kind": "json-schema",
+      "path": "contracts/schemas/retention-policy.v2.schema.json",
+      "owners": ["canonical-core", "agent-orchestrator"],
+      "consumers": ["missions", "agent-orchestrator", "operations", "sdk-ts", "sdk-rs"],
+      "compatibility": "major-versioned",
+      "classification": "public",
+      "status": "locked"
+    },
+    {
+      "id": "retention-policy-v2",
+      "kind": "data-policy",
+      "path": "contracts/data/retention.v2.json",
+      "owners": ["canonical-core", "agent-orchestrator"],
+      "consumers": ["missions", "agent-orchestrator", "operations"],
+      "compatibility": "major-versioned",
+      "classification": "public",
+      "status": "locked"
+    },
+    {
+      "id": "build-brief-body-v2",
+      "kind": "json-schema",
+      "path": "contracts/schemas/build-brief-body.v2.schema.json",
+      "owners": ["contracts"],
+      "consumers": ["missions", "artifacts", "authz-biscuit"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "candidate",
+      "review": {
+        "state": "pending-independent-agent-review",
+        "reviewerKind": "agent",
+        "separation": "role-scoped-review-pass",
+        "required": ["architecture", "security", "cryptography"],
+        "dossier": "docs/reviews/build-brief-v2-review.md"
+      }
+    },
+    {
+      "id": "build-brief-acceptance-v2",
+      "kind": "json-schema",
+      "path": "contracts/schemas/build-brief-acceptance.v2.schema.json",
+      "owners": ["contracts"],
+      "consumers": ["missions", "artifacts", "authz-biscuit"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "candidate",
+      "review": {
+        "state": "pending-independent-agent-review",
+        "reviewerKind": "agent",
+        "separation": "role-scoped-review-pass",
+        "required": ["architecture", "security", "cryptography"],
+        "dossier": "docs/reviews/build-brief-v2-review.md"
+      }
+    },
+    {
+      "id": "spec-package-v2",
+      "kind": "json-schema",
+      "path": "contracts/schemas/spec-package.v2.schema.json",
+      "owners": ["contracts"],
+      "consumers": ["missions", "artifacts", "authz-biscuit"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "candidate",
+      "review": {
+        "state": "pending-independent-agent-review",
+        "reviewerKind": "agent",
+        "separation": "role-scoped-review-pass",
+        "required": ["architecture", "security", "cryptography"],
+        "dossier": "docs/reviews/build-brief-v2-review.md"
+      }
+    },
+    {
+      "id": "agent-handoff-v2",
+      "kind": "json-schema",
+      "path": "contracts/schemas/agent-handoff.v2.schema.json",
+      "owners": ["contracts"],
+      "consumers": ["missions", "artifacts", "authz-biscuit"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "candidate",
+      "review": {
+        "state": "pending-independent-agent-review",
+        "reviewerKind": "agent",
+        "separation": "role-scoped-review-pass",
+        "required": ["architecture", "security", "cryptography"],
+        "dossier": "docs/reviews/build-brief-v2-review.md"
+      }
+    },
+    {
+      "id": "build-brief-policy-v2",
+      "kind": "biscuit-policy",
+      "path": "contracts/authz/build-brief-v2.datalog",
+      "owners": ["contracts"],
+      "consumers": ["missions", "artifacts", "authz-biscuit"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "candidate",
+      "review": {
+        "state": "pending-independent-agent-review",
+        "reviewerKind": "agent",
+        "separation": "role-scoped-review-pass",
+        "required": ["architecture", "security", "cryptography"],
+        "dossier": "docs/reviews/build-brief-v2-review.md"
+      }
+    },
+    {
+      "id": "retention-policy-schema-v3",
+      "kind": "json-schema",
+      "path": "contracts/schemas/retention-policy.v3.schema.json",
+      "owners": ["contracts"],
+      "consumers": ["missions", "data"],
+      "compatibility": "major-versioned",
+      "classification": "public",
+      "status": "candidate",
+      "review": {
+        "state": "pending-independent-agent-review",
+        "reviewerKind": "agent",
+        "separation": "role-scoped-review-pass",
+        "required": ["architecture", "security", "privacy"],
+        "dossier": "docs/reviews/auth-retention-v3-review.md"
+      }
+    },
+    {
+      "id": "retention-policy-v3",
+      "kind": "data-policy",
+      "path": "contracts/data/retention.v3.json",
+      "owners": ["contracts"],
+      "consumers": ["missions", "data"],
+      "compatibility": "major-versioned",
+      "classification": "public",
+      "status": "candidate",
+      "review": {
+        "state": "pending-independent-agent-review",
+        "reviewerKind": "agent",
+        "separation": "role-scoped-review-pass",
+        "required": ["architecture", "security", "privacy"],
+        "dossier": "docs/reviews/auth-retention-v3-review.md"
+      }
+    },
+    {
+      "id": "specifications-api-v2",
+      "kind": "openapi",
+      "path": "contracts/openapi/specifications.v2.yaml",
+      "owners": ["specifications"],
+      "consumers": ["missions", "sdk-ts", "sdk-rs"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "candidate",
+      "review": {
+        "state": "pending-independent-agent-review",
+        "reviewerKind": "agent",
+        "separation": "role-scoped-review-pass",
+        "required": ["architecture", "security", "cryptography"],
+        "dossier": "docs/reviews/build-brief-api-v2-review.md"
+      }
+    },
+    {
+      "id": "build-brief-api-v2",
+      "kind": "json-schema",
+      "path": "contracts/schemas/build-brief-api.v2.schema.json",
+      "owners": ["specifications"],
+      "consumers": ["missions", "sdk-ts", "sdk-rs"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "candidate",
+      "review": {
+        "state": "pending-independent-agent-review",
+        "reviewerKind": "agent",
+        "separation": "role-scoped-review-pass",
+        "required": ["architecture", "security", "cryptography"],
+        "dossier": "docs/reviews/build-brief-api-v2-review.md"
+      }
+    },
+    {
+      "id": "signalement-local-export-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/signalement-local-export.v1.schema.json",
+      "owners": ["signalement"],
+      "consumers": ["signalement"],
+      "compatibility": "major-versioned",
+      "classification": "local",
+      "status": "locked"
+    }
+  ]
+}

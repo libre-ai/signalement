@@ -1,0 +1,467 @@
+{
+  "schemaVersion": "libre-ai.schema-fixtures.v1",
+  "cases": [
+    {
+      "schema": "signalement-local-export.v1.schema.json",
+      "valid": {
+        "schemaVersion": "libre-ai.signalement-local-export.v1",
+        "payload": {
+          "dossierId": "dossier-synthetic",
+          "dossierRevision": 1,
+          "createdAt": "2026-10-06T10:00:00Z",
+          "reviewedAt": "2026-10-06T10:01:00Z",
+          "statements": {
+            "expected": "A panel",
+            "observed": "No panel"
+          },
+          "context": {
+            "provenance": "user-statement",
+            "application": "Synthetic app",
+            "environment": "Synthetic browser",
+            "steps": ["Open panel"]
+          },
+          "observations": [
+            {
+              "id": "observation-1",
+              "provenance": "user-statement",
+              "text": "No panel was visible",
+              "capturedAt": "2026-10-06T10:00:30Z",
+              "mediaIds": []
+            }
+          ],
+          "hypotheses": [
+            {
+              "id": "hypothesis-1",
+              "text": "The action may not have completed"
+            }
+          ],
+          "document": {
+            "text": "# Synthetic dossier\n\nExpected: a panel. Observed by user: no panel.\n",
+            "observationIds": ["observation-1"]
+          },
+          "files": [
+            {
+              "path": "README.md",
+              "role": "document",
+              "mimeType": "text/markdown",
+              "byteLength": 68,
+              "sha256": "900323cba25eee8d0d7160770dea94d8ae5823694ed37e312a208522d38cfc60",
+              "media": null
+            }
+          ]
+        },
+        "approval": {
+          "target": "local-export",
+          "payloadDigest": "1dc210f493679aac7b0cac427bf177f7f3296444ba53643cecb6a604ddaf0abf",
+          "approvedAt": "2026-10-06T10:01:00Z"
+        },
+        "exportedAt": "2026-10-06T10:01:00Z"
+      },
+      "invalidMutations": [
+        {
+          "name": "unknown root",
+          "path": "/unexpected",
+          "value": true
+        },
+        {
+          "name": "unknown payload",
+          "path": "/payload/cookies",
+          "value": []
+        },
+        {
+          "name": "unknown context",
+          "path": "/payload/context/networkBodies",
+          "value": []
+        },
+        {
+          "name": "wrong target",
+          "path": "/approval/target",
+          "value": "upload"
+        },
+        {
+          "name": "fractional revision",
+          "path": "/payload/dossierRevision",
+          "value": 1.5
+        },
+        {
+          "name": "zero revision",
+          "path": "/payload/dossierRevision",
+          "value": 0
+        },
+        {
+          "name": "oversized revision",
+          "path": "/payload/dossierRevision",
+          "value": 2147483648
+        },
+        {
+          "name": "wrong digest",
+          "path": "/approval/payloadDigest",
+          "value": "ABC"
+        },
+        {
+          "name": "invalid timestamp",
+          "path": "/exportedAt",
+          "value": "yesterday"
+        },
+        {
+          "name": "timezone alias",
+          "path": "/exportedAt",
+          "value": "2026-10-06T10:01:00+00:00"
+        },
+        {
+          "name": "empty inventory",
+          "path": "/payload/files",
+          "value": []
+        },
+        {
+          "name": "excess inventory",
+          "path": "/payload/files",
+          "value": [
+            {
+              "path": "README.md",
+              "role": "document",
+              "mimeType": "text/markdown",
+              "byteLength": 68,
+              "sha256": "900323cba25eee8d0d7160770dea94d8ae5823694ed37e312a208522d38cfc60",
+              "media": null
+            },
+            {
+              "path": "README.md",
+              "role": "document",
+              "mimeType": "text/markdown",
+              "byteLength": 68,
+              "sha256": "900323cba25eee8d0d7160770dea94d8ae5823694ed37e312a208522d38cfc60",
+              "media": null
+            },
+            {
+              "path": "README.md",
+              "role": "document",
+              "mimeType": "text/markdown",
+              "byteLength": 68,
+              "sha256": "900323cba25eee8d0d7160770dea94d8ae5823694ed37e312a208522d38cfc60",
+              "media": null
+            },
+            {
+              "path": "README.md",
+              "role": "document",
+              "mimeType": "text/markdown",
+              "byteLength": 68,
+              "sha256": "900323cba25eee8d0d7160770dea94d8ae5823694ed37e312a208522d38cfc60",
+              "media": null
+            },
+            {
+              "path": "README.md",
+              "role": "document",
+              "mimeType": "text/markdown",
+              "byteLength": 68,
+              "sha256": "900323cba25eee8d0d7160770dea94d8ae5823694ed37e312a208522d38cfc60",
+              "media": null
+            },
+            {
+              "path": "README.md",
+              "role": "document",
+              "mimeType": "text/markdown",
+              "byteLength": 68,
+              "sha256": "900323cba25eee8d0d7160770dea94d8ae5823694ed37e312a208522d38cfc60",
+              "media": null
+            },
+            {
+              "path": "README.md",
+              "role": "document",
+              "mimeType": "text/markdown",
+              "byteLength": 68,
+              "sha256": "900323cba25eee8d0d7160770dea94d8ae5823694ed37e312a208522d38cfc60",
+              "media": null
+            },
+            {
+              "path": "README.md",
+              "role": "document",
+              "mimeType": "text/markdown",
+              "byteLength": 68,
+              "sha256": "900323cba25eee8d0d7160770dea94d8ae5823694ed37e312a208522d38cfc60",
+              "media": null
+            },
+            {
+              "path": "README.md",
+              "role": "document",
+              "mimeType": "text/markdown",
+              "byteLength": 68,
+              "sha256": "900323cba25eee8d0d7160770dea94d8ae5823694ed37e312a208522d38cfc60",
+              "media": null
+            },
+            {
+              "path": "README.md",
+              "role": "document",
+              "mimeType": "text/markdown",
+              "byteLength": 68,
+              "sha256": "900323cba25eee8d0d7160770dea94d8ae5823694ed37e312a208522d38cfc60",
+              "media": null
+            },
+            {
+              "path": "README.md",
+              "role": "document",
+              "mimeType": "text/markdown",
+              "byteLength": 68,
+              "sha256": "900323cba25eee8d0d7160770dea94d8ae5823694ed37e312a208522d38cfc60",
+              "media": null
+            },
+            {
+              "path": "README.md",
+              "role": "document",
+              "mimeType": "text/markdown",
+              "byteLength": 68,
+              "sha256": "900323cba25eee8d0d7160770dea94d8ae5823694ed37e312a208522d38cfc60",
+              "media": null
+            },
+            {
+              "path": "README.md",
+              "role": "document",
+              "mimeType": "text/markdown",
+              "byteLength": 68,
+              "sha256": "900323cba25eee8d0d7160770dea94d8ae5823694ed37e312a208522d38cfc60",
+              "media": null
+            },
+            {
+              "path": "README.md",
+              "role": "document",
+              "mimeType": "text/markdown",
+              "byteLength": 68,
+              "sha256": "900323cba25eee8d0d7160770dea94d8ae5823694ed37e312a208522d38cfc60",
+              "media": null
+            },
+            {
+              "path": "README.md",
+              "role": "document",
+              "mimeType": "text/markdown",
+              "byteLength": 68,
+              "sha256": "900323cba25eee8d0d7160770dea94d8ae5823694ed37e312a208522d38cfc60",
+              "media": null
+            },
+            {
+              "path": "README.md",
+              "role": "document",
+              "mimeType": "text/markdown",
+              "byteLength": 68,
+              "sha256": "900323cba25eee8d0d7160770dea94d8ae5823694ed37e312a208522d38cfc60",
+              "media": null
+            },
+            {
+              "path": "README.md",
+              "role": "document",
+              "mimeType": "text/markdown",
+              "byteLength": 68,
+              "sha256": "900323cba25eee8d0d7160770dea94d8ae5823694ed37e312a208522d38cfc60",
+              "media": null
+            },
+            {
+              "path": "README.md",
+              "role": "document",
+              "mimeType": "text/markdown",
+              "byteLength": 68,
+              "sha256": "900323cba25eee8d0d7160770dea94d8ae5823694ed37e312a208522d38cfc60",
+              "media": null
+            },
+            {
+              "path": "README.md",
+              "role": "document",
+              "mimeType": "text/markdown",
+              "byteLength": 68,
+              "sha256": "900323cba25eee8d0d7160770dea94d8ae5823694ed37e312a208522d38cfc60",
+              "media": null
+            },
+            {
+              "path": "README.md",
+              "role": "document",
+              "mimeType": "text/markdown",
+              "byteLength": 68,
+              "sha256": "900323cba25eee8d0d7160770dea94d8ae5823694ed37e312a208522d38cfc60",
+              "media": null
+            },
+            {
+              "path": "README.md",
+              "role": "document",
+              "mimeType": "text/markdown",
+              "byteLength": 68,
+              "sha256": "900323cba25eee8d0d7160770dea94d8ae5823694ed37e312a208522d38cfc60",
+              "media": null
+            },
+            {
+              "path": "README.md",
+              "role": "document",
+              "mimeType": "text/markdown",
+              "byteLength": 68,
+              "sha256": "900323cba25eee8d0d7160770dea94d8ae5823694ed37e312a208522d38cfc60",
+              "media": null
+            },
+            {
+              "path": "README.md",
+              "role": "document",
+              "mimeType": "text/markdown",
+              "byteLength": 68,
+              "sha256": "900323cba25eee8d0d7160770dea94d8ae5823694ed37e312a208522d38cfc60",
+              "media": null
+            },
+            {
+              "path": "README.md",
+              "role": "document",
+              "mimeType": "text/markdown",
+              "byteLength": 68,
+              "sha256": "900323cba25eee8d0d7160770dea94d8ae5823694ed37e312a208522d38cfc60",
+              "media": null
+            },
+            {
+              "path": "README.md",
+              "role": "document",
+              "mimeType": "text/markdown",
+              "byteLength": 68,
+              "sha256": "900323cba25eee8d0d7160770dea94d8ae5823694ed37e312a208522d38cfc60",
+              "media": null
+            },
+            {
+              "path": "README.md",
+              "role": "document",
+              "mimeType": "text/markdown",
+              "byteLength": 68,
+              "sha256": "900323cba25eee8d0d7160770dea94d8ae5823694ed37e312a208522d38cfc60",
+              "media": null
+            },
+            {
+              "path": "README.md",
+              "role": "document",
+              "mimeType": "text/markdown",
+              "byteLength": 68,
+              "sha256": "900323cba25eee8d0d7160770dea94d8ae5823694ed37e312a208522d38cfc60",
+              "media": null
+            },
+            {
+              "path": "README.md",
+              "role": "document",
+              "mimeType": "text/markdown",
+              "byteLength": 68,
+              "sha256": "900323cba25eee8d0d7160770dea94d8ae5823694ed37e312a208522d38cfc60",
+              "media": null
+            },
+            {
+              "path": "README.md",
+              "role": "document",
+              "mimeType": "text/markdown",
+              "byteLength": 68,
+              "sha256": "900323cba25eee8d0d7160770dea94d8ae5823694ed37e312a208522d38cfc60",
+              "media": null
+            },
+            {
+              "path": "README.md",
+              "role": "document",
+              "mimeType": "text/markdown",
+              "byteLength": 68,
+              "sha256": "900323cba25eee8d0d7160770dea94d8ae5823694ed37e312a208522d38cfc60",
+              "media": null
+            },
+            {
+              "path": "README.md",
+              "role": "document",
+              "mimeType": "text/markdown",
+              "byteLength": 68,
+              "sha256": "900323cba25eee8d0d7160770dea94d8ae5823694ed37e312a208522d38cfc60",
+              "media": null
+            },
+            {
+              "path": "README.md",
+              "role": "document",
+              "mimeType": "text/markdown",
+              "byteLength": 68,
+              "sha256": "900323cba25eee8d0d7160770dea94d8ae5823694ed37e312a208522d38cfc60",
+              "media": null
+            },
+            {
+              "path": "README.md",
+              "role": "document",
+              "mimeType": "text/markdown",
+              "byteLength": 68,
+              "sha256": "900323cba25eee8d0d7160770dea94d8ae5823694ed37e312a208522d38cfc60",
+              "media": null
+            },
+            {
+              "path": "README.md",
+              "role": "document",
+              "mimeType": "text/markdown",
+              "byteLength": 68,
+              "sha256": "900323cba25eee8d0d7160770dea94d8ae5823694ed37e312a208522d38cfc60",
+              "media": null
+            }
+          ]
+        },
+        {
+          "name": "traversal",
+          "path": "/payload/files/0/path",
+          "value": "../README.md"
+        },
+        {
+          "name": "absolute path",
+          "path": "/payload/files/0/path",
+          "value": "/README.md"
+        },
+        {
+          "name": "case alias",
+          "path": "/payload/files/0/path",
+          "value": "readme.md"
+        },
+        {
+          "name": "unsupported media",
+          "path": "/payload/files/0/mimeType",
+          "value": "text/html"
+        },
+        {
+          "name": "fractional bytes",
+          "path": "/payload/files/0/byteLength",
+          "value": 1.1
+        },
+        {
+          "name": "oversized file",
+          "path": "/payload/files/0/byteLength",
+          "value": 67108865
+        },
+        {
+          "name": "negative bytes",
+          "path": "/payload/files/0/byteLength",
+          "value": -1
+        },
+        {
+          "name": "unbounded text",
+          "path": "/payload/statements/expected",
+          "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        {
+          "name": "trusted context",
+          "path": "/payload/context/provenance",
+          "value": "verified"
+        },
+        {
+          "name": "false observation verdict",
+          "path": "/payload/observations/0/verdict",
+          "value": "reproduced"
+        },
+        {
+          "name": "duplicate references",
+          "path": "/payload/document/observationIds",
+          "value": ["observation-1", "observation-1"]
+        },
+        {
+          "name": "unknown provenance",
+          "path": "/payload/observations/0/provenance",
+          "value": "verified"
+        },
+        {
+          "name": "approval required",
+          "path": "/approval",
+          "remove": true
+        },
+        {
+          "name": "reserved device",
+          "path": "/payload/files/0/path",
+          "value": "media/con.png"
+        }
+      ]
+    }
+  ]
+}

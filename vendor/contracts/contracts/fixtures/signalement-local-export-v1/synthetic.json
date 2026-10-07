@@ -1,0 +1,69 @@
+{
+  "manifest": {
+    "schemaVersion": "libre-ai.signalement-local-export.v1",
+    "payload": {
+      "dossierId": "dossier-synthetic",
+      "dossierRevision": 1,
+      "createdAt": "2026-10-06T10:00:00Z",
+      "reviewedAt": "2026-10-06T10:01:00Z",
+      "statements": {
+        "expected": "A panel",
+        "observed": "No panel"
+      },
+      "context": {
+        "provenance": "user-statement",
+        "application": "Synthetic app",
+        "environment": "Synthetic browser",
+        "steps": ["Open panel"]
+      },
+      "observations": [
+        {
+          "id": "observation-1",
+          "provenance": "user-statement",
+          "text": "No panel was visible",
+          "capturedAt": "2026-10-06T10:00:30Z",
+          "mediaIds": []
+        }
+      ],
+      "hypotheses": [
+        {
+          "id": "hypothesis-1",
+          "text": "The action may not have completed"
+        }
+      ],
+      "document": {
+        "text": "# Synthetic dossier\n\nExpected: a panel. Observed by user: no panel.\n",
+        "observationIds": ["observation-1"]
+      },
+      "files": [
+        {
+          "path": "README.md",
+          "role": "document",
+          "mimeType": "text/markdown",
+          "byteLength": 68,
+          "sha256": "900323cba25eee8d0d7160770dea94d8ae5823694ed37e312a208522d38cfc60",
+          "media": null
+        }
+      ]
+    },
+    "approval": {
+      "target": "local-export",
+      "payloadDigest": "1dc210f493679aac7b0cac427bf177f7f3296444ba53643cecb6a604ddaf0abf",
+      "approvedAt": "2026-10-06T10:01:00Z"
+    },
+    "exportedAt": "2026-10-06T10:01:00Z"
+  },
+  "files": [
+    {
+      "path": "README.md",
+      "kind": "file",
+      "utf8": "# Synthetic dossier\n\nExpected: a panel. Observed by user: no panel.\n"
+    }
+  ],
+  "provenance": "synthetic-only",
+  "oracle": {
+    "profile": "ASCII keys/strings and safe integers: Python json.dumps(sort_keys=True,separators=(comma,colon)) UTF-8 plus hashlib.sha256, independently of the TypeScript canonicalizer",
+    "canonicalPayloadUtf8": "{\"context\":{\"application\":\"Synthetic app\",\"environment\":\"Synthetic browser\",\"provenance\":\"user-statement\",\"steps\":[\"Open panel\"]},\"createdAt\":\"2026-10-06T10:00:00Z\",\"document\":{\"observationIds\":[\"observation-1\"],\"text\":\"# Synthetic dossier\\n\\nExpected: a panel. Observed by user: no panel.\\n\"},\"dossierId\":\"dossier-synthetic\",\"dossierRevision\":1,\"files\":[{\"byteLength\":68,\"media\":null,\"mimeType\":\"text/markdown\",\"path\":\"README.md\",\"role\":\"document\",\"sha256\":\"900323cba25eee8d0d7160770dea94d8ae5823694ed37e312a208522d38cfc60\"}],\"hypotheses\":[{\"id\":\"hypothesis-1\",\"text\":\"The action may not have completed\"}],\"observations\":[{\"capturedAt\":\"2026-10-06T10:00:30Z\",\"id\":\"observation-1\",\"mediaIds\":[],\"provenance\":\"user-statement\",\"text\":\"No panel was visible\"}],\"reviewedAt\":\"2026-10-06T10:01:00Z\",\"statements\":{\"expected\":\"A panel\",\"observed\":\"No panel\"}}",
+    "sha256": "1dc210f493679aac7b0cac427bf177f7f3296444ba53643cecb6a604ddaf0abf"
+  }
+}

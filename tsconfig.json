@@ -15,5 +15,5 @@
     "target": "ESNext",
     "types": ["bun"]
   },
-  "include": ["tools/**/*.ts"]
+  "include": ["tools/**/*.ts", "packages/**/*.ts", "apps/**/*.ts"]
 }

@@ -1,0 +1,60 @@
+{
+  "reviewer": "/root/export_contract_review",
+  "scope": "Independent read-only delta review: CodecName removal and production diagnostic removal",
+  "baseHead": "0d3d3044b67297cef00be15e8fb4b751dd1df5bb",
+  "previousReviewSha256": "4ab24d085f429b8663b0695a57e5e383fb0d9d3528d3e948a5239732760d5f31",
+  "sources": {
+    "apps/extension-shared/video-container.ts": "804a6a52aa555875176fd53fa327166855a8500a6e49a99ab6beb261d00a526a",
+    "apps/extension-shared/video-sanitizer.ts": "746a169dd99f2020a4a250c7d274696223e22a5ab8016bfee9dec51e5b6a1d44",
+    "apps/extension-shared/video-container.test.ts": "c69ebd12f15c07f852dbeb7dde416bc2d1011c6d5745770e9ee393eed9d5b110",
+    "apps/extension-shared/video.browser-fixture.ts": "f4712f59aa53ec558a83cc5b6a3f17d2eee72e4de6eba381a53833bf18f3f4c8",
+    "tools/browser-check/firefox-video.ts": "8d81f7b490cd14f900f1f8d1279139f042dc2baeb9e389a0a201f24bb9e36ee8"
+  },
+  "verdict": "approve-scoped-wip-delta",
+  "findings": [],
+  "evidence": {
+    "unit": {
+      "exitCode": 0,
+      "passed": 14,
+      "assertions": 36
+    },
+    "independentProbes": {
+      "exitCode": 0,
+      "assertions": 8,
+      "oracle": "Removal of duplicate CodecName elements gives byte-exact baseline output, including arbitrary payloads; five nearby/unknown IDs rejected."
+    },
+    "deltaEquivalence": "Reversing only CodecName drop/comment reconstructs previous parser hash5a95ac7; restoring diagnostic catch/import reconstructs previous sanitizer hash8e9a18d. No other unreviewed logic delta.",
+    "firefox": {
+      "attribution": "Existing worker/CI execution, evidence read; browser not independently rerun in this delta",
+      "status": "passed",
+      "assertions": 10,
+      "scope": "synthetic-video-pipeline-only-not-extension-permissions",
+      "browser": "Mozilla Firefox 157.0",
+      "bundleSha256": "a71cd7e6a23e0c9ac01ba88591db0cf38619406b257d6738a34d5d2087ce9e0a",
+      "recipeSha256": "8d81f7b490cd14f900f1f8d1279139f042dc2baeb9e389a0a201f24bb9e36ee8",
+      "reconstructedBundleMatches": true,
+      "evidenceSha256": "d476a5e106873339b079cd81240384da7fab0e0542827e9ac57224269740232f"
+    }
+  },
+  "axes": {
+    "security": "Only known optional display-name metadata is removed; unknown track IDs still fail closed. CodecID/track counts/media type checks unchanged. Production error no longer carries container diagnostic IDs.",
+    "quality": "Exact predecessor-hash reconstruction proves delta bounded; unit regression and independent byte equality oracle pass.",
+    "performance": "One constant ID comparison added; error path avoids diagnostic reparse. Size/count bounds unchanged.",
+    "completeness": "Source-linked tests and Firefox bundle binding verified; installed extension permissions/capture UI and immutable integration remain separate."
+  },
+  "specSource": "https://www.matroska.org/technical/elements.html#CodecName",
+  "limits": [
+    "WIP source-hash approval only, not immutable-commit promotion.",
+    "Firefox claim limited to synthetic video pipeline, fresh disposable profile with fixture autoplay; not installed-extension activeTab/source-picker qualification.",
+    "No Safari claim.",
+    "No source edits or new browser launch during this delta."
+  ],
+  "localEvidenceHashes": {
+    "rebuild-only.ts": "835bc92fae5f9556066555f017dde3affdf662b107e3abed58a55abd9ba80a4d",
+    "delta-equivalence.json": "07e8cf9789eac6a695cb57cb67847b98235fc0b962bb9a7fd52383f77b1f8b96",
+    "unit.log": "2d4349cec2409adfb842e271fd8476e791822d758962e4cd93b50148afffdca4",
+    "adversarial.ts": "23252aac584973c43174019d7df113cc6fd316fc4319743bbec3e710a88fb793",
+    "adversarial.log": "b2c0c76a1ff70b8351ad52d03803ab7812c2f00c4b0de7543c511622848c7ffd",
+    "firefox-bundle-check.log": "5be208de0a05f779d6a5d53e505904fa6651506dfd9608fe500b187a57a2d465"
+  }
+}

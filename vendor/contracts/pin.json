@@ -1,0 +1,17 @@
+{
+  "repository": "https://github.com/libre-ai/contracts",
+  "commit": "812c7d8b64976054201a0da6a3af2ce93bf9cc0b",
+  "contract": "signalement-local-export-v1",
+  "status": "locked",
+  "files": {
+    "contracts/catalog.v1.json": "10f6087437419b408f9f01c9898a0f7970bd3f9f439b4f86098c4d23d94bbcb4",
+    "contracts/COMPATIBILITY.md": "0e69adb94bff044650895b47ca2fc50a649682c4334cc9095a2d9125618ebe17",
+    "contracts/schemas/signalement-local-export.v1.schema.json": "ddb63e43cfa76253079df8b10cb31ee4575927cfc22226d4a7942e4c51d83d0e",
+    "contracts/signalement-local-export-v1/SEMANTICS.md": "5ae8443c1cadaf4c7fd20b341c2fa0569c329c6768734296517f411c39c629db",
+    "contracts/fixtures/signalement-local-export-v1/synthetic.json": "c763a48514fb0a41c436ad676aec69ede52a7c71013f7540aa988bca2cdff051",
+    "contracts/fixtures/signalement-local-export-v1/schema-fixtures.json": "8a16b467ecf29f37d2f92ed85ab622685e2ce89988d9fd9b9b43819973d51049",
+    "tools/quality/signalement-local-export-v1.ts": "b330fa75b4f7a647740476f6bcde7f1ca5d28d987e533553e683a77d645a7d00",
+    "tools/quality/authorized-execution.ts": "5fa4744a5a80a1de8ea44e22fce03abce89dde39e16b09ae364a85a31be63f0e",
+    "tools/quality/policy-core-raw-inputs.ts": "94fc29b0b479be581c063a6c8a566f076319d1f4bd372c82291b7a71b7dcc389"
+  }
+}
