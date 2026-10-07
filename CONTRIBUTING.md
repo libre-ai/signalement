@@ -1,6 +1,6 @@
 # Contributing
 
-Signalement follows the [Libre AI contribution policy](https://github.com/libre-ai/governance/blob/main/CONTRIBUTING.md).
+Signalement follows the [Libre AI contribution policy](https://github.com/libre-ai/project-governance/blob/migrate/recover-code/CONTRIBUTING.md).
 Every commit must satisfy the Developer Certificate of Origin with an author-matching
 `Signed-off-by` trailer. No Contributor License Agreement grants proprietary relicensing.
 
@@ -19,7 +19,7 @@ personal data, or provider-instance fixtures. Use reserved `.test` or `.invalid`
 and synthetic artifacts generated outside Git history.
 
 Suspected vulnerabilities, exposed secrets, and exploit details must never enter a public
-issue or pull request. Use the [private fleet security intake](https://github.com/libre-ai/governance/security/advisories/new).
+issue or pull request. Use the [private fleet security intake](https://github.com/libre-ai/project-governance/security/advisories/new).
 
 Architecture or public-contract changes require an ADR. A provider, browser, or execution
 capability remains unqualified until its exact versioned acceptance suite passes; a mock or

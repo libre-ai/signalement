@@ -38,10 +38,10 @@ non_goals:
   - "Laisser une IA modifier silencieusement une assertion, une référence ou un verdict."
   - "Qualifier universellement une famille fournisseur dont les éditions ont des contrats différents."
 dependencies:
-  - on: libre-ai/governance
+  - on: libre-ai/project-governance
     why: "doctrine de flotte, schéma de fiche, gates de sécurité et workflows réutilisables"
-    pinned: "94fc054c6b16e047eb0736e12444a08d50728efc"
-  - on: libre-ai/contracts
+    pinned: "2024a4884b314df99be457618be9c3b48a0287f7"
+  - on: libre-ai/schemas-and-contracts
     why: "autorité future des schémas publics de dossier, scénario, exécution et connecteur"
     pinned: "aucun contrat consommé au stade de fondation"
 maturity: specified
@@ -108,14 +108,14 @@ phases:
         status: accepted
         evidence:
           date: "2026-09-15"
-          reference: "https://github.com/libre-ai/governance/blob/8bc106b5be319be81616ba30ee3ab92e4ffdd253/docs/reviews/signalement-bootstrap/8b02f8e61e1675948caaea5be3c57a898cbd624b/ATTESTATION.md"
+          reference: "https://github.com/libre-ai/project-governance/blob/2024a4884b314df99be457618be9c3b48a0287f7/docs/reviews/signalement-bootstrap/8b02f8e61e1675948caaea5be3c57a898cbd624b/ATTESTATION.md"
       - id: card-and-licenses
         text: "La fiche valide et les fichiers présents sont attribués EUPL-1.2 ou CC-BY-4.0 par chemin; Apache-2.0 est réservé au futur SDK, dont le texte de licence sera ajouté avec ses premiers fichiers."
         weight: 3
         status: accepted
         evidence:
           date: "2026-09-15"
-          reference: "https://github.com/libre-ai/governance/blob/8bc106b5be319be81616ba30ee3ab92e4ffdd253/docs/reviews/signalement-bootstrap/8b02f8e61e1675948caaea5be3c57a898cbd624b/ATTESTATION.md"
+          reference: "https://github.com/libre-ai/project-governance/blob/2024a4884b314df99be457618be9c3b48a0287f7/docs/reviews/signalement-bootstrap/8b02f8e61e1675948caaea5be3c57a898cbd624b/ATTESTATION.md"
       - id: independent-bootstrap-review
         text: "Les revues architecture, sécurité, qualité et souveraineté acceptent le même commit immuable."
         weight: 4
