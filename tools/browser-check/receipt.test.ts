@@ -4,10 +4,14 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import {
+  ADVISORY_QUOTA_WARNING,
   NATIVE_QUOTA_STEP,
+  policyArgument,
   REQUIRED_STEPS,
   readReceipt,
   receiptFailures,
+  receiptPolicyArgument,
+  receiptReport,
   receiptSummary,
 } from "./receipt";
 
@@ -110,6 +114,113 @@ test("reads exactly one receipt from an output directory", async () => {
   }
 });
 
+test("the advisory policy reports an unverified quota as a warning, never as a pass", () => {
+  const report = receiptReport({ receipt: quotaUnverified() }, "advisory");
+  expect(report.exitCode).toBe(0);
+  expect(report.failures).toEqual([]);
+  expect(report.stdout).toEqual([
+    "9/9 required steps verified; native quota unverified (native quota policy: advisory)",
+    `::warning title=Native quota qualification::${ADVISORY_QUOTA_WARNING}`,
+  ]);
+  expect(report.stderr).toEqual([]);
+  expect(report.stepSummary).toContain(`**Verdict:** ${ADVISORY_QUOTA_WARNING}`);
+  expect(report.stepSummary).toContain("9/9 required steps verified; native quota unverified");
+  expect(ADVISORY_QUOTA_WARNING).toBe("native quota unverified (non-required, owner decision D2)");
+});
+
+test("the advisory policy passes a verified quota without a warning", () => {
+  const report = receiptReport({ receipt: passed() }, "advisory");
+  expect(report.exitCode).toBe(0);
+  expect(report.stdout).toEqual([
+    "9/9 required steps verified; native quota verified (native quota policy: advisory)",
+  ]);
+  expect(report.stepSummary).toContain("**Verdict:** native quota verified");
+});
+
+test("the advisory policy tolerates the native quota shortfall and nothing else", () => {
+  const missingStep = quotaUnverified();
+  missingStep.steps = REQUIRED_STEPS.slice(1);
+  const otherCause = quotaUnverified();
+  otherCause.quota = { overrideAccepted: true };
+  const cases: Array<[{ receipt: unknown } | { failure: string }, string]> = [
+    [{ failure: "receipt.missing" }, "receipt.missing"],
+    [{ failure: "receipt.unreadable" }, "receipt.unreadable"],
+    [{ failure: "receipt.ambiguous" }, "receipt.ambiguous"],
+    [{ receipt: { ...quotaUnverified(), status: "failed" } }, "receipt.failed"],
+    [{ receipt: missingStep }, "receipt.steps"],
+    [{ receipt: otherCause }, "receipt.inconsistent"],
+    [{ receipt: null }, "receipt.shape"],
+  ];
+  for (const [read, code] of cases) {
+    const report = receiptReport(read, "advisory");
+    expect(report.exitCode).toBe(1);
+    expect(report.failures).toEqual([code]);
+    expect(report.stdout.join("\n")).not.toContain("::warning");
+    expect(report.stderr).toContain(`::error title=Native quota qualification::${code}`);
+    expect(report.stepSummary).toContain(`**Verdict:** failed (${code})`);
+  }
+});
+
+test("receipt text never reaches the report", () => {
+  const hostile = quotaUnverified();
+  hostile.reason = "::error::injected";
+  hostile.quota = { status: "unverified", reason: "::warning::injected\n### injected" };
+  const report = receiptReport({ receipt: hostile }, "advisory");
+  const everything = [...report.stdout, ...report.stderr, report.stepSummary].join("\n");
+  expect(everything).not.toContain("injected");
+});
+
+test("the required and non-required reports keep their exit semantics", () => {
+  expect(receiptReport({ receipt: quotaUnverified() }, "required").exitCode).toBe(1);
+  expect(receiptReport({ receipt: quotaUnverified() }, "required").failures).toEqual([
+    "quota.unverified",
+  ]);
+  expect(receiptReport({ receipt: quotaUnverified() }, "non-required").exitCode).toBe(0);
+});
+
+test("only the receipt verifier accepts the advisory policy", () => {
+  expect(receiptPolicyArgument(["--native-quota=advisory"])).toBe("advisory");
+  expect(receiptPolicyArgument(["--native-quota=required"])).toBe("required");
+  expect(receiptPolicyArgument(["--native-quota=advisory", "--native-quota=required"])).toBeNull();
+  expect(receiptPolicyArgument(["--native-quota=lenient"])).toBeNull();
+  expect(policyArgument(["--native-quota=advisory"])).toBeNull();
+});
+
+test("the CLI appends the advisory verdict to the step summary", async () => {
+  const root = await mkdtemp(join(tmpdir(), "signalement-receipt-summary-"));
+  try {
+    const path = join(root, "evidence.json");
+    const summary = join(root, "summary.md");
+    await writeFile(path, JSON.stringify(quotaUnverified()));
+    await writeFile(summary, "previous\n");
+    const run = async (target: string) => {
+      const child = Bun.spawn(
+        [process.execPath, join(import.meta.dir, "receipt.ts"), target, "--native-quota=advisory"],
+        { stdout: "pipe", stderr: "pipe", env: { ...process.env, GITHUB_STEP_SUMMARY: summary } },
+      );
+      return {
+        code: await child.exited,
+        stdout: await new Response(child.stdout).text(),
+        stderr: await new Response(child.stderr).text(),
+      };
+    };
+    const advisory = await run(path);
+    expect(advisory.code).toBe(0);
+    expect(advisory.stdout).toContain(`::warning title=Native quota qualification::`);
+    const written = await Bun.file(summary).text();
+    expect(written).toStartWith("previous\n");
+    expect(written).toContain(ADVISORY_QUOTA_WARNING);
+    // An empty artifact directory: the download succeeded but held no receipt.
+    await mkdir(join(root, "empty"));
+    const missing = await run(join(root, "empty"));
+    expect(missing.code).toBe(1);
+    expect(missing.stderr).toContain("::error title=Native quota qualification::receipt.missing");
+    expect(await Bun.file(summary).text()).toContain("failed (receipt.missing)");
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test("the CLI exits nonzero on an unverified quota only under the required policy", async () => {
   const root = await mkdtemp(join(tmpdir(), "signalement-receipt-cli-"));
   try {
@@ -146,13 +257,26 @@ test("CI takes the native quota verdict outside the required job, from the same 
   expect(bunQuality).toContain("    name: Bun quality\n");
   expect(bunQuality).toContain("bun tools/browser-check/chrome.ts --native-quota=non-required\n");
   expect(bunQuality).not.toContain("--native-quota=required");
-  const publish = bunQuality.split("      - name: Publish Chrome qualification receipt\n")[1] ?? "";
+  // The required job re-reads the receipt file it publishes: the in-memory
+  // verdict of chrome.ts alone passed with no evidence.json in the artifact.
+  const [beforePublish = "", publish = ""] = bunQuality.split(
+    "      - name: Publish Chrome qualification receipt\n",
+  );
+  expect(beforePublish).toContain(
+    "        run: bun tools/browser-check/receipt.ts test-results/browser-check/chrome --native-quota=non-required\n",
+  );
+  expect(beforePublish.indexOf("receipt.ts test-results")).toBeGreaterThan(
+    beforePublish.indexOf("chrome.ts --native-quota=non-required"),
+  );
   expect(publish).toStartWith("        if: always()\n");
   expect(publish).toContain("          name: chrome-qualification-receipt\n");
   expect(publish).toContain("          if-no-files-found: error\n");
   expect(nativeQuota).toContain("    needs: bun-quality\n    if: always()\n");
   expect(nativeQuota).toContain("          name: chrome-qualification-receipt\n");
   expect(nativeQuota).toContain(
-    'bun tools/browser-check/receipt.ts "$RUNNER_TEMP/receipt" --native-quota=required\n',
+    'bun tools/browser-check/receipt.ts "$RUNNER_TEMP/receipt" --native-quota=advisory\n',
   );
+  // Non-blocking comes from the verifier tolerating exactly one code, never
+  // from the runner: continue-on-error would also swallow a missing receipt.
+  expect(workflow).not.toContain("continue-on-error");
 });
