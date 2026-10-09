@@ -1,6 +1,12 @@
 import { sanitizeWebm } from "./video-container.ts";
 import { reencodeVideoPixels } from "./video-sanitizer.ts";
 
+// Each beacon lets the harness bound every real-time media stage separately and name the one
+// that stalled, instead of one wall clock that also absorbs browser startup.
+function progress(stage: string): void {
+  void fetch("/progress", { method: "POST", body: stage });
+}
+
 async function source(audio: boolean): Promise<Blob> {
   const canvas = document.createElement("canvas");
   canvas.width = 64;
@@ -45,7 +51,10 @@ async function source(audio: boolean): Promise<Blob> {
 async function run() {
   const checks: string[] = [];
   for (const audio of [false, true]) {
+    const mode = audio ? "audio" : "silent";
+    progress(`recording-${mode}`);
     const original = await source(audio);
+    progress(`recorded-${mode}`);
     const originalVideo = document.createElement("video");
     originalVideo.muted = true;
     document.body.append(originalVideo);
@@ -74,6 +83,7 @@ async function run() {
     URL.revokeObjectURL(originalUrl);
     if ((sourcePixel[1] ?? 0) < 200)
       throw new Error(`Source fixture pixel ${Array.from(sourcePixel).join(",")}`);
+    progress(`source-decoded-${mode}`);
     const controller = new AbortController();
     const raw = await reencodeVideoPixels(
       original,
@@ -89,6 +99,7 @@ async function run() {
       result.audioIncluded !== audio
     )
       throw new Error("Derivative shape");
+    progress(`transcoded-${mode}`);
     checks.push(`transcode-${audio ? "audio" : "silent"}`);
     const canonical = sanitizeWebm(result.bytes, audio);
     if (
@@ -149,6 +160,7 @@ async function run() {
         `Opaque video mask ${audio}: left=${Array.from(left).join(",")} right=${Array.from(right).join(",")}`,
       );
     checks.push(`decoded-mask-${audio ? "audio" : "silent"}`);
+    progress(`derivative-presented-${mode}`);
     let frames = 0;
     let badFrame = false;
     let callback: number | null = null;
@@ -177,6 +189,7 @@ async function run() {
     if (callback !== null) video.cancelVideoFrameCallback(callback);
     if (frames < 2 || badFrame) throw new Error("Mask missing from a decoded frame");
     checks.push(`all-decoded-frames-masked-${audio ? "audio" : "silent"}`);
+    progress(`derivative-ended-${mode}`);
     video.removeAttribute("src");
     video.load();
     video.remove();
