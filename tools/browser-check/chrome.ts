@@ -248,11 +248,16 @@ try {
     return !!editor;
   });
   let session = await attach(editor?.targetId ?? "");
+  // The editor target exists before its document is parsed; reading the
+  // preview element earlier throws instead of letting waitFor poll again.
+  await waitFor(
+    async () => (await evaluate(session, "document.readyState === 'complete'")) === true,
+  );
   await waitFor(
     async () =>
       (await evaluate(
         session,
-        "!document.getElementById('screenshot').hidden && document.getElementById('screenshot').naturalWidth > 0",
+        "document.getElementById('screenshot')?.hidden === false && document.getElementById('screenshot').naturalWidth > 0",
       )) === true,
   );
   if ((await evaluate(workerSession, "globalThis.qualificationCaptureCalls")) !== 1)
