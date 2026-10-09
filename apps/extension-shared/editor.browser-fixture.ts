@@ -2,9 +2,15 @@ import { readZip } from "../../packages/domain/zip.ts";
 
 // Synthetic isolated-browser acceptance. Never injected into a production extension.
 const checks: string[] = [];
+// One beacon per passed check lets the harness bound the silence between checks instead of the
+// whole run from browser spawn, and name the last check reached when the page stops reporting.
+function progress(stage: string): void {
+  void fetch("/progress", { method: "POST", body: stage });
+}
 function assert(condition: boolean, label: string) {
   if (!condition) throw new Error(label);
   checks.push(label);
+  progress(label);
 }
 function field(id: string) {
   const item = document.getElementById(id);

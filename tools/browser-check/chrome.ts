@@ -4,8 +4,10 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { Readable, Writable } from "node:stream";
 
+import { BROWSER_STARTUP_MS } from "../../apps/extension-shared/browser-check-watchdog";
 import { readZip } from "../../packages/domain/zip";
 import { recipeEvidence, snapshotBuild } from "./evidence";
+import { waitForExtensionWorker } from "./extension-worker";
 import { type NativeQuotaPolicy, policyArgument, receiptFailures, receiptSummary } from "./receipt";
 
 // Without an explicit flag the native quota stays required, as before.
@@ -108,13 +110,14 @@ async function cdp(
   method: string,
   params: Record<string, unknown> = {},
   sessionId?: string,
+  timeoutMs = 25000,
 ): Promise<Record<string, unknown>> {
   const id = ++serial;
   return new Promise((resolveCall, rejectCall) => {
     const timer = setTimeout(() => {
       calls.delete(id);
       rejectCall(new Error(`CDP timeout: ${method}`));
-    }, 25000);
+    }, timeoutMs);
     calls.set(id, { method, resolve: resolveCall, reject: rejectCall, timer });
     current.writer.write(
       `${JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) })}\0`,
@@ -163,7 +166,9 @@ const evidence: Record<string, unknown> = {
 };
 const steps = evidence.steps as string[];
 try {
-  evidence.browser = await cdp("Browser.getVersion");
+  // The first reply waits for the browser to start, which a cold runner stretches past the
+  // per-call deadline (see BROWSER_STARTUP_MS); later calls keep their own deadline.
+  evidence.browser = await cdp("Browser.getVersion", {}, undefined, BROWSER_STARTUP_MS);
   const storageTarget = await cdp("Target.createTarget", {
     url: `http://127.0.0.1:${fixture.port}/storage.html`,
   });
@@ -181,7 +186,10 @@ try {
     join(root, "dist/extensions/chrome"),
     join(profile, "unpacked"),
   );
-  evidence.inputHashes = await recipeEvidence(import.meta.path, root);
+  evidence.inputHashes = await recipeEvidence(import.meta.path, root, {
+    workerReadiness: join(import.meta.dir, "extension-worker.ts"),
+    watchdog: join(root, "apps/extension-shared/browser-check-watchdog.ts"),
+  });
   const { id } = await cdp("Extensions.loadUnpacked", {
     path: join(profile, "unpacked"),
   });
@@ -196,6 +204,12 @@ try {
     return !!worker;
   });
   const workerSession = await attach(worker?.targetId ?? "");
+  // The target is listed before the extension API is bound in the worker (F4): wait for the
+  // API the instrumentation below replaces instead of evaluating against an unbound global.
+  evidence.workerReadiness = await waitForExtensionWorker(
+    (expression) => evaluate(workerSession, expression),
+    id,
+  );
   await evaluate(
     workerSession,
     "globalThis.qualificationCaptureCalls = 0; const originalCapture = chrome.tabs.captureVisibleTab.bind(chrome.tabs); chrome.tabs.captureVisibleTab = (...args) => { globalThis.qualificationCaptureCalls++; return originalCapture(...args); };",
@@ -424,7 +438,7 @@ try {
   current = launchBrowser();
   pending = "";
   current.reader.on("data", handleMessage);
-  await cdp("Browser.getVersion");
+  await cdp("Browser.getVersion", {}, undefined, BROWSER_STARTUP_MS);
   const installed = await cdp("Extensions.getExtensions");
   if (!(installed.extensions as { id: string }[]).some((extension) => extension.id === id)) {
     const restored = await cdp("Extensions.loadUnpacked", { path: join(profile, "unpacked") });

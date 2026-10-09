@@ -1,6 +1,15 @@
 import { describe, expect, test } from "bun:test";
 
-import { stallVerdict, type TimelineEntry, VIDEO_CHECK_BUDGETS } from "./browser-check-watchdog.ts";
+import {
+  awaitProgress,
+  BROWSER_FIXTURE_BUDGETS,
+  BROWSER_STARTUP_MS,
+  browserLogTail,
+  stallVerdict,
+  startStageClock,
+  type TimelineEntry,
+  VIDEO_CHECK_BUDGETS,
+} from "./browser-check-watchdog.ts";
 
 // Timeline measured on CI run 37872290823 (Chrome 154.0.8037.97, first launch on a fresh runner):
 // a correct run whose browser startup alone took 6.7 s and whose result arrived at 22.3 s.
@@ -78,5 +87,114 @@ describe("stallVerdict", () => {
     expect(stallVerdict([], VIDEO_CHECK_BUDGETS.startupMs + 1, VIDEO_CHECK_BUDGETS)).toBe(
       `no progress for ${VIDEO_CHECK_BUDGETS.startupMs} ms after browser-spawned`,
     );
+  });
+});
+
+function fakeTime() {
+  let nowMs = 0;
+  return {
+    now: () => nowMs,
+    advance: (ms: number) => {
+      nowMs += ms;
+    },
+  };
+}
+
+describe("startStageClock", () => {
+  test("records stages relative to its own start", () => {
+    const time = fakeTime();
+    time.advance(500);
+    const clock = startStageClock(time.now);
+    time.advance(120);
+    clock.mark("browser-spawned");
+    time.advance(30);
+    clock.mark("page-requested");
+    expect(clock.timeline).toEqual([
+      { stage: "browser-spawned", atMs: 120 },
+      { stage: "page-requested", atMs: 150 },
+    ]);
+    expect(clock.elapsedMs()).toBe(150);
+  });
+
+  test("bounds the timeline and each stage name a browser page can report", () => {
+    const clock = startStageClock(fakeTime().now);
+    for (let index = 0; index < 300; index++) clock.mark(`stage-${index}-${"x".repeat(100)}`);
+    expect(clock.timeline).toHaveLength(256);
+    expect(clock.timeline.every((entry) => entry.stage.length <= 64)).toBe(true);
+  });
+});
+
+describe("awaitProgress", () => {
+  test("returns null once the check settles while it keeps progressing", async () => {
+    const time = fakeTime();
+    const clock = startStageClock(time.now);
+    clock.mark("browser-spawned");
+    let polls = 0;
+    const stall = await awaitProgress(
+      () => polls >= 30,
+      clock,
+      BROWSER_FIXTURE_BUDGETS,
+      async (ms) => {
+        time.advance(ms);
+        polls++;
+        if (polls % 10 === 0) clock.mark(`stage-${polls}`);
+      },
+    );
+    expect(stall).toBe(null);
+  });
+
+  test("names the stage after which the check went silent", async () => {
+    const time = fakeTime();
+    const clock = startStageClock(time.now);
+    clock.mark("browser-spawned");
+    clock.mark("fixture-requested");
+    const stall = await awaitProgress(
+      () => false,
+      clock,
+      BROWSER_FIXTURE_BUDGETS,
+      async (ms) => {
+        time.advance(ms);
+      },
+    );
+    expect(stall).toBe(
+      `no progress for ${BROWSER_FIXTURE_BUDGETS.stageMs} ms after fixture-requested`,
+    );
+    expect(clock.elapsedMs()).toBeLessThanOrEqual(BROWSER_FIXTURE_BUDGETS.stageMs + 100);
+  });
+
+  test("a result that lands during the last poll wins over a stall", async () => {
+    const time = fakeTime();
+    const clock = startStageClock(time.now);
+    let settled = false;
+    const stall = await awaitProgress(
+      () => settled,
+      clock,
+      BROWSER_FIXTURE_BUDGETS,
+      async () => {
+        time.advance(BROWSER_FIXTURE_BUDGETS.startupMs + 1);
+        settled = true;
+      },
+    );
+    expect(stall).toBe(null);
+  });
+});
+
+describe("budgets", () => {
+  test("every check shares the measured browser startup budget", () => {
+    expect(VIDEO_CHECK_BUDGETS.startupMs).toBe(BROWSER_STARTUP_MS);
+    expect(BROWSER_FIXTURE_BUDGETS.startupMs).toBe(BROWSER_STARTUP_MS);
+  });
+
+  test("a fixture stage outlasts the fixture's own 5 s wait so the fixture names its failure", () => {
+    expect(BROWSER_FIXTURE_BUDGETS.stageMs).toBeGreaterThan(5_000);
+    expect(BROWSER_FIXTURE_BUDGETS.overallMs).toBeGreaterThan(BROWSER_STARTUP_MS);
+  });
+});
+
+describe("browserLogTail", () => {
+  test("keeps the last 20 non-empty lines and reports nothing for an empty log", () => {
+    const lines = Array.from({ length: 30 }, (_, index) => `line-${index}`);
+    expect(browserLogTail(`${lines.join("\n")}\n`)).toBe(lines.slice(-20).join("\n"));
+    expect(browserLogTail("  \n")).toBe(null);
   });
 });

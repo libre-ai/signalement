@@ -2,6 +2,12 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
+import {
+  awaitProgress,
+  startStageClock,
+  VIDEO_CHECK_BUDGETS,
+} from "../../apps/extension-shared/browser-check-watchdog";
+
 const root = resolve(import.meta.dir, "../..");
 const build = await Bun.build({
   entrypoints: [join(root, "apps/extension-shared/video.browser-fixture.ts")],
@@ -36,6 +42,9 @@ await writeFile(
 );
 let result: unknown = null;
 const stages: string[] = [];
+// Same fixture and the same real-time media clocks as the Chrome video check: startup and each
+// media stage are bounded separately rather than by one clock from spawn.
+const clock = startStageClock();
 const server = Bun.serve({
   hostname: "127.0.0.1",
   port: 0,
@@ -44,19 +53,25 @@ const server = Bun.serve({
     if (path === "/progress" && request.method === "POST") {
       const stage = await request.text();
       if (stages.length < 256) stages.push(stage);
+      clock.mark(stage);
       return new Response("ok");
     }
-    if (path === "/fixture.js")
+    if (path === "/fixture.js") {
+      clock.mark("fixture-requested");
       return new Response(script, { headers: { "Content-Type": "application/javascript" } });
+    }
     if (path === "/result" && request.method === "POST") {
       result = await request.json();
+      clock.mark("result");
       return new Response("ok");
     }
-    if (path === "/")
+    if (path === "/") {
+      clock.mark("page-requested");
       return new Response(
         `<!doctype html><title>Synthetic video qualification</title><script>const ids=new WeakMap();let next=0;function report(object,event){if(!ids.has(object)){ids.set(object,++next);for(const type of ['playing','pause','seeking','seeked','ended','stop','error'])object.addEventListener(type,()=>fetch('/progress',{method:'POST',body:ids.get(object)+':'+type}));}fetch('/progress',{method:'POST',body:ids.get(object)+':'+event});}for(const [prototype,name] of [[HTMLVideoElement.prototype,'play'],[HTMLVideoElement.prototype,'requestVideoFrameCallback'],[MediaRecorder.prototype,'start'],[MediaRecorder.prototype,'stop'],[AudioContext.prototype,'resume']]){const original=prototype[name];prototype[name]=function(...args){report(this,name);return original.apply(this,args);};}</script><script type="module" src="fixture.js"></script>`,
         { headers: { "Content-Type": "text/html" } },
       );
+    }
     return new Response("Not found", { status: 404 });
   },
 });
@@ -68,6 +83,7 @@ const child = Bun.spawn(
   [binary, "-no-remote", "-headless", "-profile", profile, `http://127.0.0.1:${server.port}/`],
   { stdout: "ignore", stderr: "ignore" },
 );
+clock.mark("browser-spawned");
 const evidence: Record<string, unknown> = {
   date: new Date().toISOString(),
   browser,
@@ -82,10 +98,10 @@ const evidence: Record<string, unknown> = {
     .digest("hex"),
 };
 try {
-  const deadline = Date.now() + 25000;
-  while (result === null && Date.now() < deadline) await Bun.sleep(100);
+  const stall = await awaitProgress(() => result !== null, clock, VIDEO_CHECK_BUDGETS);
   evidence.stages = stages;
-  evidence.result = result ?? { status: "unverified", reason: "25-second fixture timeout" };
+  evidence.timeline = clock.timeline;
+  evidence.result = result ?? { status: "unverified", reason: stall };
   if (result === null || (result as { status?: string }).status !== "passed") process.exitCode = 1;
 } finally {
   child.kill();
