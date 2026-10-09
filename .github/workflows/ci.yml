@@ -59,6 +59,10 @@ jobs:
         run: |
           test -x "$CHROME_BINARY"
           bun tools/browser-check/chrome.ts --native-quota=non-required
+      # chrome.ts judges its in-memory evidence; this re-reads the file that is
+      # published, so a missing, ambiguous or unreadable receipt fails here.
+      - name: Verify the published Chrome receipt
+        run: bun tools/browser-check/receipt.ts test-results/browser-check/chrome --native-quota=non-required
       - name: Publish Chrome qualification receipt
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

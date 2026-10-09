@@ -257,7 +257,17 @@ test("CI takes the native quota verdict outside the required job, from the same 
   expect(bunQuality).toContain("    name: Bun quality\n");
   expect(bunQuality).toContain("bun tools/browser-check/chrome.ts --native-quota=non-required\n");
   expect(bunQuality).not.toContain("--native-quota=required");
-  const publish = bunQuality.split("      - name: Publish Chrome qualification receipt\n")[1] ?? "";
+  // The required job re-reads the receipt file it publishes: the in-memory
+  // verdict of chrome.ts alone passed with no evidence.json in the artifact.
+  const [beforePublish = "", publish = ""] = bunQuality.split(
+    "      - name: Publish Chrome qualification receipt\n",
+  );
+  expect(beforePublish).toContain(
+    "        run: bun tools/browser-check/receipt.ts test-results/browser-check/chrome --native-quota=non-required\n",
+  );
+  expect(beforePublish.indexOf("receipt.ts test-results")).toBeGreaterThan(
+    beforePublish.indexOf("chrome.ts --native-quota=non-required"),
+  );
   expect(publish).toStartWith("        if: always()\n");
   expect(publish).toContain("          name: chrome-qualification-receipt\n");
   expect(publish).toContain("          if-no-files-found: error\n");

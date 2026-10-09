@@ -119,7 +119,11 @@ The verdict over that receipt is taken twice (`receipt.ts`). The required
 `Bun quality` job runs `chrome.ts --native-quota=non-required`: it admits a
 `partial` receipt only when native quota is the sole shortfall and all nine
 other steps are present in order, and fails on any other missing, extra,
-reordered or failed step. The receipt is published as the
+reordered or failed step. The same job then re-reads the published file with
+`receipt.ts test-results/browser-check/chrome --native-quota=non-required`,
+because `chrome.ts` judges its in-memory evidence: without that step, a run
+that wrote no `evidence.json` kept `Bun quality` green (mutation run
+37929950167). The receipt is published as the
 `chrome-qualification-receipt` artifact on every run. The separate, non-required
 `Native quota qualification` job downloads that same receipt and applies
 `--native-quota=advisory`: the `required` verdict, except that an unverified
