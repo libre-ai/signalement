@@ -19,7 +19,7 @@ https://raw.githubusercontent.com/libre-ai/project-governance/migrate/recover-co
 - Approved assertions and visual references are immutable. Changes create traceable versions.
 - A verdict is deterministic. Unevaluated assertions can never produce `fix-validated`.
 - Provider, browser, and execution capabilities stay unverified until their exact profile passes.
-- Runtime contracts are canonical in `libre-ai/contracts`, never redefined here.
+- Runtime contracts are canonical in `libre-ai/schemas-and-contracts`, never redefined here.
 
 ## Commands
 
