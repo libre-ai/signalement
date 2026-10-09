@@ -6,6 +6,8 @@ async function run() {
   function check(value: boolean, label: string) {
     if (!value) throw new Error(label);
     checks.push(label);
+    // Beacon per passed check: the harness bounds the silence between checks, not the whole run.
+    void fetch("/progress", { method: "POST", body: label });
   }
   const name = "synthetic-draft-storage-qualification";
   const store = await IndexedDbStore.open(name);

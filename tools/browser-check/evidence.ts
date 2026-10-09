@@ -48,6 +48,9 @@ export async function snapshotBuild(source: string, destination: string): Promis
 export async function recipeEvidence(
   recipe: string,
   root: string,
+  // Modules the recipe imports for its own control flow: without their hash the receipt would
+  // bind a recipe whose behaviour can change underneath it.
+  helpers: Readonly<Record<string, string>> = {},
 ): Promise<Record<string, string>> {
   const result: Record<string, string> = {};
   for (const [label, path] of [
@@ -55,6 +58,7 @@ export async function recipeEvidence(
     ["buildVerifier", join(import.meta.dir, "evidence.ts")],
     ["fixtureHtml", join(root, "tests/fixtures/capture-app/index.html")],
     ["fixtureScript", join(root, "tests/fixtures/capture-app/fixture.js")],
+    ...Object.entries(helpers),
   ]) {
     if (label === undefined || path === undefined) throw new Error("Evidence recipe missing");
     result[label] = new Bun.CryptoHasher("sha256").update(await readFile(path)).digest("hex");

@@ -2,7 +2,12 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { stallVerdict, type TimelineEntry, VIDEO_CHECK_BUDGETS } from "./browser-check-watchdog.ts";
+import {
+  awaitProgress,
+  browserLogTail,
+  startStageClock,
+  VIDEO_CHECK_BUDGETS,
+} from "./browser-check-watchdog.ts";
 
 const chromeBinary =
   process.env.CHROME_BINARY ??
@@ -26,15 +31,11 @@ if (!build.success || !build.outputs[0]) {
 const script = await build.outputs[0].text();
 const html = '<!doctype html><script type="module" src="fixture.js"></script>';
 let result: unknown = null;
-const started = performance.now();
 // Stage beacons replace a single wall clock: the fixture's duration is a sum of real-time media
 // clocks plus browser startup, so only the silence between beacons separates a stall from a slow
 // cold start (see VIDEO_CHECK_BUDGETS for the measurements).
-const timeline: TimelineEntry[] = [];
-function mark(stage: string): void {
-  if (timeline.length < 256)
-    timeline.push({ stage, atMs: Math.round(performance.now() - started) });
-}
+const clock = startStageClock();
+const mark = clock.mark;
 const server = Bun.serve({
   hostname: "127.0.0.1",
   port: 0,
@@ -45,7 +46,7 @@ const server = Bun.serve({
       return new Response(script, { headers: { "Content-Type": "application/javascript" } });
     }
     if (path === "/progress" && request.method === "POST") {
-      mark((await request.text()).slice(0, 64));
+      mark(await request.text());
       return new Response("ok");
     }
     if (path === "/styles.css") return new Response(Bun.file(join(import.meta.dir, "styles.css")));
@@ -74,22 +75,17 @@ const child = Bun.spawn(
 );
 const browserLog = new Response(child.stderr).text();
 mark("browser-spawned");
-let stall: string | null = null;
 try {
-  while (result === null) {
-    await Bun.sleep(100);
-    stall = stallVerdict(timeline, performance.now() - started, VIDEO_CHECK_BUDGETS);
-    if (stall !== null) break;
-  }
+  const stall = await awaitProgress(() => result !== null, clock, VIDEO_CHECK_BUDGETS);
   const verdict = result ?? { status: "unverified", reason: stall };
-  console.info(JSON.stringify({ ...(verdict as object), timeline }));
+  console.info(JSON.stringify({ ...(verdict as object), timeline: clock.timeline }));
   if (result === null || (result as { status: string }).status !== "passed") process.exitCode = 1;
 } finally {
   child.kill();
   await child.exited;
   if (process.exitCode === 1) {
-    const tail = (await browserLog).trim().split("\n").slice(-20);
-    if (tail.length > 0 && tail[0] !== "") console.error(tail.join("\n"));
+    const tail = browserLogTail(await browserLog);
+    if (tail !== null) console.error(tail);
   }
   server.stop(true);
   await rm(profile, { recursive: true, force: true });

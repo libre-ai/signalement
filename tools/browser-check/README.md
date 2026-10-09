@@ -27,7 +27,15 @@ enter Git. The extension is copied into temporary storage only after each file
 matches the build's SHA-256 inventory. Evidence binds the browser version,
 provider, no-model execution, recipe, helper and fixture hashes to that snapshot.
 The profiles and launched processes are cleaned in `finally`; individual protocol
-calls and waits have 25-second deadlines. Do not interpret a successful launch,
+calls and waits have 25-second deadlines, except the first Chrome reply after a
+launch, which waits for a cold browser start (60 s, `BROWSER_STARTUP_MS` in
+`apps/extension-shared/browser-check-watchdog.ts`). Chrome lists the extension
+service worker before its `chrome` API is bound, so `chrome.ts` polls the worker
+until `chrome.runtime.id` and `chrome.tabs.captureVisibleTab` exist (bounded at
+10 s, `extension-worker.ts`) and records the polls in `workerReadiness`. The
+fixture-only checks (`video`, `editor`, draft storage, Firefox video) bound browser
+startup and the silence between page beacons separately instead of one clock
+from spawn. Do not interpret a successful launch,
 installation, or partial result as a successful end-to-end journey.
 
 ## Observed scope — 2026-10-07
