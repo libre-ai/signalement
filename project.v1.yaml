@@ -40,7 +40,7 @@ non_goals:
 dependencies:
   - on: libre-ai/project-governance
     why: "doctrine de flotte, schéma de fiche, gates de sécurité et workflows réutilisables"
-    pinned: "7c2238d6185e59d446586688ca7db32e6a17d3e0"
+    pinned: "1c8b37c80beb41f640982768ec27304a911e0b8e"
   - on: libre-ai/schemas-and-contracts
     why: "autorité verrouillée du contrat signalement-local-export-v1; les autres contrats restent futurs"
     pinned: "5b3f940c550800a9ce13f73f4bfcfdb8eba08925"
@@ -108,14 +108,14 @@ phases:
         status: accepted
         evidence:
           date: "2026-09-15"
-          reference: "https://github.com/libre-ai/project-governance/blob/7c2238d6185e59d446586688ca7db32e6a17d3e0/docs/reviews/signalement-bootstrap/8b02f8e61e1675948caaea5be3c57a898cbd624b/ATTESTATION.md"
+          reference: "https://github.com/libre-ai/project-governance/blob/1c8b37c80beb41f640982768ec27304a911e0b8e/docs/reviews/signalement-bootstrap/8b02f8e61e1675948caaea5be3c57a898cbd624b/ATTESTATION.md"
       - id: card-and-licenses
         text: "La fiche valide et les fichiers présents sont attribués EUPL-1.2 ou CC-BY-4.0 par chemin; Apache-2.0 est réservé au futur SDK, dont le texte de licence sera ajouté avec ses premiers fichiers."
         weight: 3
         status: accepted
         evidence:
           date: "2026-09-15"
-          reference: "https://github.com/libre-ai/project-governance/blob/7c2238d6185e59d446586688ca7db32e6a17d3e0/docs/reviews/signalement-bootstrap/8b02f8e61e1675948caaea5be3c57a898cbd624b/ATTESTATION.md"
+          reference: "https://github.com/libre-ai/project-governance/blob/1c8b37c80beb41f640982768ec27304a911e0b8e/docs/reviews/signalement-bootstrap/8b02f8e61e1675948caaea5be3c57a898cbd624b/ATTESTATION.md"
       - id: independent-bootstrap-review
         text: "Les revues architecture, sécurité, qualité et souveraineté acceptent le même commit immuable."
         weight: 4
