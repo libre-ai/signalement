@@ -6,7 +6,15 @@ import { Readable, Writable } from "node:stream";
 
 import { readZip } from "../../packages/domain/zip";
 import { recipeEvidence, snapshotBuild } from "./evidence";
+import { type NativeQuotaPolicy, policyArgument, receiptFailures, receiptSummary } from "./receipt";
 
+// Without an explicit flag the native quota stays required, as before.
+const nativeQuotaArgument = process.argv.slice(2).length
+  ? policyArgument(process.argv.slice(2))
+  : "required";
+if (nativeQuotaArgument === null)
+  throw new Error("Usage: chrome.ts [--native-quota=required|non-required]");
+const nativeQuotaPolicy: NativeQuotaPolicy = nativeQuotaArgument;
 const root = resolve(import.meta.dir, "../..");
 const storageBuild = await Bun.build({
   entrypoints: [join(root, "tools/browser-check/storage.browser-fixture.ts")],
@@ -489,14 +497,13 @@ try {
     throw new Error("Export media differs from exact reviewed bytes");
   evidence.reviewedMediaSha256 = reviewedHash;
   steps.push("downloaded-zip-independent-verifier");
-  if ((evidence.quota as { status?: string }).status === "unverified") {
-    evidence.status = "partial";
-    process.exitCode = 1;
-  } else evidence.status = "passed";
+  // The receipt keeps recording the native quota shortfall as `partial`; the
+  // exit code below is decided by the receipt policy, not by this status alone.
+  if ((evidence.quota as { status?: string }).status === "unverified") evidence.status = "partial";
+  else evidence.status = "passed";
 } catch (error) {
   evidence.status = "failed";
   evidence.reason = error instanceof Error ? error.message : "Unknown failure";
-  process.exitCode = 1;
 } finally {
   for (const call of calls.values()) clearTimeout(call.timer);
   calls.clear();
@@ -509,4 +516,10 @@ try {
   await rm(profile, { recursive: true, force: true });
   await Bun.write(join(output, "evidence.json"), JSON.stringify(evidence, null, 2));
   console.log(JSON.stringify(evidence));
+  const failures = receiptFailures(evidence, nativeQuotaPolicy);
+  console.log(`${receiptSummary(evidence)} (native quota policy: ${nativeQuotaPolicy})`);
+  if (failures.length > 0) {
+    console.error(failures.join("\n"));
+    process.exitCode = 1;
+  }
 }
