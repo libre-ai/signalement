@@ -43,7 +43,7 @@ dependencies:
     pinned: "7c2238d6185e59d446586688ca7db32e6a17d3e0"
   - on: libre-ai/schemas-and-contracts
     why: "autorité verrouillée du contrat signalement-local-export-v1; les autres contrats restent futurs"
-    pinned: "34c143373876e5cf13ecb781f16d773c41751c2d"
+    pinned: "5b3f940c550800a9ce13f73f4bfcfdb8eba08925"
 maturity: specified
 confidence: medium
 exposure: spec-published

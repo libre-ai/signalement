@@ -6,10 +6,10 @@ import pin from "../../vendor/contracts/pin.json";
 import { generatedValidator } from "./generate-validator.ts";
 
 const AUTHORITY_REPOSITORY = "https://github.com/libre-ai/schemas-and-contracts";
-const AUTHORITY_COMMIT = "34c143373876e5cf13ecb781f16d773c41751c2d";
+const AUTHORITY_COMMIT = "5b3f940c550800a9ce13f73f4bfcfdb8eba08925";
 // Pin the inventory itself: editing a vendored file and its listed hash must
 // not manufacture conformance to the immutable upstream revision.
-const PIN_DIGEST = "5b02d5e7afe36a1396fa70e8c081f8e324f7611b11681acddacbab2f87e95107";
+const PIN_DIGEST = "fe10f59aefef25f886e11ec0aa5252217c185ffcf993c782fc501d0c6c4b31e2";
 
 function sha256(bytes: string | Uint8Array): string {
   return createHash("sha256").update(bytes).digest("hex");

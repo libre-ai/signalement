@@ -1,6 +1,6 @@
 {
   "repository": "https://github.com/libre-ai/schemas-and-contracts",
-  "commit": "34c143373876e5cf13ecb781f16d773c41751c2d",
+  "commit": "5b3f940c550800a9ce13f73f4bfcfdb8eba08925",
   "contract": "signalement-local-export-v1",
   "status": "locked",
   "files": {
