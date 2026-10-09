@@ -12,13 +12,14 @@ export interface WatchdogBudgets {
   overallMs: number;
 }
 
-// Measured 2026-10-09 on CI (Chrome 154.0.8037.97, ubuntu-latest), runs 37871032245 and
-// 37872290823-37873100676: the first browser launch on a fresh runner takes 0.7-7.5 s before
-// requesting the page (0.2-0.9 s once warm, and dropping the page cache does not reproduce it), and
-// every media stage is clocked by about 2.2 s of real-time recording or playback (longest gap
-// observed 2.8 s). The stages then take 13.3-15.0 s, so one 20 s wall clock from spawn failed
-// correct cold runs. Each budget is about four times the longest observed gap: a real stall still
-// fails within seconds and is named, while a slow startup no longer consumes media time.
+// Measured 2026-10-09 on CI (Chrome 154.0.8037.97, ubuntu-latest), 16 first launches on fresh
+// runners (runs 37872290823-37873100676 and 37873745532-37874804056): the browser takes 0.7-10.7 s
+// before requesting the page (0.2-0.9 s once warm; dropping the page cache does not reproduce the
+// delay), and every media stage is clocked by about 2.2 s of real-time recording or playback
+// (longest gap observed 2.8 s). The stages then take 13.3-15.1 s, so one 20 s wall clock from spawn
+// failed correct cold runs. Startup keeps about three times, and each media stage about four times,
+// its longest observed gap: a real stall still fails and is named, while a slow startup no longer
+// consumes media time.
 export const VIDEO_CHECK_BUDGETS: WatchdogBudgets = {
   startupMs: 30_000,
   stageMs: 10_000,
