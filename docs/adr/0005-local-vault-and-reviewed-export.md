@@ -24,8 +24,11 @@ cannot be guaranteed physically erased. Encryption detects changed ciphertext, n
 rollback of an entire older valid envelope by a profile attacker. Expired bytes are
 purged when the extension next runs; a closed browser cannot execute timed erasure.
 
-The export consumes the locked Contracts authority at
-`812c7d8b64976054201a0da6a3af2ce93bf9cc0b`. Every authority file has an exact hash
+The export consumes the locked contract authority `libre-ai/schemas-and-contracts`
+at the commit recorded in `vendor/contracts/pin.json`; it was first locked in the
+since-deleted `libre-ai/contracts` at `812c7d8b64976054201a0da6a3af2ce93bf9cc0b` and
+republished byte-identical. `check:contracts` refetches every pinned file from the
+authority and requires the pin on its served line. Every authority file has an exact hash
 and the generated browser validator is reproducible. The product defines no competing
 public schema. Only copied reviewed derivatives enter the deterministic, store-only
 ZIP. The independent CLI verifies inventory, bounds, digests and canonical semantics.

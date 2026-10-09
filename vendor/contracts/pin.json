@@ -1,10 +1,10 @@
 {
-  "repository": "https://github.com/libre-ai/contracts",
-  "commit": "812c7d8b64976054201a0da6a3af2ce93bf9cc0b",
+  "repository": "https://github.com/libre-ai/schemas-and-contracts",
+  "commit": "34c143373876e5cf13ecb781f16d773c41751c2d",
   "contract": "signalement-local-export-v1",
   "status": "locked",
   "files": {
-    "contracts/catalog.v1.json": "10f6087437419b408f9f01c9898a0f7970bd3f9f439b4f86098c4d23d94bbcb4",
+    "contracts/catalog.v1.json": "d064a41186666df4a2100c9c21c44abd385c2ad473636ec722f3f2a41e9a6ee1",
     "contracts/COMPATIBILITY.md": "0e69adb94bff044650895b47ca2fc50a649682c4334cc9095a2d9125618ebe17",
     "contracts/schemas/signalement-local-export.v1.schema.json": "ddb63e43cfa76253079df8b10cb31ee4575927cfc22226d4a7942e4c51d83d0e",
     "contracts/signalement-local-export-v1/SEMANTICS.md": "5ae8443c1cadaf4c7fd20b341c2fa0569c329c6768734296517f411c39c629db",

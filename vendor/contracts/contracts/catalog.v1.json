@@ -1091,14 +1091,7 @@
       "consumers": ["missions", "artifacts", "authz-biscuit"],
       "compatibility": "major-versioned",
       "classification": "tenant-private",
-      "status": "candidate",
-      "review": {
-        "state": "pending-independent-agent-review",
-        "reviewerKind": "agent",
-        "separation": "role-scoped-review-pass",
-        "required": ["architecture", "security", "cryptography"],
-        "dossier": "docs/reviews/build-brief-v2-review.md"
-      }
+      "status": "locked"
     },
     {
       "id": "build-brief-acceptance-v2",
@@ -1108,14 +1101,7 @@
       "consumers": ["missions", "artifacts", "authz-biscuit"],
       "compatibility": "major-versioned",
       "classification": "tenant-private",
-      "status": "candidate",
-      "review": {
-        "state": "pending-independent-agent-review",
-        "reviewerKind": "agent",
-        "separation": "role-scoped-review-pass",
-        "required": ["architecture", "security", "cryptography"],
-        "dossier": "docs/reviews/build-brief-v2-review.md"
-      }
+      "status": "locked"
     },
     {
       "id": "spec-package-v2",
@@ -1125,14 +1111,7 @@
       "consumers": ["missions", "artifacts", "authz-biscuit"],
       "compatibility": "major-versioned",
       "classification": "tenant-private",
-      "status": "candidate",
-      "review": {
-        "state": "pending-independent-agent-review",
-        "reviewerKind": "agent",
-        "separation": "role-scoped-review-pass",
-        "required": ["architecture", "security", "cryptography"],
-        "dossier": "docs/reviews/build-brief-v2-review.md"
-      }
+      "status": "locked"
     },
     {
       "id": "agent-handoff-v2",
@@ -1142,14 +1121,7 @@
       "consumers": ["missions", "artifacts", "authz-biscuit"],
       "compatibility": "major-versioned",
       "classification": "tenant-private",
-      "status": "candidate",
-      "review": {
-        "state": "pending-independent-agent-review",
-        "reviewerKind": "agent",
-        "separation": "role-scoped-review-pass",
-        "required": ["architecture", "security", "cryptography"],
-        "dossier": "docs/reviews/build-brief-v2-review.md"
-      }
+      "status": "locked"
     },
     {
       "id": "build-brief-policy-v2",
@@ -1159,14 +1131,7 @@
       "consumers": ["missions", "artifacts", "authz-biscuit"],
       "compatibility": "major-versioned",
       "classification": "tenant-private",
-      "status": "candidate",
-      "review": {
-        "state": "pending-independent-agent-review",
-        "reviewerKind": "agent",
-        "separation": "role-scoped-review-pass",
-        "required": ["architecture", "security", "cryptography"],
-        "dossier": "docs/reviews/build-brief-v2-review.md"
-      }
+      "status": "locked"
     },
     {
       "id": "retention-policy-schema-v3",
@@ -1210,14 +1175,7 @@
       "consumers": ["missions", "sdk-ts", "sdk-rs"],
       "compatibility": "major-versioned",
       "classification": "tenant-private",
-      "status": "candidate",
-      "review": {
-        "state": "pending-independent-agent-review",
-        "reviewerKind": "agent",
-        "separation": "role-scoped-review-pass",
-        "required": ["architecture", "security", "cryptography"],
-        "dossier": "docs/reviews/build-brief-api-v2-review.md"
-      }
+      "status": "locked"
     },
     {
       "id": "build-brief-api-v2",
@@ -1227,14 +1185,87 @@
       "consumers": ["missions", "sdk-ts", "sdk-rs"],
       "compatibility": "major-versioned",
       "classification": "tenant-private",
-      "status": "candidate",
-      "review": {
-        "state": "pending-independent-agent-review",
-        "reviewerKind": "agent",
-        "separation": "role-scoped-review-pass",
-        "required": ["architecture", "security", "cryptography"],
-        "dossier": "docs/reviews/build-brief-api-v2-review.md"
-      }
+      "status": "locked"
+    },
+    {
+      "id": "retention-policy-v4",
+      "kind": "data-policy",
+      "path": "contracts/data/retention.v4.json",
+      "owners": ["specifications", "data"],
+      "consumers": ["specifications", "missions", "data"],
+      "compatibility": "major-versioned",
+      "classification": "internal",
+      "status": "locked"
+    },
+    {
+      "id": "retention-policy-schema-v4",
+      "kind": "json-schema",
+      "path": "contracts/schemas/retention-policy.v4.schema.json",
+      "owners": ["specifications", "data"],
+      "consumers": ["specifications", "missions", "data"],
+      "compatibility": "major-versioned",
+      "classification": "internal",
+      "status": "locked"
+    },
+    {
+      "id": "mission-handoff-binding-v1",
+      "kind": "json-schema",
+      "path": "contracts/schemas/mission-handoff-binding.v1.schema.json",
+      "owners": ["missions", "specifications"],
+      "consumers": ["missions", "agent-orchestrator", "sdk-ts", "sdk-rs"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "mission-record-v3",
+      "kind": "json-schema",
+      "path": "contracts/schemas/mission-record.v3.schema.json",
+      "owners": ["missions"],
+      "consumers": ["missions", "agent-orchestrator", "sdk-ts", "sdk-rs"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "execution-plan-body-v3",
+      "kind": "json-schema",
+      "path": "contracts/schemas/execution-plan-body.v3.schema.json",
+      "owners": ["missions", "agent-orchestrator"],
+      "consumers": ["missions", "agent-orchestrator", "sdk-ts", "sdk-rs"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "execution-authorization-v3",
+      "kind": "json-schema",
+      "path": "contracts/schemas/execution-authorization.v3.schema.json",
+      "owners": ["missions"],
+      "consumers": ["agent-orchestrator", "authz-biscuit", "sdk-ts", "sdk-rs"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "missions-api-schema-v3",
+      "kind": "json-schema",
+      "path": "contracts/schemas/missions-api.v3.schema.json",
+      "owners": ["missions"],
+      "consumers": ["missions", "browser", "agent-orchestrator", "sdk-ts", "sdk-rs"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "locked"
+    },
+    {
+      "id": "missions-api-v3",
+      "kind": "openapi",
+      "path": "contracts/openapi/missions.v3.yaml",
+      "owners": ["missions"],
+      "consumers": ["browser", "agent-orchestrator", "agent-harness"],
+      "compatibility": "major-versioned",
+      "classification": "tenant-private",
+      "status": "locked"
     },
     {
       "id": "signalement-local-export-v1",

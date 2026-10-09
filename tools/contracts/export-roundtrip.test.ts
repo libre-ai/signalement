@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { buildReview } from "../../packages/domain/export.ts";
 import { readZip, writeZip } from "../../packages/domain/zip.ts";
-import { driftFailures } from "./check-drift.ts";
+import { vendoredDriftFailures } from "./check-drift.ts";
 import { writeValidator } from "./generate-validator.ts";
 import { inspectExportFile, verifyExport } from "./verify-export.ts";
 
@@ -26,7 +26,7 @@ async function review() {
   );
 }
 test("vendor is pinned byte-exact and generated schema is reproducible", async () =>
-  expect(await driftFailures()).toEqual([]));
+  expect(await vendoredDriftFailures()).toEqual([]));
 test("fresh independent authority consumer accepts ZIP and rejects changed inventory/content", async () => {
   const bytes = await (await review()).toZip();
   expect(verifyExport(bytes)).toEqual([]);
