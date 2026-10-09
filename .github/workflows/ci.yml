@@ -100,5 +100,8 @@ jobs:
         with:
           name: chrome-qualification-receipt
           path: ${{ runner.temp }}/receipt
-      - name: Require native quota refusal from the same receipt
-        run: bun tools/browser-check/receipt.ts "$RUNNER_TEMP/receipt" --native-quota=required
+      # Owner decision D2: an unverified native quota is reported as a warning
+      # and in the step summary, not as a red job. Every other verdict on the
+      # receipt (missing, unreadable, failed, inconsistent) still fails here.
+      - name: Report native quota refusal from the same receipt
+        run: bun tools/browser-check/receipt.ts "$RUNNER_TEMP/receipt" --native-quota=advisory

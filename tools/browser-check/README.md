@@ -122,8 +122,15 @@ other steps are present in order, and fails on any other missing, extra,
 reordered or failed step. The receipt is published as the
 `chrome-qualification-receipt` artifact on every run. The separate, non-required
 `Native quota qualification` job downloads that same receipt and applies
-`--native-quota=required`, so it stays red until native refusal is observed.
-Without a flag, `chrome.ts` keeps requiring native quota.
+`--native-quota=advisory`: the `required` verdict, except that an unverified
+native quota (`quota.unverified`, and that code alone) is reported as the
+warning annotation `native quota unverified (non-required, owner decision D2)`
+and in the job's step summary instead of failing the job, so the workflow
+conclusion stays green while native refusal is unobserved. A missing,
+unreadable, ambiguous, failed or inconsistent receipt still fails that job.
+The workflow uses no `continue-on-error`, which would swallow those failures too.
+Without a flag, `chrome.ts` keeps requiring native quota; `advisory` is
+accepted only by `receipt.ts`.
 
 Firefox video's latest diagnostic run reached native `seeked`, playback `ended`,
 and the transcode recorder's `stop()` invocation, but no corresponding recorder
