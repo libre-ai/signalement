@@ -104,8 +104,18 @@ session, `Storage.overrideQuotaForOrigin` was accepted and usage reporting expos
 an active one-byte quota, but saving a second real screenshot of synthetic random
 pixels succeeded without `QuotaExceededError`. The override was restored before
 restart. This does not establish atomic preservation on native quota failure;
-the receipt is partial and the command exits nonzero. No product storage error
-was injected to replace that missing browser evidence.
+the receipt is partial. No product storage error was injected to replace that
+missing browser evidence.
+
+The verdict over that receipt is taken twice (`receipt.ts`). The required
+`Bun quality` job runs `chrome.ts --native-quota=non-required`: it admits a
+`partial` receipt only when native quota is the sole shortfall and all nine
+other steps are present in order, and fails on any other missing, extra,
+reordered or failed step. The receipt is published as the
+`chrome-qualification-receipt` artifact on every run. The separate, non-required
+`Native quota qualification` job downloads that same receipt and applies
+`--native-quota=required`, so it stays red until native refusal is observed.
+Without a flag, `chrome.ts` keeps requiring native quota.
 
 Firefox video's latest diagnostic run reached native `seeked`, playback `ended`,
 and the transcode recorder's `stop()` invocation, but no corresponding recorder

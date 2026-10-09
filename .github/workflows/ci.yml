@@ -50,12 +50,22 @@ jobs:
           bun apps/extension-shared/editor.browser-check.ts
           bun apps/extension-shared/editor.browser-check.ts --audio-fixture
           bun apps/extension-shared/editor.browser-check.ts --init-lock
+      # Every receipt step except native quota refusal is required here; headless
+      # Chrome never raises QuotaExceededError under CDP, so that one verdict is
+      # taken by the separate native-quota job from the same receipt.
       - name: Verify installed Chrome local capture and export
         env:
           CHROME_BINARY: /usr/bin/google-chrome
         run: |
           test -x "$CHROME_BINARY"
-          bun tools/browser-check/chrome.ts
+          bun tools/browser-check/chrome.ts --native-quota=non-required
+      - name: Publish Chrome qualification receipt
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: chrome-qualification-receipt
+          path: test-results/browser-check/chrome/
+          if-no-files-found: error
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 0
@@ -65,3 +75,30 @@ jobs:
       - run: bun run check:development-history
         env:
           EXPECTED_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+  native-quota:
+    name: Native quota qualification
+    needs: bun-quality
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install archived Bun toolchain
+        env:
+          BUN_ARCHIVE_URL: https://github.com/libre-ai/project-governance/releases/download/toolchain-bun-1.4.0-canary.1-57f349f63/bun-linux-x64.zip
+          BUN_ARCHIVE_SHA256: 83144e2542c33aaae541cf16b42f8cf1c55c3b94c5395fc776417fa27e95bcbf
+        run: |
+          curl --fail --location --retry 3 --output "$RUNNER_TEMP/bun.zip" "$BUN_ARCHIVE_URL"
+          echo "$BUN_ARCHIVE_SHA256  $RUNNER_TEMP/bun.zip" | sha256sum --check --strict
+          unzip -q "$RUNNER_TEMP/bun.zip" -d "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/bun-linux-x64" >> "$GITHUB_PATH"
+      - name: Check out the receipt verifier
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          sparse-checkout: tools/browser-check/receipt.ts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: chrome-qualification-receipt
+          path: ${{ runner.temp }}/receipt
+      - name: Require native quota refusal from the same receipt
+        run: bun tools/browser-check/receipt.ts "$RUNNER_TEMP/receipt" --native-quota=required
