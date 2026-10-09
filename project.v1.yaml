@@ -22,10 +22,10 @@ summary: >-
   Signalement web relu, reproduction exécutable et vérification déterministe,
   avec projections portables vers plusieurs systèmes de travail.
 current_situation: >-
-  La fondation est publiée au commit 8b02f8e61e1675948caaea5be3c57a898cbd624b,
-  attesté dans Governance par la PR 112 fusionnée; sa disponibilité publique a été
-  revérifiée le 2026-10-06. Aucune capture, extension, API, synchronisation, exécution
-  ni intégration fournisseur n'est qualifiée ou opérationnelle.
+  La fondation est publique. Une implémentation locale de capture relue, brouillons
+  chiffrés et export portable est en validation, contre le contrat v1 verrouillé.
+  La qualification complète des trois navigateurs reste ouverte. Aucun connecteur
+  fournisseur, API serveur ni worker de reproduction n'est livré.
 scope:
   - "Capture volontaire, bornée et relue depuis Chrome, Firefox et Safari, chacun qualifié séparément."
   - "Dossier canonique exportable avec preuves, contexte filtré et historique de redaction."
@@ -42,13 +42,13 @@ dependencies:
     why: "doctrine de flotte, schéma de fiche, gates de sécurité et workflows réutilisables"
     pinned: "7c2238d6185e59d446586688ca7db32e6a17d3e0"
   - on: libre-ai/schemas-and-contracts
-    why: "autorité future des schémas publics de dossier, scénario, exécution et connecteur"
-    pinned: "aucun contrat consommé au stade de fondation"
+    why: "autorité verrouillée du contrat signalement-local-export-v1; les autres contrats restent futurs"
+    pinned: "5b3f940c550800a9ce13f73f4bfcfdb8eba08925"
 maturity: specified
 confidence: medium
 exposure: spec-published
 freshness:
-  last_verified_on: "2026-10-06"
+  last_verified_on: "2026-10-07"
 scope_stability: stable
 hypothesis: >-
   Un dossier canonique relu, doté d'un scénario et de projections idempotentes, réduit

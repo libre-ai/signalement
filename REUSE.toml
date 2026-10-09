@@ -20,3 +20,9 @@ path = ["packages/connector-sdk/**"]
 precedence = "override"
 SPDX-FileCopyrightText = "2026 Libre AI contributors"
 SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = ["packages/domain/schema-validator.js"]
+precedence = "override"
+SPDX-FileCopyrightText = ["2026 Libre AI contributors", "2015-2021 Evgeny Poberezkin"]
+SPDX-License-Identifier = "MIT"

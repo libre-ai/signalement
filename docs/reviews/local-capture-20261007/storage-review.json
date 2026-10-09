@@ -1,0 +1,54 @@
+{
+  "reviewPassId": "signalement-storage-capture-wip-20261007-03",
+  "reviewer": "/root/export_contract_review",
+  "sourceHashes": {
+    "packages/draft-storage/indexeddb.ts": "f02e6aaf8b59fd8a8b0a711e98475b159f673d82446342cec29c5b0107d4f375",
+    "packages/draft-storage/run-browser-check.ts": "b3fed5f8dfc4c9cdbc30e18499c3ec2018fad52d89b9956be1e5c319fc07f2d4",
+    "packages/draft-storage/vault.ts": "3ad8af6588b2957a1cc8b5212a8bc243095f087d0d1f0ff84203f9f44866d40a",
+    "packages/draft-storage/README.md": "650416f79fba7ed3bcbbb36377bbf5840fd2b172fdd4a94d782407cd8279fd16",
+    "packages/draft-storage/vault.test.ts": "2e1be53bd46ccc6df55569f2c4f627467051c70cb84b0339afe391414f62d263",
+    "packages/draft-storage/browser-fixture.ts": "be833c7bd7fdd31e43144ee3c44067d604731e7b801a6b00dc639380f455cd51",
+    "packages/capture-core/pixels.bench.ts": "534b6453970b4c81d1baa22b578a062036b3869fa4c3993eea7059dcb3f7ac65",
+    "packages/capture-core/README.md": "29563f4a4c7afc0d29d015bad4b21985458c87fdd4cd74a899043f95063178d0",
+    "packages/capture-core/pixels.ts": "ab74af5bd131f9eb419be0da8f2f44547634297595c4874e20669f09bc60c1a2",
+    "packages/capture-core/pixels.test.ts": "f2e2a94617b0329ae7a96f0f713f71a672458be84f4968667c1d3fdefc69f1d8",
+    "tools/build/manifest.test.ts": "58a97fccd05f9c012ac1eadb6aa6a2ce77ddede13b64bfbc8813a281a2913b88",
+    "tools/build/extensions.ts": "b0782ed25fb167d45e3616efd7626eb8fa6e1cabf79b2aa29e9b3f92c05ff239",
+    "tools/build/manifest.ts": "3e12cd421f4a41c208bc93947ca33daa29b62fb8ae5e352f5491a7d2a13ca599",
+    "apps/extension-shared/capture.ts": "60b3a5c888d61c3765fd82be9e5a1d8c0a425505e9f0c39f457dff7458e8c8b4",
+    "apps/extension-shared/controller.ts": "482bf63c83efbaab5a95289058b9f32408b95593b33678e66606d3c3f715b717",
+    "apps/extension-shared/browser-api.ts": "a22bd5776c1e6d5ca6dca342a022f3075490a5c4c54149af1349f1b415b53ec3",
+    "apps/extension-shared/background.ts": "b2568a8ccadd66465cd52500e2fcf838e4e1131cc2c04d7cf7a3d5bd13a97044",
+    "apps/extension-shared/capture.test.ts": "35344b1514bd1e9ca950425193ed6a5b555eeaa1a65b3cc4538302ceb42c9395",
+    "apps/extension-shared/controller.test.ts": "109003ce0920f212e32a76b7ac22b66f3f884801766150b7860de44a16e29e1e"
+  },
+  "scope": "Requested storage/capture/controller/build WIP only; excludes editor/browser-media/tools-browser-check",
+  "findings": [],
+  "resolved": [
+    "Mutable save identity race: copy.id throughout, both drafts survive mutation",
+    "Internal plaintext buffers: raw decrypt, import material, unlock, discarded decoded states and partial decode failure copies cleared",
+    "Resource amplification: bounded header/content, draft and attachment counts before relevant allocations",
+    "Build artifact notices: MIT, EUPL and project attribution now copied and hashed"
+  ],
+  "evidence": {
+    "targetedTests": 34,
+    "assertions": 152,
+    "exitCode": 0,
+    "independentResolvedProbes": [
+      "resolved-identity.ts",
+      "resolved-plaintext.ts",
+      "resolved-list.ts"
+    ],
+    "strictStorageTypecheck": "tsc --ignoreConfig --noEmit --strict --noUncheckedIndexedAccess --exactOptionalPropertyTypes --target esnext --module esnext --moduleResolution bundler --allowImportingTsExtensions --types bun packages/draft-storage/vault.ts packages/draft-storage/indexeddb.ts; exit0"
+  },
+  "verdict": "no remaining concrete finding in reviewed scope at listed hashes",
+  "promotionApproval": false,
+  "sourceFilesModifiedByReviewer": false,
+  "limitations": [
+    "No end-to-end branded-browser or video/media qualification",
+    "No full-tree gate while other modules mutate",
+    "Garbage-collected strings and caller-owned returned plaintext cannot be guaranteed erased",
+    "Previously started IndexedDB commit may complete after lock; documented boundary",
+    "Intermediate review-followup-record.json overlapped an author update and is superseded by this stable recheck"
+  ]
+}

@@ -142,7 +142,12 @@ test("CLI rejects historical findings with generic diagnostics", async () => {
 
 test("CI validates the integration tree before auditing immutable contributor history", async () => {
   const workflow = await readFile(join(import.meta.dir, "../../.github/workflows/ci.yml"), "utf8");
-  const checkouts = workflow.split("      - uses: actions/checkout@").slice(1);
+  // Scope to the required job; the non-required native quota job checks out
+  // only its receipt verifier and audits no history.
+  const [, afterQuality = ""] = workflow.split("\n  bun-quality:\n");
+  const [bunQuality = ""] = afterQuality.split(/(?<=\n) {2}native-quota:\n/);
+  expect(bunQuality).toContain("    name: Bun quality\n");
+  const checkouts = bunQuality.split("      - uses: actions/checkout@").slice(1);
   expect(checkouts).toHaveLength(2);
   const integration = checkouts[0] ?? "";
   const history = checkouts[1] ?? "";

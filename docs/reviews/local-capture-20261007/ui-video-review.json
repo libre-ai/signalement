@@ -1,0 +1,88 @@
+{
+  "reviewer": "/root/export_contract_review",
+  "provider": "OpenAI Codex",
+  "model": "inherited parent configuration; exact model not independently exposed",
+  "scope": "Read-only security/privacy/function review of local UI and video; mutable worktree only",
+  "baseHead": "0d3d3044b67297cef00be15e8fb4b751dd1df5bb",
+  "sources": {
+    "apps/extension-shared/browser-media.test.ts": "9df7958c95bf9b066ed0145501b26361bed3373c1c1376bc7af22deb2214d640",
+    "apps/extension-shared/browser-media.ts": "9c6b30bf286d81ff924fcf398e203315bf2c5c91ff1f41747f014592262e059b",
+    "apps/extension-shared/editor.browser-check.ts": "3ba1c8fe521afb6c380b927cc2e4ee01f87fb03f897ae74cbe6d74bda1505246",
+    "apps/extension-shared/editor.browser-fixture.ts": "4f6701e0c1588156976b8c81370639a06ad03f583a10403fd3ff8feebbd08bd9",
+    "apps/extension-shared/editor.html": "cfb3fd4441157cc1b1ccd73c01cec0fd4b6a17188268993f3705b7fca52e1712",
+    "apps/extension-shared/editor.ts": "6314ba0cee4a06eab22fa1b8bdfd8a2b77add6e1dccbf203d517d230c5643cf3",
+    "apps/extension-shared/styles.css": "be672c9cc36cc17221532f35c4e925185eefa3cb3f6927b333d8aa5618437904",
+    "apps/extension-shared/video-container.test.ts": "4917e38268af8c3cb998169c0c924405c70fc3b6ea7279b90a92fd49043f7ad0",
+    "apps/extension-shared/video-container.ts": "5a95ac790a4e9426c027a1c8d5b5ae7f9bc37e7a1248dd1ee608c0861e0a8d75",
+    "apps/extension-shared/video-sanitizer.test.ts": "076404ac381d93ce58b2a508a88436237e59c7d3d3ade3c856722cd83d829f40",
+    "apps/extension-shared/video-sanitizer.ts": "c5f590b9aef1fc9488b358c6a0da61c00e6adf7e3a36b47c8a654428523f4f34",
+    "apps/extension-shared/video-state.test.ts": "6bd30ab154661a1361d847a3cdd9fc3b7ca13ad5fa0ccee4d5c70b7b3567220d",
+    "apps/extension-shared/video-state.ts": "48d941e9ed79f6ac39611496e88c0787f6006f96ee7392d60a9fc635d015aced",
+    "apps/extension-shared/video.browser-check.ts": "0f102aab55acb13fe820cd4e541a3b4df03339cca0913aa831a78eb5c566f439",
+    "apps/extension-shared/video.browser-fixture.ts": "f4712f59aa53ec558a83cc5b6a3f17d2eee72e4de6eba381a53833bf18f3f4c8"
+  },
+  "verdict": "approve-scoped-wip",
+  "openFindings": [],
+  "resolvedFindings": [
+    "UI-1 new prepare invalidates approval; Chrome regression passes",
+    "UI-2 save snapshots identity, vault, revision, retention and media before Blob await; generation/vault checked before persistent effect; operation counter preserves exclusion after concurrent lock",
+    "UI-3 source-track ended callback checks recording epoch",
+    "UI-4 pending initial capture blocks prepare and late installation invalidates review; lock epoch prevents late return"
+  ],
+  "evidence": {
+    "editor-browser-final.log": {
+      "exitCode": 0,
+      "assertions": 19,
+      "sha256": "50e2b7ba2ab55422c2da54817e014196487f12e324395b7f5ba90c1b622e58c9"
+    },
+    "init-lock-final.log": {
+      "exitCode": 0,
+      "assertions": 2,
+      "sha256": "fbc7fa4cd3022120ed543d08c95ca4d1045b9bb86a2d02480643bc5f7aed5202"
+    },
+    "video-browser-final.log": {
+      "exitCode": 0,
+      "assertions": 10,
+      "sha256": "9ce0b529afaf3bbb1d4a5ead8bb233b083730766d6a434130ecf891e3471b2e9"
+    },
+    "unit-after.log": {
+      "exitCode": 0,
+      "sha256": "6488d2d4d4fe97e5a9f1153d643aca0b74d902c60b7615b66e4dd002d4e81c82"
+    },
+    "save-race-after.log": {
+      "exitCode": 0,
+      "sha256": "495ae98b9d5ca5fa7273f02c8f0b66667b51511a9cc61465b00046163a4b169f"
+    },
+    "stale-track-after.log": {
+      "exitCode": 0,
+      "sha256": "11cf7204a7bd5cc6d96faa02535dcd6427f0e64b557fc99796c0caf4f357d65d"
+    }
+  },
+  "units": {
+    "tests": 12,
+    "assertions": 30,
+    "failed": 0
+  },
+  "browserProfile": {
+    "brand": "Google Chrome",
+    "installedVersion": "154.0.8037.98",
+    "mode": "headless synthetic loopback with fresh temporary profile"
+  },
+  "analysis": [
+    "Original image/video retained only as encrypted draft attachments; export prepares derivative copies and opaque source relations.",
+    "Pixel masks applied before first captured canvas frame and each subsequent presentation; temporal masks permanent.",
+    "Optional PCM graph feeds MediaStreamAudioDestinationNode only; no connection to physical audio output destination. Collection and derivative inclusion separate explicit controls.",
+    "WebM profile rebuild accepts known element IDs, removes free metadata; input is fresh native encoder output, never direct arbitrary uploaded container. Multi-cluster scan walks EBML boundaries, finite count/size checks.",
+    "DOM review uses textContent; labels and status regions present; production CSP forbids connections and remote scripts.",
+    "Reload requires fresh video playback and video/audio review. Immutable export is independently compared to preview bytes."
+  ],
+  "limits": [
+    "Approval is for listed exact source hashes only; later changes invalidate affected evidence.",
+    "This is not final immutable commit or merge/promotion approval.",
+    "Chrome browser fixtures are real decoded pixels/PCM and UI state checks, not installed-extension/source-picker qualification.",
+    "No Firefox or Safari qualification inferred.",
+    "Full repository gate is parent responsibility and not asserted here.",
+    "Initial browser escalation was refused, identical command was accepted on explicit user AGENTS E2E context re-examination; no alternate bypass.",
+    "No proof of OS-level secret erasure is claimed; JavaScript Blob/string lifetime remains runtime-managed."
+  ]
+}

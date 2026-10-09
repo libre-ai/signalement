@@ -1,0 +1,92 @@
+{
+  "reviewPassId": "signalement-domain-zip-wip-20261007-01",
+  "reviewer": "/root/export_contract_review",
+  "provider": "OpenAI",
+  "model": "exact identifier unavailable",
+  "scope": "packages/domain,tools/contracts,vendored authority pin; read-only WIP. Editor/video/browser-check excluded.",
+  "sourceHashes": {
+    "packages/domain/schema-validator.d.ts": "cc34139ee80a71a0ed5397b1752857661957aec52fa73d0b6759ee13d353a38c",
+    "packages/domain/zip.ts": "d10ffd1f396db1bc90a315f7a867466e29023b5af1c1acb6cb487bcaeabf76b9",
+    "packages/domain/README.md": "7874d04d9d78ad433d1aa80d9ea293ace8697c9ace0baf6067d6bfd21f5006b5",
+    "packages/domain/zip.test.ts": "2d8f407ac55c9877a691a06475c421f702a6bd31c29ff7e8f4ad2d97ece6ad2d",
+    "packages/domain/export.ts": "e6a9e3f43b6ca349cc28dba0aa38f4e17ce12a8418b8a3f239a7cc01a49e7fe7",
+    "packages/domain/export.test.ts": "b7abdc56756ea556bf1d1e4a9b688250831e7df6748ddfd2f5a1679d9ff17c9b",
+    "packages/domain/schema-validator.js": "f472cc21b5aafec75019d1f5e95be614f2955af9e70259aa0ad28b2c789bed3a",
+    "tools/contracts/check-drift.ts": "336079016b872e3a7ee9141f53dafaee4ae0c0f7e7430f582875d6f2f3702795",
+    "tools/contracts/verify-export.ts": "d08e0228a4720229af8d56043e692ebbb163474bcaefd2ae4255e15e84a98a7f",
+    "tools/contracts/bunfig.toml": "1d97839ba4e059a212c2d34e94748ac40ed2851211517b083af5f9a4d0cb5070",
+    "tools/contracts/export-roundtrip.test.ts": "77141d95e2121a701a2e63d29cbfda94d913a1304cbd393a4b159b23fe5b671a",
+    "tools/contracts/generate-validator.ts": "a9b006a05d8502d746db538ec2b5a5d59d84ac4e2a821311e74a0af0ebf04f07",
+    "vendor/contracts/pin.json": "84f5e4d8ca32193439947775dff04759508878677329d471d1e4f1772db60c97",
+    "vendor/contracts/tools/quality/signalement-local-export-v1.ts": "b330fa75b4f7a647740476f6bcde7f1ca5d28d987e533553e683a77d645a7d00",
+    "vendor/contracts/tools/quality/authorized-execution.ts": "5fa4744a5a80a1de8ea44e22fce03abce89dde39e16b09ae364a85a31be63f0e",
+    "vendor/contracts/tools/quality/policy-core-raw-inputs.ts": "94fc29b0b479be581c063a6c8a566f076319d1f4bd372c82291b7a71b7dcc389",
+    "vendor/contracts/contracts/COMPATIBILITY.md": "0e69adb94bff044650895b47ca2fc50a649682c4334cc9095a2d9125618ebe17",
+    "vendor/contracts/contracts/catalog.v1.json": "10f6087437419b408f9f01c9898a0f7970bd3f9f439b4f86098c4d23d94bbcb4",
+    "vendor/contracts/contracts/schemas/signalement-local-export.v1.schema.json": "ddb63e43cfa76253079df8b10cb31ee4575927cfc22226d4a7942e4c51d83d0e",
+    "vendor/contracts/contracts/signalement-local-export-v1/SEMANTICS.md": "5ae8443c1cadaf4c7fd20b341c2fa0569c329c6768734296517f411c39c629db",
+    "vendor/contracts/contracts/fixtures/signalement-local-export-v1/synthetic.json": "c763a48514fb0a41c436ad676aec69ede52a7c71013f7540aa988bca2cdff051",
+    "vendor/contracts/contracts/fixtures/signalement-local-export-v1/schema-fixtures.json": "8a16b467ecf29f37d2f92ed85ab622685e2ce89988d9fd9b9b43819973d51049"
+  },
+  "authorityCommit": "812c7d8b64976054201a0da6a3af2ce93bf9cc0b",
+  "findings": [],
+  "resolvedFindings": [
+    {
+      "priority": "P2",
+      "file": "packages/domain/zip.ts",
+      "line": 8,
+      "title": "UTF-8 BOM path alias accepted",
+      "detail": "Default TextDecoder stripped leading BOM from ZIP names; malicious last entry BOM+manifest.json was accepted as manifest.json by readZip and verifyExport while Python zipfile saw a distinct filename. ignoreBOM:true now preserves the character so the exact path allowlist rejects it.",
+      "originalRepro": "bom-probe.ts",
+      "independentOracle": "Python zipfile.namelist showed BOM-prefixed filename, no manifest.json",
+      "resolvedRepro": "resolved-bom-probe.ts, exit0"
+    }
+  ],
+  "checks": {
+    "exportSuite": {
+      "command": "bun run check:export",
+      "exitCode": 0,
+      "tests": 13,
+      "assertions": 97,
+      "lineCoverage": 95.71,
+      "functionCoverage": 100
+    },
+    "drift": {
+      "command": "bun run check:contracts",
+      "exitCode": 0
+    },
+    "upstreamByteComparison": {
+      "files": 9,
+      "exactBytesAndDigests": true
+    },
+    "independentHostileChecks": {
+      "command": "bun hostile-probes.ts",
+      "exitCode": 0,
+      "cases": 1704,
+      "scope": "Each byte of a valid 1696-byte archive toggled once; 6 extreme length/count/offset fields; trailing bytes and concatenated ZIP"
+    },
+    "generatedValidator": {
+      "canonicalFixtureChecks": 2,
+      "passed": true,
+      "characters": 58850,
+      "allErrors": false,
+      "messages": false,
+      "booleanSurface": true,
+      "reproducibleGeneration": true
+    }
+  },
+  "analysis": {
+    "snapshot": "All mutable arrays/media bytes copied before first await; manifest, filenames and review object frozen, each ZIP freshly allocated. Caller mutation covered by test.",
+    "binding": "Private copied media and Markdown hashes enter restricted JCS payload digest; semantic timestamp, media/source identity, audio and type conditions checked before hashing. Independent Python ZIP/JCS/hash oracle passes.",
+    "zipResources": "At most34entries; aggregate/per-file caps checked before final copies and CRC. Store-only profile refuses compression, encryption, links/attrs, extras/comments, bad offsets, mismatched names, duplicates and extra local bytes. CRC visits bounded file content once; bounded searches over32/34entries are not unbounded quadratic work. Offset/length arithmetic stays within safe JS integers.",
+    "authority": "All nine files compared against git show at exact upstream commit. Pin inventory hash is hardcoded, vendor inventory checked and generated validator regenerated byte-exact.",
+    "licensing": "Generated Ajv validator MIT attribution recorded; packaging license checks handled in prior storage/build review. No scanner file diff or exemption introduced by this domain change."
+  },
+  "limitations": [
+    "WIP review only, no final promotion",
+    "No actual media codec/sanitation/consent or browser capture admission",
+    "Large maximum archive memory use remains bounded but not browser-performance qualified"
+  ],
+  "verdict": "No remaining concrete finding at listed hashes",
+  "sourceFilesModifiedByReviewer": false
+}
