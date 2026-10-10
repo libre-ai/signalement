@@ -39,7 +39,7 @@ La publication de la fondation porte sur le commit
 `governance`, retiré le 2026-10-07 (ADR-0041) : son lien n'est donc plus donné,
 et l'attestation citée ci-dessous a suivi l'autorité par transfert tracé.
 La disponibilité publique a été revérifiée le 2026-10-06.
-L’[attestation privée historique](https://github.com/libre-ai/project-governance/blob/1c8b37c80beb41f640982768ec27304a911e0b8e/docs/reviews/signalement-bootstrap/8b02f8e61e1675948caaea5be3c57a898cbd624b/ATTESTATION.md)
+L’[attestation privée historique](https://github.com/libre-ai/project-governance/blob/5ef12472d043f3ed1799ca09cff89c27ff024d79/docs/reviews/signalement-bootstrap/8b02f8e61e1675948caaea5be3c57a898cbd624b/ATTESTATION.md)
 décrit les contrôles effectués avant exposition ; elle ne qualifie aucune capacité produit.
 Le critère de revue architecture, sécurité, qualité et souveraineté reste en attente :
 les preuves disponibles ne démontrent pas ces quatre revues au même commit.
