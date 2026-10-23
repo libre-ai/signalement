@@ -1,7 +1,7 @@
 # Signalement v1.0 — projection d'un Dossier vers les systèmes de tickets, routée par politique
 
 - Statut : design approuvé par le propriétaire le 2026-10-23 (en chat) ; la levée du
-  gel attend la fusion de l'amendement d'ADR-0042 §1, proposé comme ADR-0054
+  gel attend la fusion de l'amendement d'ADR-0042 §1, proposé comme ADR-0055
   (`libre-ai/project-governance` #134)
 - Arbitrages : décisions propriétaires des 2026-10-22 et 2026-10-23, prises par questions
   structurées pendant la session de cadrage v1.0 (restituées au §4)
@@ -539,7 +539,7 @@ Texte proposé :
 Ajout au préambule « Autorise » : « la sortie du gel de `signalement` ».
 
 Forme : un ADR d'amendement dans `project-governance`. Proposé le 2026-10-23 comme
-ADR-0054, entrée D81 du registre (`libre-ai/project-governance` #134). La ligne
+ADR-0055, entrée D94 du registre (`libre-ai/project-governance` #134). La ligne
 d'arbitrage est écrite par le propriétaire, jamais par l'agent.
 
 ## Annexe B — Correction de catalogue P15
