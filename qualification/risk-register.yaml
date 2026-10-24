@@ -28,7 +28,7 @@ entries:
     reopens_on: "AI provider configuration or disclosure-policy change"
   - id: consistent-read-unavailable
     status: unresolved
-    statement: "Jira Cloud offers no strongly consistent lookup (measured 2026-10-24, assumption jira-consistent-read): every ambiguous Jira create goes to human resolution. GitHub, GitLab, and Plane carry the same risk until their lookup is proven."
+    statement: "Jira Cloud offers no strongly consistent lookup (documented 2026-10-24 in Atlassian documentation, search and reconcile; assumption jira-consistent-read): every ambiguous Jira create goes to human resolution. GitHub, GitLab, and Plane carry the same risk until their lookup is proven."
     source: qualification/assumptions.yaml
     reopens_on: "per-profile consistent-read qualification"
   - id: delivery-memory-bound

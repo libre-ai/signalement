@@ -43,12 +43,12 @@ entries:
     reopens_on: "policy evaluation, renderer, or connector change"
   - id: denied-destination-disclosure
     status: unresolved
-    statement: "The reporting person sees only the count of destinations the matched rule denies, never their names or reasons; the detail is readable only by policy administrators in the audit log."
+    statement: "The reporting person sees only the count of destinations the matched rules deny, never their names or reasons; the detail is readable by policy administrators in the audit log."
     source: docs/superpowers/specs/2026-10-22-v1-policy-routed-ticket-projection-design.md#54-écran-denvoi
     reopens_on: "send screen, plan API, or audit access change"
   - id: stale-plan-dispatch
     status: unresolved
-    statement: "A discovered attribute changed or a policy version retired between approval and dispatch yields to-resolve and a new approval, never a send; a failed attribute read counts as public."
+    statement: "A discovered attribute changed or a policy version retired between approval and dispatch yields to-resolve and a new approval, never a send; a failed attribute read withholds every file of that destination (reason `visibility-unknown`)."
     source: docs/superpowers/specs/2026-10-22-v1-policy-routed-ticket-projection-design.md#55-projection-idempotence-et-reçus
     reopens_on: "dispatcher, revalidation, or policy lifecycle change"
   - id: ambiguous-outcome-duplicate
