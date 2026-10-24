@@ -1,8 +1,8 @@
 # Signalement v1.0 — projection d'un Dossier vers les systèmes de tickets, routée par politique
 
-- Statut : design approuvé par le propriétaire le 2026-10-23 (en chat) ; la levée du
-  gel attend la fusion de l'amendement d'ADR-0042 §1, proposé comme ADR-0055
-  (`libre-ai/project-governance` #134)
+- Statut : design approuvé par le propriétaire le 2026-10-23 (en chat) ; gel levé par
+  ADR-0055, décision D94 du registre de `libre-ai/project-governance`, fusionné par le
+  propriétaire le 2026-10-23 (`libre-ai/project-governance` #134)
 - Arbitrages : décisions propriétaires des 2026-10-22 et 2026-10-23, prises par questions
   structurées pendant la session de cadrage v1.0 (restituées au §4)
 - Base inspectée le 2026-10-22 : `6c1af3c` ; la tête servie se résout par
@@ -149,10 +149,11 @@ Ce qui rend le produit vendable à cet acheteur :
 - **Souveraineté.** Cible de déploiement de référence : Clever Cloud (Paris), sans
   hyperscaler américain dans la chaîne du control plane. Aucune dépendance AGPL/SSPL.
   Plane (AGPL) est une cible d'API, pas une dépendance : sans effet de licence.
-- **Gouvernance.** ADR-0042 §1 gèle `signalement` jusqu'à B′ (texte en annexe A).
-  Aucun lot de code ne démarre avant la fusion propriétaire de l'amendement. Les
-  chemins gardés (`docs/adr/**`, etc.) exigent un artefact de revue ; l'agent n'écrit
-  jamais de ligne `Owner-arbitration:`.
+- **Gouvernance.** ADR-0042 §1 gelait `signalement` jusqu'à B′ (texte en annexe A).
+  ADR-0055 (D94), fusionné le 2026-10-23, l'a amendé : le gel est levé. Aucune PR de
+  code qui consomme un contrat public ne fusionne avant le verrou de ce contrat (§8.3).
+  Les chemins gardés (`docs/adr/**`, etc.) exigent un artefact de revue ; l'agent
+  n'écrit jamais de ligne `Owner-arbitration:`.
 - **Comptes de qualification.** GitLab.com et Jira Cloud exigent des comptes de test
   créés par le propriétaire ; Plane tourne en conteneur local ; GitHub utilise un dépôt
   de test de l'organisation. Sans compte, le profil reste `unresolved` et la v1.0 ne
@@ -487,7 +488,8 @@ Tests liés aux prédicats, obligatoires avant toute annonce :
 ## 8. Préalables de gouvernance, dans l'ordre
 
 1. **Amendement d'ADR-0042 §1** en `project-governance` (annexe A) : PR ouverte par
-   l'agent, fusion par le propriétaire. Aucun lot de code avant.
+   l'agent, fusion par le propriétaire. Aucun lot de code avant. Fait : ADR-0055, D94,
+   fusionné le 2026-10-23 (`libre-ai/project-governance` #134).
 2. **Correction de catalogue P15** (annexe B), dans la même PR ou une PR liée.
 3. **Contrats publics** en `schemas-and-contracts` : politique, enveloppe de remise,
    reçu, `ConnectorProfile`. Ils sont verrouillés avant que le code qui les consomme soit
@@ -538,7 +540,14 @@ Texte proposé :
 
 Ajout au préambule « Autorise » : « la sortie du gel de `signalement` ».
 
-Forme : un ADR d'amendement dans `project-governance`. Proposé le 2026-10-23 comme
+Texte adopté (ADR-0055, D1) :
+
+> Capture & Relay (`signalement`) est le dépôt porteur de **P15** (projets,
+> tickets et support). Il sort du gel : ses lots reprennent pour livrer la v1.0
+> décrite dans son dépôt. Le moratoire de création de dépôt ne s'applique pas :
+> le dépôt existe.
+
+Forme : un ADR d'amendement dans `project-governance`. Fusionné le 2026-10-23 comme
 ADR-0055, entrée D94 du registre (`libre-ai/project-governance` #134). La ligne
 d'arbitrage est écrite par le propriétaire, jamais par l'agent.
 
