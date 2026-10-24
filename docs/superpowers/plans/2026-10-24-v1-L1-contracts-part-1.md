@@ -273,7 +273,7 @@ Document (design §5.3, registre §4.1) :
 
 **Sémantique d'évaluation (DL8), normative dans `SEMANTICS.md`, reprise par le monde WIT,
 implémentée par L2.** `SEMANTICS.md` porte en tête cette ligne : « Precedence among
-matched rules is the union below (DL8), provisional pending the owner's decision. »
+matched rules is the union below (DL8), decided by the owner on 2026-10-24. »
 Entrée `EvaluationInput`, sortie `PolicyVerdict` du registre §4.2.
 `DiscoveredAttributes` = `{ visibility: "public" | "internal" | "private" | "unknown";
 attachmentUpload: boolean }` ; une entrée absente vaut `{ visibility: "unknown",
