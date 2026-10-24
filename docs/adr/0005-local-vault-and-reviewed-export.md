@@ -60,10 +60,11 @@ a valid manifest does not prove redaction or consent.
   (`docs/superpowers/specs/2026-10-22-v1-policy-routed-ticket-projection-design.md`);
   the freeze was lifted by `libre-ai/project-governance` ADR-0055 (D94). The original
   permission-surface consequence above is kept as history.
-- The permission-surface consequence now reads, word for word: "Permission surface is
-  voluntary active-tab capture,
-  observed origin retention, and gesture-bound delivery to one configured origin, with
-  no host permissions or content-script collection."
+- The permission-surface consequence now reads, word for word (one line, deliberately
+  not wrapped so that a single-line grep proves the whole sentence):
+
+  > Permission surface is voluntary active-tab capture, observed origin retention, and gesture-bound delivery to one configured origin, with no host permissions or content-script collection.
+
 - Manifest: `permissions` become `["activeTab", "scripting"]`. `host_permissions`,
   `content_scripts` and `externally_connectable` stay absent. The `connect-src 'none'`
   CSP of the extension pages is unchanged. This amendment authorizes; the manifest and
