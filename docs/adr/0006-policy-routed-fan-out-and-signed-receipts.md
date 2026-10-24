@@ -5,7 +5,7 @@
   `docs/superpowers/specs/2026-10-22-v1-policy-routed-ticket-projection-design.md` §4;
   the freeze was lifted by `libre-ai/project-governance` ADR-0055 (D94)
 - 2026-10-24 owner decisions: recorded in `docs/superpowers/plans/2026-10-24-v1-roadmap.md`
-  §4.2, §4.5 and §6; they supersede design §5.2 point 5 and §5.6 where they differ
+  §4.2, §4.5 and §6; they supersede design §5.2 point 5, §5.5 and §5.6 where they differ
 - Reopens when: a policy, receipt or profile contract changes incompatibly, or a measured
   trust boundary requires a second deployable
 - Prolongs: ADR-0001, ADR-0002, ADR-0004, ADR-0005 (amended 2026-10-24)
