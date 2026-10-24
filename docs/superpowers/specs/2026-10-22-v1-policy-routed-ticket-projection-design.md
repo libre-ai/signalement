@@ -272,9 +272,13 @@ politique. Elle n'est pas falsifiable par une faute de frappe.
    morceaux bornés**, chacun acquitté par la page, avec le digest de l'export annoncé en
    tête et vérifié à la fin. Le total reste borné par les limites du contrat d'export ;
    la mémoire consommée est mesurée en qualification, par navigateur.
-5. La page vérifie l'export (inventaire, longueurs, digests, contrat), puis le
-   téléverse avec l'origine observée vers le control plane, qui le revérifie côté
-   serveur avant de créer ou réviser le Dossier.
+5. La page vérifie le **transport** (longueur, SHA-256 annoncé dans l'enveloppe,
+   archive lisible, présence de `manifest.json`), puis téléverse l'export avec l'origine
+   observée vers le control plane. Le serveur rend le verdict de conformité
+   (`verifyExport`, le même vérificateur que `verify-export.ts`) avant de créer ou
+   réviser le Dossier ; la page affiche ce verdict. Motif : le vérificateur vendorisé ne
+   tourne pas en navigateur sans `unsafe-eval` (`node:crypto`, `Bun.file` au chargement,
+   Ajv compilé à l'exécution). Décision du propriétaire du 2026-10-24.
 
 Propriétés exigées :
 
