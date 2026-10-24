@@ -26,3 +26,28 @@ entries:
     statement: "AI output cannot authorize disclosure, assertions, conflicts, verdicts, or effects."
     source: docs/specs/2026-09-10-signalement-foundation.md#non-goals
     reopens_on: "a new governance invariant and adversarial authorization proof"
+  - id: v1-projection-only
+    status: verified
+    statement: "v1.0 ships policy-routed projection only, with four exact profiles (github-issues/github.com/rest-2022-11-28, gitlab-issues/gitlab.com/rest-v4, jira-cloud/cloud/rest-v3, plane/self-hosted/rest-v1) all qualified against real instances; reproduction, verdicts, and the Customer Edge Bridge move to v1.1; the card stays below usable-verifiable and the public page says so."
+    source: docs/adr/0006-policy-routed-fan-out-and-signed-receipts.md#d13--v10-ships-projection-only-with-four-qualified-profiles
+    reopens_on: "an owner change to the v1.0 exit, or a v1.0 release candidate with fewer than four profiles qualified"
+  - id: v1-buyer
+    status: verified
+    statement: "The buyer is the team that sets the rules (security, compliance); policy, audit, and receipts are the product core."
+    source: docs/adr/0006-policy-routed-fan-out-and-signed-receipts.md#d4--the-buyer-is-the-team-that-sets-the-rules
+    reopens_on: "an owner change to the buyer or to the product core"
+  - id: linear-target
+    status: rejected
+    statement: "Linear is not a v1.0 target; self-hosted Plane replaces it."
+    source: docs/superpowers/specs/2026-10-22-v1-policy-routed-ticket-projection-design.md#autres-non-buts
+    reopens_on: "an owner decision to add Linear as a target, with its own exact profile and real-instance qualification"
+  - id: standalone-cli
+    status: rejected
+    statement: "The CLI never projects on its own; it is a client of the control plane and verifies receipts offline."
+    source: docs/adr/0006-policy-routed-fan-out-and-signed-receipts.md#d11--the-cli-is-a-client-and-an-offline-verifier
+    reopens_on: "a proposal for projection without the control plane, with a threat model for its local state and operator key"
+  - id: multi-organization-operator
+    status: rejected
+    statement: "No hosted multi-organization operator in v1.0: one deployment per customer, one organization per deployment."
+    source: docs/adr/0006-policy-routed-fan-out-and-signed-receipts.md#d12--one-deployment-per-customer-one-organization-per-deployment
+    reopens_on: "an owner decision to operate a hosted instance serving several organizations"
