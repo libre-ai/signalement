@@ -1,6 +1,6 @@
 # ADR-0005 — Passphrase vault and exact reviewed local export
 
-- Status: accepted implementation choice; browser qualification is separate
+- Status: accepted implementation choice; browser qualification is separate; amendment proposed 2026-10-24 for v1.0 delivery (see "Amendment"), effective at the owner's merge of the pull request that carries it
 - Owner decision: 2026-10-07, passphrase unlocking and canonical export v1 lock
 - Base inspected: `0d3d3044b67297cef00be15e8fb4b751dd1df5bb`
 
@@ -53,3 +53,38 @@ a valid manifest does not prove redaction or consent.
   concrete tests. Independent review records bind findings to source hashes.
 - This ADR does not promote any browser, enable a ticketing connector or authorize a
   host security setting change. Browser-specific remaining gates remain explicit.
+
+## Amendment — 2026-10-24, v1.0 gesture-bound delivery
+
+- Origin: owner decisions D8 and D10 of the v1.0 design
+  (`docs/superpowers/specs/2026-10-22-v1-policy-routed-ticket-projection-design.md`);
+  the freeze was lifted by `libre-ai/project-governance` ADR-0055 (D94). The original
+  permission-surface consequence above is kept as history.
+- The permission-surface consequence now reads, word for word (one line, deliberately
+  not wrapped so that a single-line grep proves the whole sentence):
+
+  > Permission surface is voluntary active-tab capture, observed origin retention, and gesture-bound delivery to one configured origin, with no host permissions or content-script collection.
+
+- Manifest: `permissions` become `["activeTab", "scripting"]`. `host_permissions`,
+  `content_scripts` and `externally_connectable` stay absent. The `connect-src 'none'`
+  CSP of the extension pages is unchanged. This amendment authorizes; the manifest and
+  `tools/build/manifest.test.ts:7` change with the delivery implementation (L6), not
+  before.
+- Observed origin: only the origin of the captured tab is kept (scheme, host and port,
+  serialized by `new URL(x).origin`; schemes `https` and `http`), inside the encrypted
+  draft envelope. It is shown at review as a capture observation, distinct from the
+  declarations. It is removable; once removed it is `null` and is not transmitted. It
+  travels in the delivery envelope, never in the export;
+  `signalement-local-export-v1` is unchanged.
+- Delivery: an explicit gesture on the control-plane tab. The destination must match
+  exactly (scheme, host and port) the origin typed by the person, never one inferred
+  from the page; a mismatch is a visible refusal with no injection. The editor prepares
+  the delivery anew, so it is a new approval boundary in the sense of this ADR. A
+  confirmation shows the destination origin, the observed origin and the content. A
+  fixed function is injected through `scripting.executeScript` with `func`, in the
+  isolated world, never code built from data; it reads nothing from the page and posts
+  through `postMessage` to the explicit target origin. Chunks are bounded and
+  acknowledged; the export digest is announced first and verified at the end.
+- The service worker holds neither key nor bytes.
+- Boundary unchanged: no network access from the editor, no browser promoted, and no
+  delivery qualified until the browser matrix has proven it per browser.

@@ -21,3 +21,43 @@ entries:
     statement: "The selected production profile meets declared EU location, recovery, and subprocessor constraints."
     source: docs/specs/2026-09-10-signalement-foundation.md#unverified-assumptions
     reopens_on: "contractual and restore evidence for an exact deployment profile"
+  - id: github-consistent-read
+    status: assumed
+    statement: "The repository issue list endpoint, not search, is a strongly consistent read that finds a projection marker after an ambiguous create on github-issues/github.com/rest-2022-11-28."
+    source: docs/superpowers/specs/2026-10-22-v1-policy-routed-ticket-projection-design.md#56-profils-exacts-visés
+    reopens_on: "first live ambiguous-outcome qualification on the GitHub profile"
+  - id: gitlab-consistent-read
+    status: assumed
+    statement: "The project-filtered issue list is a strongly consistent read that finds a projection marker on gitlab-issues/gitlab.com/rest-v4."
+    source: docs/superpowers/specs/2026-10-22-v1-policy-routed-ticket-projection-design.md#56-profils-exacts-visés
+    reopens_on: "first live ambiguous-outcome qualification on the GitLab profile"
+  - id: jira-consistent-read
+    status: rejected
+    statement: "Measured 2026-10-24 from the Atlassian documentation (search and reconcile): Jira Cloud search is not a strongly consistent read, so jira-cloud/cloud/rest-v3 declares its lookup unsupported and every ambiguous Jira create ends in to-resolve, never in a retried create."
+    source: docs/superpowers/specs/2026-10-22-v1-policy-routed-ticket-projection-design.md#56-profils-exacts-visés
+    reopens_on: "Atlassian documentation of a strongly consistent issue lookup"
+  - id: plane-attachments
+    status: assumed
+    statement: "Work-item attachments are available through REST v1 on the pinned self-hosted Plane version; otherwise the profile declares link or withhold."
+    source: docs/superpowers/specs/2026-10-22-v1-policy-routed-ticket-projection-design.md#56-profils-exacts-visés
+    reopens_on: "Plane qualification on the pinned version"
+  - id: plane-external-id-read
+    status: assumed
+    statement: "external_id and external_source give a strongly consistent lookup on the pinned self-hosted Plane version."
+    source: docs/superpowers/specs/2026-10-22-v1-policy-routed-ticket-projection-design.md#56-profils-exacts-visés
+    reopens_on: "Plane qualification on the pinned version"
+  - id: injection-arguments-json
+    status: assumed
+    statement: "scripting.executeScript passes func arguments as JSON on Chrome, Firefox, and Safari, so the export travels as bounded base64 chunks."
+    source: docs/superpowers/specs/2026-10-22-v1-policy-routed-ticket-projection-design.md#52-origine-observée-et-remise-de-lextension-au-control-plane
+    reopens_on: "first per-browser delivery qualification"
+  - id: gitlab-project-token-tier
+    status: verified
+    statement: "Measured 2026-10-24 from the GitLab documentation (https://docs.gitlab.com/user/project/settings/project_access_tokens/): \"On GitLab.com, project access tokens require a Premium or Ultimate subscription.\" The owner decided on 2026-10-24 to use a personal access token with api scope on a dedicated service account that is a member of the target projects only."
+    source: docs/superpowers/specs/2026-10-22-v1-policy-routed-ticket-projection-design.md#56-profils-exacts-visés
+    reopens_on: "GitLab.com pricing or token model change"
+  - id: managed-browser-policy-unavailable
+    status: assumed
+    statement: "A managed browser policy cannot set the control-plane origin equivalently on Chrome, Firefox, and Safari without the storage permission."
+    source: docs/superpowers/specs/2026-10-22-v1-policy-routed-ticket-projection-design.md#2-buts-non-buts-anti-buts
+    reopens_on: "official managed-storage review per browser"

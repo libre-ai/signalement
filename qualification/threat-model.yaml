@@ -26,3 +26,33 @@ entries:
     statement: "Payment, deletion, message sending, and real mutations require explicit environment policy and are denied by default."
     source: docs/adr/0003-scenario-ir-and-deterministic-verdicts.md
     reopens_on: "execution-policy implementation or new effect class"
+  - id: spoofed-observed-origin
+    status: unresolved
+    statement: "A person who controls the browser can forge the observed origin; forging only reroutes to a destination the approved policy already authorizes, because disclosure rules key on destination attributes, never on the origin."
+    source: docs/superpowers/specs/2026-10-22-v1-policy-routed-ticket-projection-design.md#52-origine-observée-et-remise-de-lextension-au-control-plane
+    reopens_on: "routing or disclosure rule semantics change"
+  - id: wrong-origin-delivery
+    status: unresolved
+    statement: "The extension injects nothing without a user gesture, an exact scheme, host, and port match with the configured control-plane origin, and an explicit confirmation; the injected function is fixed, reads nothing from the page, and posts only to the explicit target origin."
+    source: docs/adr/0005-local-vault-and-reviewed-export.md
+    reopens_on: "manifest permission, injected function, or delivery protocol change"
+  - id: withheld-file-egress
+    status: unresolved
+    statement: "A withheld file, or a file whose destination visibility could not be read, never reaches that destination."
+    source: project.v1.yaml#kill_predicates
+    reopens_on: "policy evaluation, renderer, or connector change"
+  - id: denied-destination-disclosure
+    status: unresolved
+    statement: "The reporting person sees only the count of destinations the matched rules deny, never their names or reasons; the detail is readable by policy administrators in the audit log."
+    source: docs/superpowers/specs/2026-10-22-v1-policy-routed-ticket-projection-design.md#54-écran-denvoi
+    reopens_on: "send screen, plan API, or audit access change"
+  - id: stale-plan-dispatch
+    status: unresolved
+    statement: "A discovered attribute changed or a policy version retired between approval and dispatch yields to-resolve and a new approval, never a send; a failed attribute read withholds every file of that destination (reason `visibility-unknown`)."
+    source: docs/superpowers/specs/2026-10-22-v1-policy-routed-ticket-projection-design.md#55-projection-idempotence-et-reçus
+    reopens_on: "dispatcher, revalidation, or policy lifecycle change"
+  - id: ambiguous-outcome-duplicate
+    status: unresolved
+    statement: "After a lost response, the connector looks up the remote item by projection marker or external_id through a strongly consistent read; without one, the delivery goes to to-resolve, never to a blind create."
+    source: docs/superpowers/specs/2026-10-22-v1-policy-routed-ticket-projection-design.md#55-projection-idempotence-et-reçus
+    reopens_on: "connector lookup or provider API change"

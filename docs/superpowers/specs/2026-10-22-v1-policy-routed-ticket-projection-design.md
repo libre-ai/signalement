@@ -1,8 +1,8 @@
 # Signalement v1.0 — projection d'un Dossier vers les systèmes de tickets, routée par politique
 
-- Statut : design approuvé par le propriétaire le 2026-10-23 (en chat) ; la levée du
-  gel attend la fusion de l'amendement d'ADR-0042 §1, proposé comme ADR-0055
-  (`libre-ai/project-governance` #134)
+- Statut : design approuvé par le propriétaire le 2026-10-23 (en chat) ; gel levé par
+  ADR-0055, décision D94 du registre de `libre-ai/project-governance`, fusionné par le
+  propriétaire le 2026-10-23 (`libre-ai/project-governance` #134)
 - Arbitrages : décisions propriétaires des 2026-10-22 et 2026-10-23, prises par questions
   structurées pendant la session de cadrage v1.0 (restituées au §4)
 - Base inspectée le 2026-10-22 : `6c1af3c` ; la tête servie se résout par
@@ -149,10 +149,11 @@ Ce qui rend le produit vendable à cet acheteur :
 - **Souveraineté.** Cible de déploiement de référence : Clever Cloud (Paris), sans
   hyperscaler américain dans la chaîne du control plane. Aucune dépendance AGPL/SSPL.
   Plane (AGPL) est une cible d'API, pas une dépendance : sans effet de licence.
-- **Gouvernance.** ADR-0042 §1 gèle `signalement` jusqu'à B′ (texte en annexe A).
-  Aucun lot de code ne démarre avant la fusion propriétaire de l'amendement. Les
-  chemins gardés (`docs/adr/**`, etc.) exigent un artefact de revue ; l'agent n'écrit
-  jamais de ligne `Owner-arbitration:`.
+- **Gouvernance.** ADR-0042 §1 gelait `signalement` jusqu'à B′ (texte en annexe A).
+  ADR-0055 (D94), fusionné le 2026-10-23, l'a amendé : le gel est levé. Aucune PR de
+  code qui consomme un contrat public ne fusionne avant le verrou de ce contrat (§8.3).
+  Les chemins gardés (`docs/adr/**`, etc.) exigent un artefact de revue ; l'agent
+  n'écrit jamais de ligne `Owner-arbitration:`.
 - **Comptes de qualification.** GitLab.com et Jira Cloud exigent des comptes de test
   créés par le propriétaire ; Plane tourne en conteneur local ; GitHub utilise un dépôt
   de test de l'organisation. Sans compte, le profil reste `unresolved` et la v1.0 ne
@@ -271,9 +272,13 @@ politique. Elle n'est pas falsifiable par une faute de frappe.
    morceaux bornés**, chacun acquitté par la page, avec le digest de l'export annoncé en
    tête et vérifié à la fin. Le total reste borné par les limites du contrat d'export ;
    la mémoire consommée est mesurée en qualification, par navigateur.
-5. La page vérifie l'export (inventaire, longueurs, digests, contrat), puis le
-   téléverse avec l'origine observée vers le control plane, qui le revérifie côté
-   serveur avant de créer ou réviser le Dossier.
+5. La page vérifie le **transport** (longueur, SHA-256 annoncé dans l'enveloppe,
+   archive lisible, présence de `manifest.json`), puis téléverse l'export avec l'origine
+   observée vers le control plane. Le serveur rend le verdict de conformité
+   (`verifyExport`, le même vérificateur que `verify-export.ts`) avant de créer ou
+   réviser le Dossier ; la page affiche ce verdict. Motif : le vérificateur vendorisé ne
+   tourne pas en navigateur sans `unsafe-eval` (`node:crypto`, `Bun.file` au chargement,
+   Ajv compilé à l'exécution). Décision du propriétaire du 2026-10-24.
 
 Propriétés exigées :
 
@@ -362,7 +367,9 @@ parcours local). Les couleurs passent par les variables CSS existantes
   puis relus par le dispatcher juste avant l'envoi. Si un attribut a changé (par exemple
   un dépôt passé de privé à public), ou si la version de politique a été retirée, la
   livraison passe en `à résoudre` et exige une nouvelle approbation. Elle ne part jamais
-  sous un plan périmé. Une lecture en échec compte comme « public » : échec fermé.
+  sous un plan périmé. Une lecture en échec retient tous les fichiers de cette
+  destination (motif `visibility-unknown`), ce qui est plus strict que de la traiter
+  comme « public » : échec fermé.
 - **Issue ambiguë** (requête partie, réponse perdue) : avant toute nouvelle création, le
   connecteur cherche l'item distant par un **marqueur de projection** inclus dans le
   corps (ou par `external_id` si le profil le prend en charge). La recherche doit passer
@@ -396,8 +403,8 @@ parcours local). Les couleurs passent par les variables CSS existantes
 | Famille | Édition | API | Authentification v1.0 | Pièce jointe | Visibilité | Lecture cohérente pour la reprise |
 | --- | --- | --- | --- | --- | --- | --- |
 | GitHub Issues | github.com | REST, version d'API épinglée | jeton à grain fin, portée dépôt | aucune API de téléversement : `link` ou `withhold` | découverte (public / privé) | liste d'issues du dépôt (pas la recherche) — à prouver |
-| GitLab Issues | gitlab.com | REST v4 | jeton d'accès de projet | téléversement de projet | découverte ; `internal` est traité comme public | liste filtrée du projet — à prouver |
-| Jira Cloud | Cloud | REST v3 | jeton d'API d'un compte de service | pièces jointes d'issue | déclarée par l'administrateur | JQL ou propriété d'entité — à prouver, sinon `à résoudre` |
+| GitLab Issues | gitlab.com | REST v4 | jeton personnel de portée `api` d'un compte dédié, membre des seuls projets cibles (les jetons d'accès de projet exigent Premium ou Ultimate sur gitlab.com, mesuré le 2026-10-24) | téléversement de projet | découverte ; `internal` est traité comme public | liste filtrée du projet — à prouver |
+| Jira Cloud | Cloud | REST v3 | jeton d'API d'un compte de service | pièces jointes d'issue | déclarée par l'administrateur | aucune — infirmée le 2026-10-24 (documentation Atlassian, *search and reconcile*) : toute création ambiguë finit en `à résoudre` |
 | Plane | auto-hébergé, version épinglée en qualification | API REST v1 | clé d'API d'espace | pièces jointes d'item — à prouver sur la version épinglée | déclarée par l'administrateur | `external_id` / `external_source` — à prouver |
 
 Toutes les cellules « à prouver » sont des hypothèses. Une capacité absente est une
@@ -487,7 +494,8 @@ Tests liés aux prédicats, obligatoires avant toute annonce :
 ## 8. Préalables de gouvernance, dans l'ordre
 
 1. **Amendement d'ADR-0042 §1** en `project-governance` (annexe A) : PR ouverte par
-   l'agent, fusion par le propriétaire. Aucun lot de code avant.
+   l'agent, fusion par le propriétaire. Aucun lot de code avant. Fait : ADR-0055, D94,
+   fusionné le 2026-10-23 (`libre-ai/project-governance` #134).
 2. **Correction de catalogue P15** (annexe B), dans la même PR ou une PR liée.
 3. **Contrats publics** en `schemas-and-contracts` : politique, enveloppe de remise,
    reçu, `ConnectorProfile`. Ils sont verrouillés avant que le code qui les consomme soit
@@ -503,8 +511,8 @@ Tests liés aux prédicats, obligatoires avant toute annonce :
 ## 9. Choix de l'agent à vérifier à la lecture
 
 - règle de résidence portée par l'instance ; visibilité découverte quand le profil
-  l'expose, déclarée sinon ; GitLab `internal` traité comme public ; lecture en échec
-  traitée comme publique ;
+  l'expose, déclarée sinon ; GitLab `internal` traité comme public ; lecture en échec :
+  tous les fichiers de la destination retenus (`visibility-unknown`) ;
 - remise des médias par lien authentifié quand le profil ne sait pas téléverser, et
   seulement si la politique le dit ;
 - profils à jeton plutôt qu'OAuth/App pour la v1.0 ;
@@ -538,7 +546,14 @@ Texte proposé :
 
 Ajout au préambule « Autorise » : « la sortie du gel de `signalement` ».
 
-Forme : un ADR d'amendement dans `project-governance`. Proposé le 2026-10-23 comme
+Texte adopté (ADR-0055, D1) :
+
+> Capture & Relay (`signalement`) est le dépôt porteur de **P15** (projets,
+> tickets et support). Il sort du gel : ses lots reprennent pour livrer la v1.0
+> décrite dans son dépôt. Le moratoire de création de dépôt ne s'applique pas :
+> le dépôt existe.
+
+Forme : un ADR d'amendement dans `project-governance`. Fusionné le 2026-10-23 comme
 ADR-0055, entrée D94 du registre (`libre-ai/project-governance` #134). La ligne
 d'arbitrage est écrite par le propriétaire, jamais par l'agent.
 

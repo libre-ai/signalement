@@ -26,3 +26,33 @@ entries:
     statement: "RAG, drafting, deduplication, and prequalification are optional proposal-only modules."
     source: docs/specs/2026-09-10-signalement-foundation.md#non-goals
     reopens_on: "a proposal granting AI any canonical or effect authority"
+  - id: policy-routed-projection
+    status: verified
+    statement: "Destinations and per-file disclosure come from an approved, versioned organization policy evaluated on the observed origin; no rule matched means no destination, and the reporting person can only withhold more."
+    source: docs/adr/0006-policy-routed-fan-out-and-signed-receipts.md
+    reopens_on: "owner change to D6 or D10"
+  - id: signed-projection-receipt
+    status: verified
+    statement: "Each successful delivery produces a JCS-canonicalized, Ed25519-signed receipt verifiable offline; the local export contract v1 is unchanged."
+    source: docs/adr/0006-policy-routed-fan-out-and-signed-receipts.md
+    reopens_on: "owner change to D7"
+  - id: control-plane-cli-client
+    status: verified
+    statement: "The CLI is a control-plane client and an offline verifier; it never projects or signs."
+    source: docs/adr/0006-policy-routed-fan-out-and-signed-receipts.md
+    reopens_on: "owner change to D11"
+  - id: single-organization-deployment
+    status: verified
+    statement: "Each customer self-hosts one single-organization deployment with one signing key; organization columns and RLS remain as defense in depth."
+    source: docs/adr/0006-policy-routed-fan-out-and-signed-receipts.md
+    reopens_on: "owner change to D12"
+  - id: policy-receipt-wasm-component
+    status: verified
+    statement: "Policy evaluation, canonicalization, and receipt signature and verification live in one Rust crate compiled to WASM and loaded identically by the control plane and the CLI."
+    source: docs/adr/0006-policy-routed-fan-out-and-signed-receipts.md
+    reopens_on: "measured incompatibility of the WASM component on one surface"
+  - id: gesture-bound-delivery-surface
+    status: verified
+    statement: "The extension permission surface is voluntary active-tab capture, observed origin retention, and gesture-bound delivery to one configured origin; no host permission, content script, or network access."
+    source: docs/adr/0005-local-vault-and-reviewed-export.md
+    reopens_on: "owner change to D8 or a browser that cannot honour the bound"

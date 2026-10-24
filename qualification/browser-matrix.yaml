@@ -3,16 +3,16 @@ kind: browser-matrix
 entries:
   - id: chrome-stable
     status: unresolved
-    statement: "Chrome stable extension capture, disclosure preview, resume, and scenario export pass on the pinned version."
+    statement: "Chrome stable extension capture, disclosure preview, resume, observed-origin retention, gesture-bound delivery to the configured control-plane origin, and scenario export pass on the pinned version."
     source: docs/qualification/official-capability-baseline.md#chrome
-    reopens_on: "browser or extension manifest version change"
+    reopens_on: "browser or extension manifest version change, or delivery protocol change"
   - id: firefox-stable
     status: unresolved
-    statement: "Firefox stable extension capture, disclosure preview, resume, and scenario export pass on the pinned version."
+    statement: "Firefox stable extension capture, disclosure preview, resume, observed-origin retention, gesture-bound delivery to the configured control-plane origin, and scenario export pass on the pinned version."
     source: docs/qualification/official-capability-baseline.md#firefox
-    reopens_on: "browser or extension manifest version change"
+    reopens_on: "browser or extension manifest version change, or delivery protocol change"
   - id: safari-stable-macos
     status: unresolved
-    statement: "Safari stable Web Extension capture and safaridriver execution pass on pinned macOS and Apple hardware."
+    statement: "Safari stable Web Extension capture, observed-origin retention, gesture-bound delivery to the configured control-plane origin, and safaridriver execution pass on pinned macOS and Apple hardware."
     source: docs/qualification/official-capability-baseline.md#safari
-    reopens_on: "Safari, macOS, Xcode, native-host, or hardware profile change"
+    reopens_on: "Safari, macOS, Xcode, native-host, hardware profile, or delivery protocol change"
