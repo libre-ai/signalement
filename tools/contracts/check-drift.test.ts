@@ -333,6 +333,21 @@ test("a catalog without the pinned contract is contract.missing", async () => {
   ]);
 });
 
+test("a pinned id listed twice in the catalog is catalog.duplicate_id, whichever twin is locked", async () => {
+  const candidate = { ...lockedEntry("b"), status: "candidate", review: { state: "pending" } };
+  for (const twins of [
+    [candidate, lockedEntry("b")],
+    [lockedEntry("b"), candidate],
+    [lockedEntry("b"), lockedEntry("b")],
+  ]) {
+    const spec = twoLocked();
+    spec.catalog = [lockedEntry("a"), ...twins];
+    expect(await vendoredDriftFailures(await syntheticVendor(spec))).toEqual([
+      "catalog.duplicate_id:b-v1",
+    ]);
+  }
+});
+
 test("an unreadable catalog fails every pinned contract instead of passing", async () => {
   const spec = twoLocked();
   const v = await syntheticVendor(spec, (pin) => ({

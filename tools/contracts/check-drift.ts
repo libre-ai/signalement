@@ -51,9 +51,17 @@ async function readOrNull(url: URL): Promise<Uint8Array | null> {
   }
 }
 
-/** Catalog entries by id; an unreadable or malformed catalog yields no entry at all. */
-async function catalogEntries(root: URL): Promise<Map<string, Record<string, unknown>>> {
-  const entries = new Map<string, Record<string, unknown>>();
+const DUPLICATE = "duplicate" as const;
+
+/**
+ * Catalog entries by id; an unreadable or malformed catalog yields no entry at all.
+ * An id listed twice maps to `DUPLICATE`: neither entry is trusted, so a candidate
+ * cannot hide behind a locked twin (or the reverse) whichever one a lookup would pick.
+ */
+async function catalogEntries(
+  root: URL,
+): Promise<Map<string, Record<string, unknown> | typeof DUPLICATE>> {
+  const entries = new Map<string, Record<string, unknown> | typeof DUPLICATE>();
   const bytes = await readOrNull(new URL("contracts/catalog.v1.json", root));
   if (bytes === null) return entries;
   let catalog: unknown;
@@ -66,7 +74,7 @@ async function catalogEntries(root: URL): Promise<Map<string, Record<string, unk
   if (!Array.isArray(contracts)) return entries;
   for (const entry of contracts)
     if (typeof entry === "object" && entry !== null && typeof entry.id === "string")
-      entries.set(entry.id, entry);
+      entries.set(entry.id, entries.has(entry.id) ? DUPLICATE : entry);
   return entries;
 }
 
@@ -140,6 +148,10 @@ export async function vendoredDriftFailures(
     const entry = catalog.get(contract.id);
     if (entry === undefined) {
       failures.push(`contract.missing:${contract.id}`);
+      continue;
+    }
+    if (entry === DUPLICATE) {
+      failures.push(`catalog.duplicate_id:${contract.id}`);
       continue;
     }
     if (entry.status !== contract.status) failures.push(`contract.status_mismatch:${contract.id}`);
