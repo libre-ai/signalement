@@ -1,4 +1,5 @@
 import { expect, test } from "bun:test";
+import { createHash } from "node:crypto";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -25,6 +26,33 @@ async function review() {
     "2026-10-07T10:01:00Z",
   );
 }
+// Invariant B5: the local export contract v1 is frozen. These digests were read from the v1
+// pin and from the committed validator before the pin was generalized to several contracts
+// (`shasum -a 256`); they are not derived from pin.json, so editing a vendored file together
+// with its pin entry cannot make this test follow it.
+const LOCAL_EXPORT_NORMATIVE_BYTES: Record<string, string> = {
+  "vendor/contracts/contracts/schemas/signalement-local-export.v1.schema.json":
+    "ddb63e43cfa76253079df8b10cb31ee4575927cfc22226d4a7942e4c51d83d0e",
+  "vendor/contracts/contracts/fixtures/signalement-local-export-v1/synthetic.json":
+    "c763a48514fb0a41c436ad676aec69ede52a7c71013f7540aa988bca2cdff051",
+  "vendor/contracts/contracts/fixtures/signalement-local-export-v1/schema-fixtures.json":
+    "8a16b467ecf29f37d2f92ed85ab622685e2ce89988d9fd9b9b43819973d51049",
+  "vendor/contracts/tools/quality/signalement-local-export-v1.ts":
+    "b330fa75b4f7a647740476f6bcde7f1ca5d28d987e533553e683a77d645a7d00",
+  "vendor/contracts/tools/quality/authorized-execution.ts":
+    "5fa4744a5a80a1de8ea44e22fce03abce89dde39e16b09ae364a85a31be63f0e",
+  "vendor/contracts/tools/quality/policy-core-raw-inputs.ts":
+    "94fc29b0b479be581c063a6c8a566f076319d1f4bd372c82291b7a71b7dcc389",
+  "packages/domain/schema-validator.js":
+    "f472cc21b5aafec75019d1f5e95be614f2955af9e70259aa0ad28b2c789bed3a",
+};
+const sha256 = (bytes: Uint8Array) => createHash("sha256").update(bytes).digest("hex");
+
+test("local export normative files keep their bytes", async () => {
+  expect(Object.keys(LOCAL_EXPORT_NORMATIVE_BYTES)).toHaveLength(7);
+  for (const [path, expected] of Object.entries(LOCAL_EXPORT_NORMATIVE_BYTES))
+    expect([path, sha256(await Bun.file(path).bytes())]).toEqual([path, expected]);
+});
 test("vendor is pinned byte-exact and generated schema is reproducible", async () =>
   expect(await vendoredDriftFailures()).toEqual([]));
 test("fresh independent authority consumer accepts ZIP and rejects changed inventory/content", async () => {

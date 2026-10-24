@@ -1,8 +1,24 @@
 {
+  "schemaVersion": "signalement.contract-pin.v2",
   "repository": "https://github.com/libre-ai/schemas-and-contracts",
   "commit": "5b3f940c550800a9ce13f73f4bfcfdb8eba08925",
-  "contract": "signalement-local-export-v1",
-  "status": "locked",
+  "contracts": [
+    {
+      "id": "signalement-local-export-v1",
+      "status": "locked",
+      "files": [
+        "contracts/catalog.v1.json",
+        "contracts/COMPATIBILITY.md",
+        "contracts/schemas/signalement-local-export.v1.schema.json",
+        "contracts/signalement-local-export-v1/SEMANTICS.md",
+        "contracts/fixtures/signalement-local-export-v1/synthetic.json",
+        "contracts/fixtures/signalement-local-export-v1/schema-fixtures.json",
+        "tools/quality/signalement-local-export-v1.ts",
+        "tools/quality/authorized-execution.ts",
+        "tools/quality/policy-core-raw-inputs.ts"
+      ]
+    }
+  ],
   "files": {
     "contracts/catalog.v1.json": "d064a41186666df4a2100c9c21c44abd385c2ad473636ec722f3f2a41e9a6ee1",
     "contracts/COMPATIBILITY.md": "0e69adb94bff044650895b47ca2fc50a649682c4334cc9095a2d9125618ebe17",
