@@ -39,6 +39,17 @@ describe("v1.0 qualification links", () => {
     }
   });
 
+  test("no v1.0 provider row is verified before its qualification", async () => {
+    // Qualification later uses `qualified` with a `profile` field (roadmap §4.5);
+    // `verified` would claim a capability that no real instance has proven.
+    const rows = await entries("qualification/provider-matrix.yaml");
+    for (const family of Object.keys(V1_PROFILES)) {
+      const row = rows.find((entry) => entry.id === family);
+      expect(row).toBeDefined();
+      expect(row?.status).not.toBe("verified");
+    }
+  });
+
   test("destination-disclosure-leak resolves to a catalog entry bound to the card", async () => {
     const card = Bun.YAML.parse(await Bun.file(join(ROOT, "project.v1.yaml")).text()) as {
       kill_predicates: readonly { id: string; source: string }[];

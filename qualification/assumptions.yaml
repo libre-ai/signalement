@@ -53,7 +53,7 @@ entries:
     reopens_on: "first per-browser delivery qualification"
   - id: gitlab-project-token-tier
     status: verified
-    statement: "Measured 2026-10-24 from the GitLab documentation: \"On GitLab.com, project access tokens require a Premium or Ultimate subscription.\" The owner decided on 2026-10-24 to use a personal access token with api scope on a dedicated service account that is a member of the target projects only, so gitlab-issues/gitlab.com/rest-v4 needs no paid subscription."
+    statement: "Measured 2026-10-24 from the GitLab documentation (https://docs.gitlab.com/user/project/settings/project_access_tokens/): \"On GitLab.com, project access tokens require a Premium or Ultimate subscription.\" The owner decided on 2026-10-24 to use a personal access token with api scope on a dedicated service account that is a member of the target projects only."
     source: docs/superpowers/specs/2026-10-22-v1-policy-routed-ticket-projection-design.md#56-profils-exacts-visés
     reopens_on: "GitLab.com pricing or token model change"
   - id: managed-browser-policy-unavailable

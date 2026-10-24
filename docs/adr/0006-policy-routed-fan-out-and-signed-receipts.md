@@ -1,6 +1,8 @@
 # ADR-0006 — Policy-routed fan-out and signed receipts
 
-- Status: accepted for the v1.0 scope; provider, browser and deployment qualification is separate
+- Status: proposed for the v1.0 scope; the owner's merge of the pull request that carries it
+  is the arbitration (precedent: ADR-0055 in `libre-ai/project-governance`); provider,
+  browser and deployment qualification is separate
 - Decision owner: owner decisions D4 to D13 of 2026-10-22 and 2026-10-23, recorded in
   `docs/superpowers/specs/2026-10-22-v1-policy-routed-ticket-projection-design.md` §4;
   the freeze was lifted by `libre-ai/project-governance` ADR-0055 (D94)
@@ -8,7 +10,7 @@
   §4.2, §4.5 and §6; they supersede design §5.2 point 5, §5.5 and §5.6 where they differ
 - Reopens when: a policy, receipt or profile contract changes incompatibly, or a measured
   trust boundary requires a second deployable
-- Prolongs: ADR-0001, ADR-0002, ADR-0004, ADR-0005 (amended 2026-10-24)
+- Prolongs: ADR-0001, ADR-0002, ADR-0004, ADR-0005 (amendment proposed 2026-10-24)
 
 ## Context
 
@@ -39,11 +41,16 @@ not redefine any public schema (see "Contracts").
 
 The numbers D4 to D13 are those of the v1.0 design §4, not those of the fleet registry.
 
+Some decisions below are agent choices listed in design §9, not owner decisions; they are
+endorsed through the owner's approval of the design: the WASM component (rather than
+FFI), the separation of author and approver, the origin typed by the person, token
+profiles rather than OAuth or an App, the rejection of a managed browser policy, and the
+refusal of non-conforming instances.
+
 ### D4 — The buyer is the team that sets the rules
 
 The buyer is the team that writes the rules: security and compliance. Policy, audit and
-receipts are the product core; the capture and the connectors serve them. A feature that
-helps the reporter but weakens a rule the buyer set is refused.
+receipts are the product core; the capture and the connectors serve them.
 
 ### D5 — Self-hosted control plane, CLI on the same engine
 
@@ -112,7 +119,7 @@ cites and does not restate. No `host_permissions`, `content_scripts` or
 
 The person sees a single counter, "N destination(s) excluded by the policy", with no name
 and no reason. The counter counts only the destinations the matched rules explicitly
-denies; a destination that no rule mentions does not appear in it. The detail lives in
+deny; a destination that no rule mentions does not appear in it. The detail lives in
 the audit log, readable by policy administrators.
 
 ### D10 — Routing on the observed origin
@@ -145,13 +152,6 @@ state, audit and policy: the control plane.
   OIDC provider, through a local mapping table.
 - The CLI authenticates with attenuable Biscuit Ed25519 tokens issued by the control
   plane; the web session is a `__Host-` cookie.
-- The GitLab.com profile uses a personal access token with the `api` scope on a dedicated
-  service account, member of the target projects only (owner decision of 2026-10-24;
-  project access tokens on GitLab.com require a Premium or Ultimate subscription).
-- The reception page checks the transport (length, announced SHA-256, readable archive,
-  `manifest.json` present) and shows the `verifyExport` verdict rendered by the server
-  (owner decision of 2026-10-24). The vendored verifier does not run in a browser, so the
-  conformance verdict is the server's.
 
 ### D13 — v1.0 ships projection only, with four qualified profiles
 
@@ -161,6 +161,20 @@ Plane. Reproduction and verdict, and the Customer Edge Bridge, move to v1.1. The
 card stays under `usable-verifiable` (which requires an isolated worker) and says so
 publicly. The connector interface is published under Apache-2.0 so that a Bridge can
 implement it later without a fork.
+
+### Owner decisions of 2026-10-24
+
+These two decisions are recorded in the roadmap (`docs/superpowers/plans/2026-10-24-v1-roadmap.md`
+§4.5 and §6); they belong to no numbered decision above.
+
+- The GitLab.com profile uses a personal access token with the `api` scope on a dedicated
+  service account, member of the target projects only. Project access tokens on
+  GitLab.com require a Premium or Ultimate subscription (assumption
+  `gitlab-project-token-tier`).
+- The reception page checks the transport (length, announced SHA-256, readable archive,
+  `manifest.json` present) and shows the `verifyExport` verdict rendered by the server.
+  The vendored verifier does not run in a browser, so the conformance verdict is the
+  server's.
 
 ### Proof component
 

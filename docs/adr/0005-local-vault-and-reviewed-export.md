@@ -1,6 +1,6 @@
 # ADR-0005 — Passphrase vault and exact reviewed local export
 
-- Status: accepted implementation choice; browser qualification is separate; amended 2026-10-24 for v1.0 delivery (see "Amendment")
+- Status: accepted implementation choice; browser qualification is separate; amendment proposed 2026-10-24 for v1.0 delivery (see "Amendment"), effective at the owner's merge of the pull request that carries it
 - Owner decision: 2026-10-07, passphrase unlocking and canonical export v1 lock
 - Base inspected: `0d3d3044b67297cef00be15e8fb4b751dd1df5bb`
 
