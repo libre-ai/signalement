@@ -26,3 +26,28 @@ entries:
     statement: "No page, Dossier, ticket, or artifact content reaches an AI provider without explicit configured disclosure."
     source: AGENTS.md#domain-doctrine
     reopens_on: "AI provider configuration or disclosure-policy change"
+  - id: consistent-read-unavailable
+    status: unresolved
+    statement: "Jira Cloud offers no strongly consistent lookup (measured 2026-10-24, assumption jira-consistent-read): every ambiguous Jira create goes to human resolution. GitHub, GitLab, and Plane carry the same risk until their lookup is proven."
+    source: qualification/assumptions.yaml
+    reopens_on: "per-profile consistent-read qualification"
+  - id: delivery-memory-bound
+    status: unresolved
+    statement: "Chunked delivery memory near the export size limit is unmeasured on each browser."
+    source: docs/superpowers/specs/2026-10-22-v1-policy-routed-ticket-projection-design.md#52-origine-observée-et-remise-de-lextension-au-control-plane
+    reopens_on: "per-browser delivery measurement"
+  - id: qualification-accounts-missing
+    status: unresolved
+    statement: "Without owner-created GitLab.com and Jira Cloud qualification accounts, two profiles stay unresolved and v1.0 does not ship (D13)."
+    source: docs/superpowers/specs/2026-10-22-v1-policy-routed-ticket-projection-design.md#3-contraintes
+    reopens_on: "account provisioning through a secrets channel"
+  - id: self-hosted-version-drift
+    status: unresolved
+    statement: "A self-hosted Plane instance on a version other than the qualified one is refused at destination configuration."
+    source: qualification/provider-matrix.yaml
+    reopens_on: "Plane version or REST API change"
+  - id: receipt-signing-key-leak
+    status: unresolved
+    statement: "A leaked deployment signing key lets an attacker forge receipts until rotation; receipts carry a key id and public keys are exported with their retirement."
+    source: docs/adr/0006-policy-routed-fan-out-and-signed-receipts.md
+    reopens_on: "key storage, rotation, or receipt format change"
