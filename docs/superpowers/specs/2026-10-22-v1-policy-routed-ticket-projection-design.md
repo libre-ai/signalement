@@ -398,7 +398,7 @@ parcours local). Les couleurs passent par les variables CSS existantes
 | --- | --- | --- | --- | --- | --- | --- |
 | GitHub Issues | github.com | REST, version d'API épinglée | jeton à grain fin, portée dépôt | aucune API de téléversement : `link` ou `withhold` | découverte (public / privé) | liste d'issues du dépôt (pas la recherche) — à prouver |
 | GitLab Issues | gitlab.com | REST v4 | jeton d'accès de projet | téléversement de projet | découverte ; `internal` est traité comme public | liste filtrée du projet — à prouver |
-| Jira Cloud | Cloud | REST v3 | jeton d'API d'un compte de service | pièces jointes d'issue | déclarée par l'administrateur | JQL ou propriété d'entité — à prouver, sinon `à résoudre` |
+| Jira Cloud | Cloud | REST v3 | jeton d'API d'un compte de service | pièces jointes d'issue | déclarée par l'administrateur | aucune — infirmée le 2026-10-24 (documentation Atlassian, *search and reconcile*) : toute création ambiguë finit en `à résoudre` |
 | Plane | auto-hébergé, version épinglée en qualification | API REST v1 | clé d'API d'espace | pièces jointes d'item — à prouver sur la version épinglée | déclarée par l'administrateur | `external_id` / `external_source` — à prouver |
 
 Toutes les cellules « à prouver » sont des hypothèses. Une capacité absente est une
