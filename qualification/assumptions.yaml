@@ -55,7 +55,7 @@ entries:
     status: verified
     statement: "Measured 2026-10-24 from the GitLab documentation: \"On GitLab.com, project access tokens require a Premium or Ultimate subscription.\" The owner decided on 2026-10-24 to use a personal access token with api scope on a dedicated service account that is a member of the target projects only, so gitlab-issues/gitlab.com/rest-v4 needs no paid subscription."
     source: docs/superpowers/specs/2026-10-22-v1-policy-routed-ticket-projection-design.md#56-profils-exacts-visés
-    reopens_on: "a GitLab.com pricing change or a change of the GitLab credential decision"
+    reopens_on: "GitLab.com pricing or token model change"
   - id: managed-browser-policy-unavailable
     status: assumed
     statement: "A managed browser policy cannot set the control-plane origin equivalently on Chrome, Firefox, and Safari without the storage permission."
