@@ -4,6 +4,8 @@
 - Decision owner: owner decisions D4 to D13 of 2026-10-22 and 2026-10-23, recorded in
   `docs/superpowers/specs/2026-10-22-v1-policy-routed-ticket-projection-design.md` §4;
   the freeze was lifted by `libre-ai/project-governance` ADR-0055 (D94)
+- 2026-10-24 owner decisions: recorded in `docs/superpowers/plans/2026-10-24-v1-roadmap.md`
+  §4.2, §4.5 and §6; they supersede design §5.2 point 5 and §5.6 where they differ
 - Reopens when: a policy, receipt or profile contract changes incompatibly, or a measured
   trust boundary requires a second deployable
 - Prolongs: ADR-0001, ADR-0002, ADR-0004, ADR-0005 (amended 2026-10-24)
@@ -22,7 +24,8 @@ The existing ADRs already fix what this decision builds on:
 - ADR-0001: the Dossier is canonical; external systems receive projections and never
   write Dossier fields back from remote text.
 - ADR-0002: disclosure is bound to the target; the person sees the exact result per
-  destination and may withhold more, never transmit more.
+  destination (ADR-0002, plus design goal B2: the person may withhold more, never
+  transmit more).
 - ADR-0004: one modular Bun control plane on PostgreSQL, a transactional outbox, an
   in-process dispatcher until evidence requires separation, and idempotent consumers.
 - ADR-0005: an extension without network access, the exact reviewed local export
@@ -108,7 +111,7 @@ cites and does not restate. No `host_permissions`, `content_scripts` or
 ### D9 — Denied destinations are masked
 
 The person sees a single counter, "N destination(s) excluded by the policy", with no name
-and no reason. The counter counts only the destinations the matched rule explicitly
+and no reason. The counter counts only the destinations the matched rules explicitly
 denies; a destination that no rule mentions does not appear in it. The detail lives in
 the audit log, readable by policy administrators.
 
@@ -180,12 +183,14 @@ only public keys.
 - Discovered attributes are read when the plan is computed and read again before sending.
   If an attribute changed, or the policy version was retired, the delivery becomes
   `to-resolve` and requires a new approval; it never leaves under a stale plan. A failed
-  read counts as public.
+  read withholds every file of that destination (reason `visibility-unknown`), which is
+  stricter than treating it as public.
 - An ambiguous outcome (request sent, response lost) never leads to a blind creation. The
   connector searches the remote item by projection marker through a strongly consistent
   read; if the profile offers none, the delivery ends in `to-resolve`. A search index with
-  deferred consistency does not count. Measured case: Jira Cloud has no strongly
-  consistent read-after-write lookup, so an ambiguous Jira creation ends in `to-resolve`
+  deferred consistency does not count. Documented case: per the Atlassian documentation
+  (search and reconcile), Jira Cloud has no strongly consistent read-after-write
+  lookup, so an ambiguous Jira creation ends in `to-resolve`
   (the Jira profile declares `lookup: unsupported`).
 - Each destination has its own state, never derived from another's. The Dossier shows N
   states, not an aggregated "sent".
