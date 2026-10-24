@@ -367,9 +367,9 @@ parcours local). Les couleurs passent par les variables CSS existantes
   puis relus par le dispatcher juste avant l'envoi. Si un attribut a changé (par exemple
   un dépôt passé de privé à public), ou si la version de politique a été retirée, la
   livraison passe en `à résoudre` et exige une nouvelle approbation. Elle ne part jamais
-  sous un plan périmé. Une lecture en échec retient tous les fichiers de cette destination (motif
-  `visibility-unknown`), ce qui est plus strict que de la traiter comme « public » :
-  échec fermé.
+  sous un plan périmé. Une lecture en échec retient tous les fichiers de cette
+  destination (motif `visibility-unknown`), ce qui est plus strict que de la traiter
+  comme « public » : échec fermé.
 - **Issue ambiguë** (requête partie, réponse perdue) : avant toute nouvelle création, le
   connecteur cherche l'item distant par un **marqueur de projection** inclus dans le
   corps (ou par `external_id` si le profil le prend en charge). La recherche doit passer
@@ -511,8 +511,8 @@ Tests liés aux prédicats, obligatoires avant toute annonce :
 ## 9. Choix de l'agent à vérifier à la lecture
 
 - règle de résidence portée par l'instance ; visibilité découverte quand le profil
-  l'expose, déclarée sinon ; GitLab `internal` traité comme public ; lecture en échec
-  traitée comme publique ;
+  l'expose, déclarée sinon ; GitLab `internal` traité comme public ; lecture en échec :
+  tous les fichiers de la destination retenus (`visibility-unknown`) ;
 - remise des médias par lien authentifié quand le profil ne sait pas téléverser, et
   seulement si la politique le dit ;
 - profils à jeton plutôt qu'OAuth/App pour la v1.0 ;
