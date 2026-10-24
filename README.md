@@ -51,12 +51,12 @@ une preuve de parité.
 <!-- libre-ai:project-status:begin -->
 <!-- Section générée depuis project.v1.yaml — ne pas éditer à la main. -->
 
-- Situation actuelle : La fondation est publique. Une implémentation locale de capture relue, brouillons chiffrés et export portable est en validation, contre le contrat v1 verrouillé. La qualification complète des trois navigateurs reste ouverte. Aucun connecteur fournisseur, API serveur ni worker de reproduction n'est livré.
+- Situation actuelle : La fondation est publique. Une implémentation locale de capture relue, brouillons chiffrés et export portable est en validation, contre le contrat v1 verrouillé. La qualification complète des trois navigateurs reste ouverte. La v1.0 est spécifiée : projection d'un Dossier, routée par une politique d'organisation, vers GitHub Issues, GitLab Issues, Jira Cloud et Plane auto-hébergé, avec reçus signés ; le gel qui la bloquait est levé (ADR-0055 de project-governance). Aucun connecteur fournisseur, API serveur, control plane ni worker de reproduction n'est livré. La v1.0 exclut la reproduction : la fiche restera sous usable-verifiable à sa sortie.
 - Maturité : specified
 - Exposition : spec-published
 - Confiance : medium
 - Preuves vérifiées le : 2026-10-07
-- Avancement : 18,8 % du périmètre actuellement déclaré
+- Avancement : 14,6 % du périmètre actuellement déclaré
 
 <!-- libre-ai:project-status:end -->
 

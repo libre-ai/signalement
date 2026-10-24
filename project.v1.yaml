@@ -24,8 +24,12 @@ summary: >-
 current_situation: >-
   La fondation est publique. Une implémentation locale de capture relue, brouillons
   chiffrés et export portable est en validation, contre le contrat v1 verrouillé.
-  La qualification complète des trois navigateurs reste ouverte. Aucun connecteur
-  fournisseur, API serveur ni worker de reproduction n'est livré.
+  La qualification complète des trois navigateurs reste ouverte. La v1.0 est
+  spécifiée : projection d'un Dossier, routée par une politique d'organisation, vers
+  GitHub Issues, GitLab Issues, Jira Cloud et Plane auto-hébergé, avec reçus signés ;
+  le gel qui la bloquait est levé (ADR-0055 de project-governance). Aucun connecteur
+  fournisseur, API serveur, control plane ni worker de reproduction n'est livré. La
+  v1.0 exclut la reproduction : la fiche restera sous usable-verifiable à sa sortie.
 scope:
   - "Capture volontaire, bornée et relue depuis Chrome, Firefox et Safari, chacun qualifié séparément."
   - "Dossier canonique exportable avec preuves, contexte filtré et historique de redaction."
@@ -89,6 +93,9 @@ kill_predicates:
   - id: capability-overclaim
     predicate: "une capacité fournisseur, navigateur ou moteur est publiée sans suite de qualification exacte"
     source: qualification/decision-lock.yaml
+  - id: destination-disclosure-leak
+    predicate: "un fichier retenu par la politique atteint une destination"
+    source: qualification/acceptance-catalog.yaml
 benchmark:
   product: "Jam.dev et Marker.io pour la capture; Linear et Plane pour l'expérience d'intégration, sans devenir un ticketing"
 phases:
@@ -124,11 +131,15 @@ phases:
     title: "Capture volontaire et qualification relue"
     exit_criteria:
       - id: browser-matrix-real
-        text: "Chrome, Firefox et Safari passent chacun leur matrice réelle avec limites affichées."
+        text: "Chrome, Firefox et Safari passent chacun leur matrice réelle avec limites affichées, y compris la conservation de l'origine observée et la remise liée au geste vers l'origine configurée du control plane."
         weight: 5
         status: pending
       - id: exact-disclosure-preview
         text: "L'utilisateur retire ou masque chaque donnée avant une transmission cible explicite."
+        weight: 5
+        status: pending
+      - id: gesture-bound-delivery
+        text: "Aucune injection de l'extension sans geste, sur une origine différente de l'origine configurée du control plane ou sans confirmation ; tests rouges prouvés par neutralisation."
         weight: 5
         status: pending
       - id: resumable-local-draft
@@ -137,13 +148,26 @@ phases:
         status: pending
   - id: multi-system-projection
     title: "Projections idempotentes et synchronisation gouvernée"
+    note: "v1.0 (D13 du design du 2026-10-22) : projection seule ; internal-standard-adapter reste pending, la phase ne se clôt donc pas en v1.0."
     exit_criteria:
       - id: two-real-profiles
-        text: "GitHub Issues et un second profil exact passent création, ajout, pièce jointe, reprise et conflit."
+        text: "GitHub Issues (github.com), GitLab Issues (gitlab.com), Jira Cloud et Plane auto-hébergé passent chacun, contre une instance réelle, découverte, création, ajout, pièce jointe ou repli déclaré, reprise et conflit ; résultat consigné dans qualification/provider-matrix.yaml."
         weight: 5
         status: pending
       - id: fanout-independent-state
         text: "Une destination en échec ne masque ni ne duplique les autres projections du même Dossier."
+        weight: 5
+        status: pending
+      - id: policy-routing
+        text: "Même export, même origine observée et même politique produisent le même plan ; une destination refusée n'est jamais nommée à la personne qui signale ; aucun transmit sans règle explicite."
+        weight: 5
+        status: pending
+      - id: signed-receipt-offline
+        text: "Un reçu de projection se vérifie hors ligne avec les seules clés publiques ; un octet modifié dans le reçu ou dans un fichier transmis fait échouer la vérification."
+        weight: 5
+        status: pending
+      - id: stale-plan-refused
+        text: "Un attribut découvert modifié ou une politique retirée entre l'approbation et l'envoi produit à résoudre, jamais un envoi."
         weight: 5
         status: pending
       - id: internal-standard-adapter
@@ -152,6 +176,7 @@ phases:
         status: pending
   - id: reproduce-verify
     title: "Reproduction exécutable et verdict déterministe"
+    note: "Hors v1.0 (D13 du design du 2026-10-22) : reportée en v1.1. Conséquence assumée : la fiche ne peut pas atteindre usable-verifiable à la sortie de la v1.0, qui exige un worker isolé."
     exit_criteria:
       - id: fail-then-pass
         text: "Le même scénario échoue sur la version défectueuse et réussit sur la version corrigée."
