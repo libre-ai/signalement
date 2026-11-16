@@ -132,8 +132,18 @@ async function evaluate(session: string, expression: string): Promise<unknown> {
   );
   if (reply.exceptionDetails) {
     const detail = reply.exceptionDetails as { exception?: { description?: string } };
+    // Several call sites share one expression (click("unlock") runs three times): the failing
+    // document's address and the expression together name the call that failed in a receipt.
+    const where = await cdp(
+      "Runtime.evaluate",
+      { expression: "location.href", returnByValue: true },
+      session,
+    ).then(
+      (located) => String((located.result as { value?: unknown } | undefined)?.value ?? "unknown"),
+      () => "unknown",
+    );
     throw new Error(
-      `Browser evaluation failed: ${detail.exception?.description?.split("\n")[0] ?? "Unknown"}`,
+      `Browser evaluation failed: ${detail.exception?.description?.split("\n")[0] ?? "Unknown"} (at ${where}, evaluating ${JSON.stringify(expression.slice(0, 80))})`,
     );
   }
   return (reply.result as { value?: unknown }).value;
