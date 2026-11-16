@@ -40,7 +40,7 @@ non_goals:
 dependencies:
   - on: libre-ai/project-governance
     why: "doctrine de flotte, schéma de fiche, gates de sécurité et workflows réutilisables"
-    pinned: "75d6ea085b18cb15d450d7f0f5b1ba9d69645800"
+    pinned: "ce7300250446d9f45bd28d2aaa6014b11d6280ff"
   - on: libre-ai/schemas-and-contracts
     why: "autorité verrouillée du contrat signalement-local-export-v1; les autres contrats restent futurs"
     pinned: "5b3f940c550800a9ce13f73f4bfcfdb8eba08925"
@@ -91,6 +91,9 @@ kill_predicates:
     source: qualification/decision-lock.yaml
 benchmark:
   product: "Jam.dev et Marker.io pour la capture; Linear et Plane pour l'expérience d'intégration, sans devenir un ticketing"
+products:
+  - id: P15
+    code: apps/extension-shared
 phases:
   - id: sealed-repo
     title: "Repository publiable et historique prouvé étanche"
@@ -122,6 +125,8 @@ phases:
         status: pending
   - id: capture-qualification
     title: "Capture volontaire et qualification relue"
+    product: P15
+    delivers: "A person can capture a report from the Chrome, Firefox or Safari extension, with its limits shown, remove or mask each captured item before any explicit transmission to a target, and resume a local draft after an interruption."
     exit_criteria:
       - id: browser-matrix-real
         text: "Chrome, Firefox et Safari passent chacun leur matrice réelle avec limites affichées."
@@ -137,6 +142,8 @@ phases:
         status: pending
   - id: multi-system-projection
     title: "Projections idempotentes et synchronisation gouvernée"
+    product: P15
+    delivers: "A person can relay a reviewed report to GitHub Issues and to a second qualified ticket system, creating and appending to the ticket with attachments, resuming without a duplicate ticket and handling conflicts, a failing destination never hiding or duplicating the others, and an in-house system plugged in by contract."
     exit_criteria:
       - id: two-real-profiles
         text: "GitHub Issues et un second profil exact passent création, ajout, pièce jointe, reprise et conflit."
