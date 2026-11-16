@@ -175,6 +175,13 @@ const evidence: Record<string, unknown> = {
   steps: [],
 };
 const steps = evidence.steps as string[];
+// readyState alone does not prove popup.html is loaded: on Chrome 157 a target listed at
+// popup.html answered readyState 'complete' with no capture button (2026-11-16, intermittent).
+// Either a new target still holding its initial empty document, whose readyState is also
+// 'complete', or the first popup's closing target; the second is excluded where it is found.
+// Wait for the popup's own button as well as the load.
+const popupReady =
+  "document.readyState === 'complete' && document.getElementById('capture') !== null";
 try {
   // The first reply waits for the browser to start, which a cold runner stretches past the
   // per-call deadline (see BROWSER_STARTUP_MS); later calls keep their own deadline.
@@ -260,9 +267,7 @@ try {
     throw new Error("Popup invoked capture without explicit action");
   steps.push("popup-open-zero-native-capture-calls");
   const popupSession = await attach(popup?.targetId ?? "");
-  await waitFor(
-    async () => (await evaluate(popupSession, "document.readyState === 'complete'")) === true,
-  );
+  await waitFor(async () => (await evaluate(popupSession, popupReady)) === true);
   await evaluate(popupSession, "document.getElementById('capture').click()");
   let editor: Target | undefined;
   await waitFor(async () => {
@@ -357,15 +362,17 @@ try {
   await cdp("Extensions.triggerAction", { id, targetId: tabTarget?.targetId ?? targetId });
   let quotaPopup: Target | undefined;
   await waitFor(async () => {
+    // The first popup closes itself after its capture, but its target can still be listed:
+    // only a target other than that one is the popup this action opened.
     quotaPopup = (await targets()).find(
-      (target) => target.url === `chrome-extension://${id}/popup.html`,
+      (target) =>
+        target.url === `chrome-extension://${id}/popup.html` &&
+        target.targetId !== popup?.targetId,
     );
     return !!quotaPopup;
   });
   const quotaPopupSession = await attach(quotaPopup?.targetId ?? "");
-  await waitFor(
-    async () => (await evaluate(quotaPopupSession, "document.readyState === 'complete'")) === true,
-  );
+  await waitFor(async () => (await evaluate(quotaPopupSession, popupReady)) === true);
   await evaluate(quotaPopupSession, "document.getElementById('capture').click()");
   let quotaEditor: Target | undefined;
   await waitFor(async () => {
