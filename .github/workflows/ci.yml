@@ -15,9 +15,9 @@ concurrency:
 
 jobs:
   licensing:
-    uses: libre-ai/project-governance/.github/workflows/reusable-licensing.yml@ce7300250446d9f45bd28d2aaa6014b11d6280ff
+    uses: libre-ai/project-governance/.github/workflows/reusable-licensing.yml@5f7742d86a3c16e9d55a62bc0ea9dc67dc011240
     with:
-      tooling_ref: ce7300250446d9f45bd28d2aaa6014b11d6280ff
+      tooling_ref: 5f7742d86a3c16e9d55a62bc0ea9dc67dc011240
   bun-quality:
     name: Bun quality
     runs-on: ubuntu-latest

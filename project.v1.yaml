@@ -40,7 +40,7 @@ non_goals:
 dependencies:
   - on: libre-ai/project-governance
     why: "doctrine de flotte, schéma de fiche, gates de sécurité et workflows réutilisables"
-    pinned: "ce7300250446d9f45bd28d2aaa6014b11d6280ff"
+    pinned: "5f7742d86a3c16e9d55a62bc0ea9dc67dc011240"
   - on: libre-ai/schemas-and-contracts
     why: "autorité verrouillée du contrat signalement-local-export-v1; les autres contrats restent futurs"
     pinned: "5b3f940c550800a9ce13f73f4bfcfdb8eba08925"
