@@ -366,8 +366,7 @@ try {
     // only a target other than that one is the popup this action opened.
     quotaPopup = (await targets()).find(
       (target) =>
-        target.url === `chrome-extension://${id}/popup.html` &&
-        target.targetId !== popup?.targetId,
+        target.url === `chrome-extension://${id}/popup.html` && target.targetId !== popup?.targetId,
     );
     return !!quotaPopup;
   });
