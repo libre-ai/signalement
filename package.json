@@ -17,7 +17,7 @@
     "fast-uri": "4.1.5"
   },
   "devDependencies": {
-    "@libre-ai/governance": "github:libre-ai/project-governance#5f7742d86a3c16e9d55a62bc0ea9dc67dc011240",
+    "@libre-ai/governance": "github:libre-ai/project-governance#a00daec8d10419f266a9611f589c606858ca86b3",
     "@biomejs/biome": "2.5.3",
     "@types/bun": "1.3.14",
     "ajv": "8.20.0",

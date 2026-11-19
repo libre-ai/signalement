@@ -6,7 +6,7 @@
       "name": "@libre-ai/signalement",
       "devDependencies": {
         "@biomejs/biome": "2.5.3",
-        "@libre-ai/governance": "github:libre-ai/project-governance#5f7742d86a3c16e9d55a62bc0ea9dc67dc011240",
+        "@libre-ai/governance": "github:libre-ai/project-governance#a00daec8d10419f266a9611f589c606858ca86b3",
         "@types/bun": "1.3.14",
         "ajv": "8.20.0",
         "ajv-formats": "3.0.1",
@@ -36,7 +36,7 @@
 
     "@biomejs/cli-win32-x64": ["@biomejs/cli-win32-x64@2.5.3", "", { "os": "win32", "cpu": "x64" }, "sha512-ExSaJWi4/u6+GXCszlSKpWSjKNbDseAYqqkCznsCsZ/4uidZ/BEqsCc5/3ctlq6dfIubdIIRSVLC/PG9xPl70Q=="],
 
-    "@libre-ai/governance": ["@libre-ai/governance@github:libre-ai/project-governance#5f7742d", { "dependencies": { "ajv": "8.20.0", "ajv-formats": "3.0.1", "entities": "8.0.0" } }, "libre-ai-project-governance-5f7742d", "sha512-hchtYW+pcuesjmvg+Y47khdcHxJlvlhAaiVmvHzqOKH/3OzZgCHtT0eendbFCYp8fIoLvzqkNA1PMyxvsfEJ4Q=="],
+    "@libre-ai/governance": ["@libre-ai/governance@github:libre-ai/project-governance#a00daec", { "dependencies": { "ajv": "8.20.0", "ajv-formats": "3.0.1", "entities": "8.0.0" } }, "libre-ai-project-governance-a00daec", "sha512-hH5wsTYOEYn7DwTT9ciMsUz/YSxbPJ7G45o5WS/Dk8mUVFKkN/fpFT3yjVNdPHHmo4o1MVvwiho0mRvGw+rPIg=="],
 
     "@types/bun": ["@types/bun@1.3.14", "", { "dependencies": { "bun-types": "1.3.14" } }, "sha512-h1hFqFVcvAvD9j9K7ZW7vd82aSA+rTdznZa+5bwvCwqSB1jmmfLcbIWhOLx1/+boy/xmjgCs/OMUL8hRJSmnPw=="],
 
