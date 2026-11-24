@@ -68,3 +68,16 @@ alternative lock authority. Installed manifest license inspection found the same
 permitted license families, including BSD-3-Clause for the patch. The repository
 toolchain gate passed. This is an advisory-database snapshot, not a claim that no
 unknown vulnerabilities exist.
+
+## fast-uri advisories recheck — 2026-11-24
+
+`bun audit` on the locked graph reported four advisories on `fast-uri` 4.1.5, reached
+through `ajv`:
+[GHSA-w74x-v6f9-j3xg](https://github.com/advisories/GHSA-w74x-v6f9-j3xg),
+[GHSA-xhq7-xmqj-769h](https://github.com/advisories/GHSA-xhq7-xmqj-769h),
+[GHSA-wjr9-j795-jxcr](https://github.com/advisories/GHSA-wjr9-j795-jxcr) and
+[GHSA-333x-w4r6-6crp](https://github.com/advisories/GHSA-333x-w4r6-6crp). Each is
+patched in 4.2.3 for the 4.x line. The exact override and lock moved to 4.2.3, published
+2026-10-19, older than the `minimumReleaseAge` of `bunfig.toml`. `bun audit` then
+reports no vulnerabilities, and the installed manifest declares BSD-3-Clause. This is an
+advisory-database snapshot, not a claim that no unknown vulnerabilities exist.
