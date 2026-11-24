@@ -14,7 +14,7 @@
     "url": "https://github.com/libre-ai/signalement.git"
   },
   "overrides": {
-    "fast-uri": "4.1.5"
+    "fast-uri": "4.2.3"
   },
   "devDependencies": {
     "@libre-ai/governance": "github:libre-ai/project-governance#a00daec8d10419f266a9611f589c606858ca86b3",
