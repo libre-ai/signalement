@@ -5,6 +5,7 @@ import { isAbsolute, join, resolve } from "node:path";
 import { GIT_METADATA_STDOUT_LIMIT, runGitBounded } from "./git-process";
 import { inspectReachableHistory, type PublicHistoryResult } from "./public-history";
 import {
+  ALIAS_SIGNED_DEVELOPMENT_COMMITS,
   APPROVED_DEVELOPMENT_AUTHOR_ALIASES,
   APPROVED_FORGE_COMMITTER_IDENTITIES,
   APPROVED_PUBLIC_IDENTITIES,
@@ -104,6 +105,7 @@ export async function inspectDevelopmentHistory(
     const result = await inspectReachableHistory(snapshot, {
       allowedIdentities: APPROVED_PUBLIC_IDENTITIES,
       allowedAuthorAliases: APPROVED_DEVELOPMENT_AUTHOR_ALIASES,
+      aliasSignedCommits: ALIAS_SIGNED_DEVELOPMENT_COMMITS,
       allowedCommitterIdentities: APPROVED_FORGE_COMMITTER_IDENTITIES,
       gitEnvironment: env,
     });
