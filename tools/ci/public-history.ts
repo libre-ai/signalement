@@ -70,6 +70,7 @@ export interface PublicHistoryOptions extends PublicBoundaryOptions {
   readonly allowedIdentities?: readonly PublicGitIdentity[];
   readonly allowedCommitterIdentities?: readonly PublicGitIdentity[];
   readonly allowedAuthorAliases?: readonly PublicGitAuthorAlias[];
+  readonly aliasSignedCommits?: readonly string[];
   readonly gitEnvironment?: Readonly<Record<string, string>>;
   readonly authorizedRefs?: readonly string[];
   readonly maxCommits?: number;
@@ -428,6 +429,7 @@ export function inspectGitMetadata(
   allowedIdentities: readonly PublicGitIdentity[],
   allowedCommitterIdentities: readonly PublicGitIdentity[] = [],
   allowedAuthorAliases: readonly PublicGitAuthorAlias[] = [],
+  permitsAliasSigner = false,
 ): GitMetadataInspection {
   const source = decode(content);
   const separator = source.indexOf("\n\n");
@@ -499,7 +501,18 @@ export function inspectGitMetadata(
   if (dcoName === undefined || dcoEmail === undefined) {
     return { approved: false, contentForBoundary: source };
   }
-  const dcoIdentity = { name: dcoName, email: dcoEmail };
+  const signedIdentity = { name: dcoName, email: dcoEmail };
+  // An immutable commit named by the policy may carry its sign-off under a declared
+  // same-address author alias. Every other commit signs under the canonical identity.
+  const signerAlias = permitsAliasSigner
+    ? allowedAuthorAliases.find(
+        ({ canonical, alias }) =>
+          alias.email === canonical.email &&
+          matchesAllowedIdentity(signedIdentity, [alias]) &&
+          matchesAllowedIdentity(canonical, allowedIdentities),
+      )
+    : undefined;
+  const dcoIdentity = signerAlias?.canonical ?? signedIdentity;
   if (
     !matchesAllowedIdentity(dcoIdentity, allowedIdentities) ||
     !validatedIdentities.some(
@@ -891,6 +904,7 @@ export async function inspectReachableHistory(
               allowedIdentities,
               options.allowedCommitterIdentities,
               options.allowedAuthorAliases,
+              object.type === "commit" && (options.aliasSignedCommits ?? []).includes(object.sha),
             )
           : null;
       const paths =
