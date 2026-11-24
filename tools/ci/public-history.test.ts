@@ -341,6 +341,36 @@ describe("inspectReachableHistory", () => {
     ).toBe(false);
   });
 
+  test("accepts an alias sign-off only where the caller permits it", () => {
+    const canonical = TEST_IDENTITIES[0];
+    const alias = { name: "Test", email: canonical.email };
+    const aliases = [{ canonical, alias }];
+    const signedBy = (name: string, email: string) =>
+      new TextEncoder().encode(
+        rawCommit(OBJECT_A, {
+          headers: [
+            `author ${alias.name} <${alias.email}> 1770000000 +0000`,
+            `committer ${canonical.name} <${canonical.email}> 1770000000 +0000`,
+          ],
+          message: `test: alias sign-off\n\nSigned-off-by: ${name} <${email}>`,
+        }),
+      );
+    const inspect = (content: Uint8Array, permitsAliasSigner: boolean) =>
+      inspectGitMetadata(content, "commit", TEST_IDENTITIES, [], aliases, permitsAliasSigner);
+    const aliasSigned = signedBy(alias.name, alias.email);
+
+    expect(inspect(aliasSigned, false).approved).toBe(false);
+    const permitted = inspect(aliasSigned, true);
+    expect(permitted.approved).toBe(true);
+    expect(permitted.contentForBoundary).not.toContain(alias.email);
+    expect(inspect(signedBy("Unlisted", alias.email), true).approved).toBe(false);
+    expect(inspect(signedBy(alias.name, "other@signalement.test"), true).approved).toBe(false);
+    expect(inspectGitMetadata(aliasSigned, "commit", TEST_IDENTITIES, [], [], true).approved).toBe(
+      false,
+    );
+    expect(inspect(signedBy(canonical.name, canonical.email), true).approved).toBe(true);
+  });
+
   test("renders the v2 manifest with lexical key order and no whitespace", () => {
     expect(
       renderPublicHistoryManifest(
